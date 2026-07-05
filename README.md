@@ -4,7 +4,7 @@
 
 CardCompare.in helps Indian consumers compare 350+ credit cards across 20+ banks with transparent editorial ratings, personalised recommendations, and fee-waiver tracking — all powered by data, not affiliate incentives.
 
-**Live site:** [https://cardcompare.in](https://cardcompare.in)
+**Live site:** SOON
 
 ---
 
