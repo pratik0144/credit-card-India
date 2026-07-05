@@ -1,0 +1,39 @@
+---
+/*
+ * Card Recommendation Engine /recommend (FRONTEND §11.1). Prerendered shell +
+ * client-side React island (§5). The quiz replaces DESIGN's PAN/soft-pull
+ * checker — one flow, framed as an estimate, NO PAN collection in v1.
+ */
+import PageLayout from '../layouts/PageLayout.astro';
+import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
+import RecommendWizard from '../islands/RecommendWizard.tsx';
+import { getCardListing } from '../lib/queries';
+export const prerender = true;
+const listing = await getCardListing();
+const previewCards = listing.slice(0, 6).map((r) => ({
+  card_id: r.card_id, card_slug: r.card_slug, card_name: r.card_name,
+  overall_score: r.overall_score, annual_fee_amount: r.annual_fee_amount,
+  headline_reward_line: r.headline_reward_line,
+}));
+---
+<PageLayout
+  title="Credit Card Recommendation Engine — Get Matched"
+  description="Answer 8 quick questions and get personalised credit-card matches for your spending and profile. A soft, estimate-based match — no PAN, no credit-score impact."
+>
+  <section class="hero">
+    <div class="container">
+      <p class="eyebrow">Free · Takes about a minute · No PAN required</p>
+      <h1>Which card is right for you?</h1>
+      <p class="lede">Tell us how you spend and what you want. We'll estimate your best matches — with the reasons, not just a score.</p>
+    </div>
+  </section>
+  <div class="container"><AffiliateDisclosure compact /></div>
+  <section class="container section">
+    <RecommendWizard client:load previewCards={previewCards} />
+  </section>
+</PageLayout>
+<style>
+  .hero { padding-block: var(--space-16) var(--space-8); }
+  .lede { font-size: var(--text-body-lg); color: var(--color-text-secondary); max-width: 54ch; }
+  .section { padding-block: var(--space-8) var(--space-16); }
+</style>

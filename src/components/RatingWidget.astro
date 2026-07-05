@@ -1,0 +1,137 @@
+---
+/*
+ * RatingWidget (DESIGN §6.4). Numeric score is PRIMARY (x.x / 5 as text);
+ * optional stars are secondary/decorative (aria-hidden). "More information"
+ * toggles an inline disclosure (not a modal) explaining the issuer-blind
+ * methodology. On review pages, pass `subscores` to render the breakdown table.
+ */
+import { formatRating } from '../lib/format';
+import type { CardRating } from '../lib/database.types';
+export interface Props {
+  score: number | null;
+  /** show the "our writers score cards…" methodology disclosure toggle */
+  showMethodology?: boolean;
+  /** full sub-score breakdown (review detail context) */
+  subscores?: CardRating | null;
+  size?: 'sm' | 'lg';
+  idSuffix?: string;
+}
+const { score, showMethodology = true, subscores = null, size = 'sm', idSuffix = '' } = Astro.props;
+const stars = score != null ? Math.round(score) : 0;
+const panelId = `rating-method-${idSuffix || Math.random().toString(36).slice(2, 8)}`;
+const rows = subscores
+  ? [
+      ['Rewards Value', subscores.rewards_value_score],
+      ['Fees & Charges', subscores.fees_charges_score],
+      ['Welcome Benefit', subscores.welcome_benefit_score],
+      ['Flexibility', subscores.flexibility_score],
+      ['Issuer Service Experience', subscores.issuer_service_score],
+    ].filter(([, v]) => v != null)
+  : [];
+---
+<div class:list={['rating', `rating--${size}`]}>
+  <div class="rating__head">
+    <span class="rating__label">Our rating:</span>
+    <span class="rating__number">{formatRating(score)}</span>
+    {score != null && (
+      <span class="rating__stars" aria-hidden="true">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <span class:list={['star', { 'star--full': i < stars }]}>★</span>
+        ))}
+      </span>
+    )}
+    {showMethodology && (
+      <button
+        type="button"
+        class="rating__info"
+        aria-expanded="false"
+        aria-controls={panelId}
+        data-rating-toggle
+      >
+        <span class="sr-only">What does this rating mean?</span>
+        <span aria-hidden="true">ⓘ More information</span>
+      </button>
+    )}
+  </div>
+
+  {showMethodology && (
+    <div id={panelId} class="rating__panel" hidden>
+      <p>
+        Our writers and editors score cards independently on fees, rewards value, welcome
+        benefits, flexibility, and issuer service. <strong>Card issuers have no influence on
+        how we rate cards</strong> or where they rank. <a href="/editorial-guidelines">Read our full ratings methodology</a>.
+      </p>
+      <button type="button" class="rating__close" data-rating-close>Close</button>
+    </div>
+  )}
+
+  {rows.length > 0 && (
+    <table class="rating__breakdown">
+      <caption class="sr-only">Rating breakdown out of 5</caption>
+      <tbody>
+        {rows.map(([label, val]) => (
+          <tr>
+            <th scope="row">{label}</th>
+            <td>{(val as number).toFixed(1)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )}
+</div>
+
+<style>
+  .rating__head { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-2); }
+  .rating__label { font-size: var(--text-body-sm); color: var(--color-text-secondary); }
+  .rating__number {
+    font-weight: var(--weight-bold);
+    color: var(--color-text-primary);
+    font-size: var(--text-h3);
+  }
+  .rating--lg .rating__number { font-size: var(--text-rating-number); }
+  .rating__stars { color: var(--color-star-empty); font-size: 1rem; letter-spacing: 1px; }
+  .star--full { color: var(--color-star-fill); }
+  .rating__info {
+    background: none; border: none; cursor: pointer; padding: var(--space-1);
+    color: var(--color-primary-blue); font-size: var(--text-body-sm);
+    min-height: 44px;
+  }
+  .rating__panel {
+    margin-top: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-primary-blue-light);
+    border-radius: var(--radius-md);
+    font-size: var(--text-body-sm);
+    color: var(--color-text-secondary);
+  }
+  .rating__panel p { margin: 0 0 var(--space-2); }
+  .rating__close {
+    background: none; border: none; color: var(--color-primary-blue);
+    cursor: pointer; font-weight: var(--weight-semibold); padding: var(--space-1) 0; min-height: 44px;
+  }
+  .rating__breakdown { margin-top: var(--space-4); border-collapse: collapse; width: 100%; max-width: 360px; }
+  .rating__breakdown th, .rating__breakdown td {
+    text-align: left; padding: var(--space-2) var(--space-3);
+    border-bottom: var(--border-width-hairline) solid var(--color-border);
+    font-size: var(--text-body-sm);
+  }
+  .rating__breakdown td { text-align: right; font-weight: var(--weight-bold); }
+  .rating__breakdown th { font-weight: var(--weight-regular); color: var(--color-text-secondary); }
+</style>
+
+<script>
+  // Inline disclosure toggle (§6.4) — no modal, no focus trap. Keyboard-operable.
+  document.querySelectorAll('[data-rating-toggle]').forEach((btn) => {
+    const panel = document.getElementById(btn.getAttribute('aria-controls') || '');
+    if (!panel) return;
+    const setOpen = (open: boolean) => {
+      btn.setAttribute('aria-expanded', String(open));
+      panel.hidden = !open;
+    };
+    btn.addEventListener('click', () => setOpen(btn.getAttribute('aria-expanded') !== 'true'));
+    panel.querySelector('[data-rating-close]')?.addEventListener('click', () => {
+      setOpen(false);
+      (btn as HTMLButtonElement).focus();
+    });
+  });
+</script>

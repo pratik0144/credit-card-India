@@ -1,0 +1,30 @@
+---
+/*
+ * Card Combo Optimizer /combo-optimizer (FRONTEND §11.2). Prerendered shell +
+ * React island.
+ */
+import PageLayout from '../layouts/PageLayout.astro';
+import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
+import ComboOptimizer from '../islands/ComboOptimizer.tsx';
+import { getCardPickerList } from '../lib/queries';
+export const prerender = true;
+const cards = await getCardPickerList();
+const cardNames: Record<string, string> = Object.fromEntries(cards.map((c) => [c.id, c.name]));
+---
+<PageLayout
+  title="Credit Card Combo Optimizer — Best 2 or 3 Card Setup"
+  description="Enter your monthly spend and we'll find the best 2- or 3-card combination for maximum rewards, with a per-category assignment table and net value after fees."
+>
+  <section class="container" style="padding-block: var(--space-12) var(--space-6);">
+    <h1>Find your best card combo</h1>
+    <p class="lede">One card rarely wins every category. Enter your spend and we'll assign each category to the card that rewards it best.</p>
+    <AffiliateDisclosure compact />
+  </section>
+  <section class="container section">
+    <ComboOptimizer client:visible cardNames={cardNames} />
+  </section>
+</PageLayout>
+<style>
+  .lede { font-size: var(--text-body-lg); color: var(--color-text-secondary); max-width: 56ch; }
+  .section { padding-block: var(--space-4) var(--space-16); }
+</style>

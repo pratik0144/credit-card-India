@@ -1,0 +1,118 @@
+---
+/*
+ * FilterSortBar (DESIGN §6.15). Real checkboxes + <select>s (not styled divs).
+ * Filter chips are toggle buttons with aria-pressed; issuer + CIBIL are real
+ * <select>s; a separate Sort <select>. Client script filters the CardRow list
+ * in place by data attributes and re-orders — progressive enhancement: with JS
+ * off, all cards remain visible.
+ */
+import { FEATURED_ISSUERS } from '../lib/site';
+const filters = [
+  ['all', 'All cards'], ['lifetime-free', 'Lifetime Free'], ['cashback', 'Cashback'],
+  ['travel', 'Travel'], ['fuel', 'Fuel'], ['dining', 'Dining'], ['airport-lounge', 'Airport Lounge'],
+  ['student', 'Student'], ['business', 'Business'], ['low-interest', 'Low Interest'],
+];
+---
+<form class="fsbar" data-filter-sort aria-label="Filter and sort cards">
+  <div class="fsbar__chips" role="group" aria-label="Filter by">
+    {filters.map(([val, label], i) => (
+      <button type="button" class="fsbar__chip" aria-pressed={i === 0 ? 'true' : 'false'} data-filter={val}>{label}</button>
+    ))}
+  </div>
+  <div class="fsbar__selects">
+    <label class="fsbar__field">
+      <span>Issuer</span>
+      <select data-issuer>
+        <option value="">All Issuers</option>
+        {FEATURED_ISSUERS.map((n) => <option value={n}>{n}</option>)}
+      </select>
+    </label>
+    <label class="fsbar__field">
+      <span>CIBIL Score Range</span>
+      <select data-cibil>
+        <option value="">All Ranges</option>
+        <option value="750">750+ (Excellent)</option>
+        <option value="700">700–749 (Good)</option>
+        <option value="650">650–699 (Fair)</option>
+        <option value="0">New to Credit / No Score</option>
+      </select>
+    </label>
+    <label class="fsbar__field">
+      <span>Sort by</span>
+      <select data-sort>
+        <option value="featured">Featured</option>
+        <option value="rating">Highest Rated</option>
+        <option value="fee">Lowest Annual Fee</option>
+      </select>
+    </label>
+  </div>
+  <p class="fsbar__empty" role="status" hidden>No cards match your current filters. Try adjusting your filter settings to see more options.</p>
+</form>
+<style>
+  .fsbar { display: grid; gap: var(--space-4); margin-bottom: var(--space-8); }
+  .fsbar__chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .fsbar__chip {
+    min-height: 44px; padding: var(--space-2) var(--space-4);
+    border: var(--border-width-hairline) solid var(--color-border);
+    border-radius: var(--radius-pill); background: var(--color-surface);
+    font-size: var(--text-body-sm); font-weight: var(--weight-medium); cursor: pointer;
+    color: var(--color-text-primary);
+  }
+  .fsbar__chip[aria-pressed="true"] {
+    background: var(--color-primary-blue-light); color: var(--color-primary-blue);
+    border-color: var(--color-primary-blue); font-weight: var(--weight-semibold);
+  }
+  .fsbar__selects { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .fsbar__field { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-caption); text-transform: uppercase; letter-spacing: var(--tracking-wide); color: var(--color-text-muted); }
+  .fsbar__field select { min-height: 44px; padding: 0 var(--space-3); font-size: var(--text-body); border: var(--border-width-hairline) solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface); text-transform: none; letter-spacing: normal; color: var(--color-text-primary); }
+  .fsbar__empty { color: var(--color-text-secondary); text-align: center; padding: var(--space-8); }
+</style>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-filter-sort]');
+  const list = document.querySelector<HTMLElement>('[data-card-list]');
+  if (form && list) {
+    const chips = form.querySelectorAll<HTMLButtonElement>('[data-filter]');
+    const issuerSel = form.querySelector<HTMLSelectElement>('[data-issuer]')!;
+    const cibilSel = form.querySelector<HTMLSelectElement>('[data-cibil]')!;
+    const sortSel = form.querySelector<HTMLSelectElement>('[data-sort]')!;
+    const empty = form.querySelector<HTMLElement>('.fsbar__empty')!;
+    let activeFilter = 'all';
+
+    const apply = () => {
+      const items = Array.from(list.querySelectorAll<HTMLElement>('[data-card]'));
+      let visible = 0;
+      for (const el of items) {
+        const cats = (el.dataset.categories || '').split(',');
+        const issuer = el.dataset.issuer || '';
+        const cibil = Number(el.dataset.cibil || '0');
+        let show = true;
+        if (activeFilter !== 'all' && !cats.includes(activeFilter)) show = false;
+        if (issuerSel.value && issuer !== issuerSel.value) show = false;
+        if (cibilSel.value !== '' && cibil > Number(cibilSel.value) && Number(cibilSel.value) > 0) show = false;
+        el.hidden = !show;
+        if (show) visible++;
+      }
+      empty.hidden = visible !== 0;
+
+      // sort visible
+      const key = sortSel.value;
+      const sorted = items
+        .filter((el) => !el.hidden)
+        .sort((a, b) => {
+          if (key === 'rating') return Number(b.dataset.rating || 0) - Number(a.dataset.rating || 0);
+          if (key === 'fee') return Number(a.dataset.fee || 0) - Number(b.dataset.fee || 0);
+          return Number(a.dataset.order || 0) - Number(b.dataset.order || 0);
+        });
+      sorted.forEach((el) => list.appendChild(el));
+    };
+
+    chips.forEach((chip) => chip.addEventListener('click', () => {
+      chips.forEach((c) => c.setAttribute('aria-pressed', 'false'));
+      chip.setAttribute('aria-pressed', 'true');
+      activeFilter = chip.dataset.filter || 'all';
+      apply();
+    }));
+    [issuerSel, cibilSel, sortSel].forEach((s) => s.addEventListener('change', apply));
+  }
+</script>

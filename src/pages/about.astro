@@ -1,0 +1,24 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { SITE } from '../lib/site';
+export const prerender = true;
+---
+<PageLayout title={`About ${SITE.name}`} description={`${SITE.name} is an independent credit-card comparison and review platform for India.`}>
+  <div class="container reading-column" style="padding-block: var(--space-8);">
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'About' }]} />
+    <h1>About {SITE.name}</h1>
+    <p>{SITE.name} is an independent credit-card comparison and review platform for the Indian market. We are not a bank, not a UPI app, and not a rewards-app — we're a reference authority. Our job is to help you pick the right card in under five minutes, with numbers first and no sales pitch.</p>
+    <h2>How we're independent</h2>
+    <p>We may earn a commission when you apply for a card through our links. That commercial relationship never influences which cards we review, how we rate them, or the order we present them. Our rating rubric is issuer-blind, and every rating is attributed to a named reviewer.</p>
+    <h2>What's next (roadmap)</h2>
+    <ul>
+      <li>Community-sourced approval reports (crowd-sourced approval/rejection data, once we can moderate it responsibly).</li>
+      <li>An EMI-vs-rewards payoff calculator.</li>
+      <li>RBI Account Aggregator (AA) based automatic spend tracking for the wallet — consent-based, when we can do it compliantly.</li>
+      <li>Hindi and regional-language coverage.</li>
+    </ul>
+    <p class="note">Some editorial figures across the site are placeholders pending real launch data, and all regulatory/compliance copy is marked for legal review before production.</p>
+  </div>
+</PageLayout>
+<style>.note { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: var(--space-8); }</style>

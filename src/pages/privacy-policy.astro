@@ -1,0 +1,22 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { SITE } from '../lib/site';
+export const prerender = true;
+---
+<PageLayout title="Privacy Policy" description={`How ${SITE.name} collects, uses, and protects your data under India's DPDP Act.`} noindex>
+  <div class="container reading-column" style="padding-block: var(--space-8);">
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Privacy Policy' }]} />
+    <h1>Privacy policy</h1>
+    {/* [NEEDS LEGAL REVIEW] — DPDP Act 2023 compliance; get real sign-off (BACKEND §12). */}
+    <p><strong>[NEEDS LEGAL REVIEW]</strong> — this is a working draft, not final legal text. It must be reviewed against India's Digital Personal Data Protection Act, 2023 (DPDP Act) before launch.</p>
+    <h2>What we collect</h2>
+    <p>We only collect what a feature needs: your email if you subscribe to our newsletter; your mobile number and email if you create an account; and, for the wallet, the cards you add and any spend you log manually. We do not collect PAN or Aadhaar anywhere on this site.</p>
+    <h2>How we use it</h2>
+    <p>To send the newsletter you asked for, to power your wallet and fee-waiver reminders, and to improve our recommendations in aggregate. We do not sell your personal data.</p>
+    <h2>Your rights</h2>
+    <p>You can delete your account and all associated wallet and profile data at any time from your account settings, or by contacting us. We don't log personal data in plaintext application logs.</p>
+    <h2>Contact</h2>
+    <p>Questions about your data? <a href="/contact">Contact us</a>.</p>
+  </div>
+</PageLayout>

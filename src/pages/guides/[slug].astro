@@ -1,0 +1,16 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import { getArticles, getArticleBySlug, getAuthorById } from '../../lib/queries';
+export const prerender = true;
+export async function getStaticPaths() {
+  const guides = await getArticles('guide');
+  return guides.map((a) => ({ params: { slug: a.slug } }));
+}
+const { slug } = Astro.params;
+const article = await getArticleBySlug(slug!);
+if (!article) return Astro.redirect('/404');
+const author = getAuthorById(article.author_id);
+const editedBy = getAuthorById(article.edited_by_author_id);
+const reviewedBy = getAuthorById(article.reviewed_by_author_id);
+---
+<ArticleLayout article={article} author={author} editedBy={editedBy} reviewedBy={reviewedBy} section="guides" />

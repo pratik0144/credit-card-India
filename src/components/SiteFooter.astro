@@ -1,0 +1,97 @@
+---
+/*
+ * SiteFooter (DESIGN §6.11). Multi-column links + copyright + the THREE full
+ * legal disclosure paragraphs (Affiliate, Editorial Independence, CIBIL/CIC) —
+ * §10.1 & §10.2. These are NEVER omitted or abbreviated on any page (§6.11, §11).
+ * [NEEDS LEGAL REVIEW] — all §10 compliance copy must be signed off before production.
+ */
+import { SITE } from '../lib/site';
+const year = new Date().getFullYear();
+const cols = [
+  { title: 'Site', links: [
+    ['Privacy Policy', '/privacy-policy'], ['Terms of Use', '/terms-of-use'],
+    ['Affiliate Disclosure', '/affiliate-disclosure'], ['Site Map', '/sitemap-index.xml'],
+  ]},
+  { title: 'About', links: [
+    ['About Us', '/about'], ['Editorial Guidelines', '/editorial-guidelines'], ['Our Team', '/authors'],
+  ]},
+  { title: 'Contact', links: [
+    ['Contact Us', '/contact'], ['Partnership Opportunities', '/contact'], ['Media Relations', '/contact'],
+  ]},
+  { title: 'Tools', links: [
+    ['Check My Eligibility', '/recommend'], ['Combo Optimizer', '/combo-optimizer'],
+    ['Best-card Calculator', '/calculator/best-card'], ['CIBIL Score Hub', '/cibil-score'],
+    ['Card Changes Tracker', '/changes'],
+  ]},
+];
+---
+<footer class="footer">
+  <div class="container">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <a href="/" class="footer__logo">{SITE.name}</a>
+        <p class="footer__tag">{SITE.tagline}.</p>
+        <p class="eyebrow" style="color: var(--color-text-muted);">Follow us</p>
+        <ul class="footer__social" aria-label="Social media">
+          {/* TODO: validate channels exist before linking (DESIGN §6.11). */}
+          <li><a href="#" aria-label="X (Twitter)">X</a></li>
+          <li><a href="#" aria-label="Instagram">Instagram</a></li>
+          <li><a href="#" aria-label="YouTube">YouTube</a></li>
+        </ul>
+      </div>
+      <nav class="footer__cols" aria-label="Footer">
+        {cols.map((col) => (
+          <div class="footer__col">
+            <h2 class="footer__col-title">{col.title}</h2>
+            <ul>
+              {col.links.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
+            </ul>
+          </div>
+        ))}
+      </nav>
+    </div>
+
+    <p class="footer__copyright">Copyright © {year} {SITE.name}. All Rights Reserved.</p>
+
+    {/* [NEEDS LEGAL REVIEW] — full disclosure blocks, never abbreviated (§10.1, §10.2). */}
+    <div class="footer__legal">
+      <p>
+        <strong>Affiliate Disclosure.</strong> {SITE.name} may earn a commission from card
+        issuers when you apply through links on this site. This does not influence which cards
+        we review, how we rate them, or the order in which we present them. Our review team
+        operates independently of our commercial partnerships.
+      </p>
+      <p>
+        <strong>Editorial Independence.</strong> Our writers and editors score and rank cards
+        using an issuer-blind rubric based on fees, rewards value, welcome benefits, flexibility,
+        and issuer service. Card issuers have no influence on our ratings or rankings.
+      </p>
+      <p>
+        <strong>Credit-score Disclosure.</strong> {SITE.name}'s credit-score references are based
+        on the CIBIL Score, issued by TransUnion CIBIL Limited, one of four credit information
+        companies (CICs) licensed by the Reserve Bank of India. Other CICs — including Experian,
+        Equifax, and CRIF High Mark — may generate different scores based on the same underlying
+        credit history. A CIBIL score of 750 or above is generally considered good to excellent by
+        most Indian card issuers; individual issuer criteria vary and this site's recommendations
+        should not be read as a guarantee of approval.
+      </p>
+    </div>
+  </div>
+</footer>
+<style>
+  .footer { background: var(--color-surface-footer); margin-top: var(--space-24); padding-block: var(--space-16); }
+  .footer__top { display: grid; gap: var(--space-12); }
+  @media (min-width: 1024px) { .footer__top { grid-template-columns: 1fr 2fr; } }
+  .footer__logo { font-size: var(--text-h3); font-weight: var(--weight-bold); color: var(--color-text-primary); text-decoration: none; }
+  .footer__tag { color: var(--color-text-secondary); font-size: var(--text-body-sm); margin: var(--space-2) 0 var(--space-6); }
+  .footer__social { display: flex; gap: var(--space-4); list-style: none; padding: 0; margin: var(--space-2) 0 0; }
+  .footer__cols { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-8); }
+  @media (min-width: 768px) { .footer__cols { grid-template-columns: repeat(4, 1fr); } }
+  .footer__col-title { font-size: var(--text-caption); text-transform: uppercase; letter-spacing: var(--tracking-wide); color: var(--color-text-secondary); margin-bottom: var(--space-3); }
+  .footer__col ul { list-style: none; padding: 0; margin: 0; }
+  .footer__col li { margin-bottom: var(--space-2); }
+  .footer__col a { font-size: var(--text-body-sm); color: var(--color-text-secondary); }
+  .footer__copyright { margin: var(--space-12) 0 var(--space-6); font-size: var(--text-body-sm); color: var(--color-text-muted); border-top: var(--border-width-hairline) solid var(--color-border); padding-top: var(--space-6); }
+  .footer__legal p { font-size: var(--text-caption); line-height: var(--leading-normal); color: var(--color-text-muted); margin-bottom: var(--space-3); max-width: 100%; }
+  .footer__legal strong { color: var(--color-text-secondary); }
+</style>

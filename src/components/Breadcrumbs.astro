@@ -1,0 +1,34 @@
+---
+/*
+ * Breadcrumbs (DESIGN §4). Link-separated trail above the H1 on non-home pages,
+ * muted, no background chip. Rendered as an ordered list in a labelled nav.
+ * Pair with breadcrumbList() JSON-LD in the page (§9).
+ */
+export interface Props { items: { name: string; path?: string }[]; }
+const { items } = Astro.props;
+---
+<nav aria-label="Breadcrumb" class="crumbs">
+  <ol>
+    {items.map((it, i) => (
+      <li>
+        {it.path && i < items.length - 1 ? (
+          <a href={it.path}>{it.name}</a>
+        ) : (
+          <span aria-current="page">{it.name}</span>
+        )}
+        {i < items.length - 1 && <span class="crumbs__sep" aria-hidden="true">/</span>}
+      </li>
+    ))}
+  </ol>
+</nav>
+<style>
+  .crumbs ol {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+    list-style: none; margin: 0; padding: 0;
+    font-size: var(--text-body-sm); color: var(--color-text-muted);
+  }
+  .crumbs li { display: inline-flex; align-items: center; gap: var(--space-2); }
+  .crumbs a { color: var(--color-text-secondary); }
+  .crumbs [aria-current="page"] { color: var(--color-text-muted); }
+  .crumbs__sep { color: var(--color-border-strong); }
+</style>

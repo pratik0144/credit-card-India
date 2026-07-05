@@ -1,0 +1,65 @@
+---
+/*
+ * Card Change / Devaluation Tracker /changes (FRONTEND §11.5). Paginated,
+ * filterable-by-category feed of card_change_log, most recent first. Dated,
+ * old→new diff display.
+ */
+import PageLayout from '../layouts/PageLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
+import { getChangeLog } from '../lib/queries';
+import { breadcrumbList } from '../lib/seo';
+
+export const prerender = true;
+const changes = await getChangeLog();
+const typeLabel: Record<string, string> = {
+  fee_increase: 'Fee increase', fee_decrease: 'Fee decrease', reward_devaluation: 'Reward devaluation',
+  reward_improvement: 'Reward improvement', benefit_added: 'Benefit added', benefit_removed: 'Benefit removed',
+  eligibility_change: 'Eligibility change', other: 'Change',
+};
+const negative = new Set(['fee_increase', 'reward_devaluation', 'benefit_removed']);
+---
+<PageLayout
+  title="Credit Card Changes & Devaluation Tracker — India"
+  description="A running feed of fee hikes, reward devaluations, and benefit changes across Indian credit cards. Dated, with the old and new values."
+  jsonLd={[breadcrumbList([{ name: 'Home', path: '/' }, { name: 'Card changes', path: '/changes' }])]}
+>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Card changes' }]} />
+    <AffiliateDisclosure />
+    <h1>Card change &amp; devaluation tracker</h1>
+    <p class="lede">Indian card programs change reward caps, fees, and benefits often. We log material changes here as we detect them — most recent first.</p>
+  </div>
+  <section class="container section">
+    {changes.length === 0 && <p>No changes logged yet.</p>}
+    <ol class="feed">
+      {changes.map((ch) => (
+        <li class="feed__item">
+          <div class="feed__meta">
+            <time datetime={ch.detected_at}>{new Date(ch.detected_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</time>
+            <span class:list={['feed__tag', { 'feed__tag--neg': negative.has(ch.change_type) }]}>{typeLabel[ch.change_type] ?? 'Change'}</span>
+          </div>
+          <h2 class="feed__card">{ch.bank_name} {ch.card_name}</h2>
+          <p class="feed__summary">{ch.summary}</p>
+          {(ch.old_value || ch.new_value) && (
+            <p class="feed__diff"><span class="feed__old">{ch.old_value ?? '—'}</span> <span aria-hidden="true">→</span> <span class="feed__new">{ch.new_value ?? '—'}</span></p>
+          )}
+        </li>
+      ))}
+    </ol>
+  </section>
+</PageLayout>
+<style>
+  .lede { font-size: var(--text-body-lg); color: var(--color-text-secondary); max-width: 60ch; }
+  .section { padding-block: var(--space-12); }
+  .feed { list-style: none; padding: 0; margin: 0; }
+  .feed__item { padding: var(--space-6) 0; border-bottom: var(--border-width-hairline) solid var(--color-border); }
+  .feed__meta { display: flex; align-items: center; gap: var(--space-3); font-size: var(--text-body-sm); color: var(--color-text-muted); }
+  .feed__tag { padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); background: var(--color-surface-alt); font-weight: var(--weight-medium); color: var(--color-text-secondary); }
+  .feed__tag--neg { background: #fdecec; color: var(--color-rating-poor); }
+  .feed__card { font-size: var(--text-h4); margin: var(--space-2) 0 var(--space-1); }
+  .feed__summary { margin: 0 0 var(--space-2); }
+  .feed__diff { font-size: var(--text-body-sm); }
+  .feed__old { color: var(--color-text-muted); text-decoration: line-through; }
+  .feed__new { color: var(--color-text-primary); font-weight: var(--weight-semibold); }
+</style>

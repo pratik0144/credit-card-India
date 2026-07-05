@@ -1,0 +1,130 @@
+---
+/*
+ * Category listing /best/[category] (FRONTEND §8). Prerendered (§5). Highest
+ * SEO weight (§17): one H1, breadcrumbs, summary comparison table above the
+ * fold, full list of COLLAPSED CardRows, "how we picked", FAQ. JSON-LD:
+ * BreadcrumbList + FAQPage. H1 carries the real current month/year (§9).
+ */
+import PageLayout from '../../layouts/PageLayout.astro';
+import AffiliateDisclosure from '../../components/AffiliateDisclosure.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CategoryPillStrip from '../../components/CategoryPillStrip.astro';
+import FilterSortBar from '../../components/FilterSortBar.astro';
+import ComparisonTable from '../../components/ComparisonTable.astro';
+import CardRow from '../../components/CardRow.astro';
+import NewsletterForm from '../../components/NewsletterForm.astro';
+import { CONTENT_CATEGORIES } from '../../lib/taxonomy';
+import { getCardListing, getCategoryBySlug, getCardDetailsByIds } from '../../lib/queries';
+import { currentMonthYear, formatAnnualFee, formatRating, slugify } from '../../lib/format';
+import { breadcrumbList, faqPage } from '../../lib/seo';
+import { SITE } from '../../lib/site';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  return [
+    { params: { category: 'all-credit-cards' } },
+    ...CONTENT_CATEGORIES.map((c) => ({ params: { category: c.slug } })),
+  ];
+}
+
+const { category } = Astro.params;
+const isAll = category === 'all-credit-cards';
+const cat = isAll ? null : await getCategoryBySlug(category!);
+const name = isAll ? 'Credit' : cat?.name ?? 'Credit';
+const rows = await getCardListing(isAll ? undefined : category);
+const detailMap = await getCardDetailsByIds(rows.map((r) => r.card_id));
+const details = rows.map((r) => detailMap.get(r.card_id) ?? null);
+const monthYear = currentMonthYear();
+const h1 = `Best ${name} Credit Cards of ${monthYear}`;
+const path = `/best/${category}`;
+
+const summaryCols = rows.slice(0, 5).map((r) => ({
+  header: r.card_name,
+  href: `/cards/${r.bank_slug}/${r.card_slug.replace(new RegExp(`^${r.bank_slug}-`), '')}`,
+}));
+const summaryRows = [
+  { label: 'Best for', values: rows.slice(0, 5).map((r) => r.primary_category_slug ?? '—') },
+  { label: 'Reward rate', values: rows.slice(0, 5).map((r) => r.headline_reward_line ?? '—') },
+  { label: 'Annual fee', values: rows.slice(0, 5).map((r) => formatAnnualFee(r.annual_fee_amount)) },
+  { label: 'Our rating', values: rows.slice(0, 5).map((r) => formatRating(r.overall_score)) },
+];
+
+const faqs = [
+  { q: `What is the best ${name.toLowerCase()} credit card in India right now?`, a: `Our top-rated pick this month is ${rows[0]?.card_name ?? 'shown above'}, based on our issuer-blind rating of rewards value, fees, and eligibility. Your best card depends on your spending — use our recommendation tool for a personalised match.` },
+  { q: 'How does CardCompare.in choose these cards?', a: 'We score every card on an issuer-blind rubric covering rewards value, fees and charges, welcome benefits, flexibility, and issuer service. Issuers cannot pay to change a rating or ranking.' },
+  { q: 'Will applying affect my CIBIL score?', a: 'Checking your eligibility on our site is a soft, estimate-based match and does not affect your CIBIL score. Applying directly with an issuer triggers a hard inquiry with the bank.' },
+];
+
+const jsonLd = [
+  breadcrumbList([{ name: 'Home', path: '/' }, { name: 'Best cards', path: '/best/all-credit-cards' }, { name: `${name} cards`, path }]),
+  faqPage(faqs),
+];
+---
+<PageLayout
+  title={`${h1} | ${SITE.name}`}
+  description={`Compare the best ${name.toLowerCase()} credit cards in India for ${monthYear}. Issuer-blind ratings, real fees in ₹, reward rates, and eligibility for ${rows.length} cards.`}
+  canonicalPath={path}
+  jsonLd={jsonLd}
+>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Best cards', path: '/best/all-credit-cards' }, { name: `${name} cards` }]} />
+    <AffiliateDisclosure />
+    <h1>{h1}</h1>
+    <p class="lede">
+      Independent, issuer-blind picks — updated for {monthYear}. {rows.length} cards, ranked by our editorial rating.
+      Expand any card for the full reward breakdown, fees, and highlights.
+    </p>
+  </div>
+
+  <div class="container"><CategoryPillStrip activeSlug={isAll ? undefined : category} /></div>
+
+  <section class="container section">
+    <h2>Comparing the best {name.toLowerCase()} cards of {monthYear}</h2>
+    <ComparisonTable variant="listing" caption={`Summary comparison of top ${name.toLowerCase()} cards`} columns={summaryCols} rows={summaryRows} />
+  </section>
+
+  <section class="container section">
+    <FilterSortBar />
+    <div data-card-list>
+      {rows.map((row, i) => (
+        <div
+          data-card
+          data-categories={(details[i]?.categorySlugs ?? [row.primary_category_slug].filter(Boolean)).join(',')}
+          data-issuer={row.bank_name}
+          data-cibil={row.cibil_min ?? 0}
+          data-rating={row.overall_score ?? 0}
+          data-fee={row.annual_fee_amount ?? 999999}
+          data-order={i}
+        >
+          <CardRow row={row} detail={details[i]} />
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="container section reading-column">
+    <h2>How we picked these cards</h2>
+    <p>
+      Every card on this list is scored on the same issuer-blind rubric: rewards value at realistic spend levels,
+      total fees and charges, welcome and milestone benefits, redemption flexibility, and issuer service quality.
+      We normalise reward rates to an estimated ₹-value per ₹100 spent so a "5X points" card and a "2% cashback"
+      card can be compared on the same axis. Estimated figures are labelled; verified figures come from issuer MITC
+      and fee schedules. We do not accept payment to change a rating or a card's position.
+    </p>
+
+    <h2>Frequently asked questions</h2>
+    <dl class="faq">
+      {faqs.map((f) => (<><dt>{f.q}</dt><dd>{f.a}</dd></>))}
+    </dl>
+  </section>
+
+  <NewsletterForm source={`best-${category}`} />
+</PageLayout>
+
+<style>
+  .lede { font-size: var(--text-body-lg); color: var(--color-text-secondary); max-width: 62ch; margin-bottom: var(--space-6); }
+  .section { padding-block: var(--space-12); }
+  .faq dt { font-weight: var(--weight-semibold); margin-top: var(--space-6); }
+  .faq dd { margin: var(--space-2) 0 0; color: var(--color-text-secondary); }
+</style>

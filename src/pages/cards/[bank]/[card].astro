@@ -1,0 +1,249 @@
+---
+/*
+ * Card review /cards/[bank]/[card] (FRONTEND §8). Prerendered (§5). Follows the
+ * DESIGN §4 22-step reading order. Highest SEO weight (§17): one H1, breadcrumbs,
+ * FinancialProduct + BreadcrumbList + FAQPage JSON-LD, byline, rating breakdown,
+ * pros/cons equal weight, counter-argument section, competitor table, MITC link.
+ * Recent-changes callout (§11.5) shown only if a change in the last 6 months.
+ */
+import PageLayout from '../../../layouts/PageLayout.astro';
+import StickyApplyBanner from '../../../components/StickyApplyBanner.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import AffiliateDisclosure from '../../../components/AffiliateDisclosure.astro';
+import AuthorByline from '../../../components/AuthorByline.astro';
+import RatingWidget from '../../../components/RatingWidget.astro';
+import ScoreTierBadge from '../../../components/ScoreTierBadge.astro';
+import ProsConsBlock from '../../../components/ProsConsBlock.astro';
+import ComparisonTable from '../../../components/ComparisonTable.astro';
+import Button from '../../../components/Button.astro';
+import NewsletterForm from '../../../components/NewsletterForm.astro';
+import { getAllCardSlugs, getCardBySlug, getCardListing, getAuthorById, getAuthors, getRecentChangeForCard } from '../../../lib/queries';
+import { formatAnnualFee, formatINR, formatINRCompact, currentMonthYear } from '../../../lib/format';
+import { annualFeeTier, forexTier, cibilTier, rewardValueTier } from '../../../lib/tiers';
+import { derivePros, deriveCons, welcomeBenefit, headlineReward } from '../../../lib/derive';
+import { breadcrumbList, faqPage, financialProduct } from '../../../lib/seo';
+import { SITE } from '../../../lib/site';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const slugs = await getAllCardSlugs();
+  return slugs.map((s) => ({ params: { bank: s.bankSlug, card: s.cardSlug } }));
+}
+
+const { bank, card } = Astro.params;
+const detail = await getCardBySlug(bank!, card!);
+if (!detail) return Astro.redirect('/404');
+
+const c = detail.card;
+const b = detail.bank;
+const path = `/cards/${bank}/${card}`;
+const applyHref = c.official_url ?? '#';
+const pros = derivePros(detail);
+const cons = deriveCons(detail);
+const welcome = welcomeBenefit(detail);
+const feeT = annualFeeTier(c.annual_fee_amount);
+const forexT = forexTier(c.forex_markup_pct);
+const cibT = cibilTier(c.cibil_min);
+const rewT = rewardValueTier(c.base_reward_value_inr_per_100);
+const recentChange = getRecentChangeForCard(c.id, detail.changeLog);
+
+const allAuthors = await getAuthors();
+const author = getAuthorById(detail.article?.author_id ?? null) ?? allAuthors[0] ?? null;
+const writtenBy = author ? [author] : [];
+const editedBy = getAuthorById(detail.article?.edited_by_author_id ?? null);
+const reviewedBy = getAuthorById(detail.article?.reviewed_by_author_id ?? null);
+
+// Competitors: same primary category, excluding this card.
+const listing = await getCardListing();
+const competitors = listing.filter((r) => r.card_id !== c.id && r.primary_category_slug === detail.categorySlugs[0]).slice(0, 2);
+const compCols = [{ header: c.name }, ...competitors.map((r) => ({ header: r.card_name, href: `/cards/${r.bank_slug}/${r.card_slug.replace(new RegExp(`^${r.bank_slug}-`), '')}` }))];
+const compRows = [
+  { label: 'Reward rate', values: [c.reward_rate_general_text ?? '—', ...competitors.map((r) => r.headline_reward_line ?? '—')] },
+  { label: 'Welcome benefit', values: [welcome ?? '—', ...competitors.map(() => '—')] },
+  { label: 'Annual fee', values: [formatAnnualFee(c.annual_fee_amount), ...competitors.map((r) => formatAnnualFee(r.annual_fee_amount))] },
+  { label: 'Our rating', values: [detail.rating?.overall_score ? `${detail.rating.overall_score} / 5` : '—', ...competitors.map((r) => r.overall_score ? `${r.overall_score} / 5` : '—')] },
+];
+
+const monthYear = currentMonthYear();
+const title = `${c.name} Review ${monthYear}: Fees, Rewards & Eligibility`;
+const nutshell = `${c.name} is a ${detail.categorySlugs[0] ?? 'rewards'} card from ${b.name} with a ${formatAnnualFee(c.annual_fee_amount).toLowerCase()} annual fee${c.annual_fee_waiver_spend_amount ? ` (waived on ${formatINRCompact(c.annual_fee_waiver_spend_amount)} spend)` : ''} — best for ${detail.categorySlugs.join(', ') || 'everyday'} spenders who value ${headlineReward(detail).toLowerCase()}.`;
+
+const faqs = [
+  { q: `Is the ${c.name} worth it?`, a: nutshell },
+  { q: `What CIBIL score do I need for the ${c.name}?`, a: c.cibil_min ? `Issuers typically look for a CIBIL score of ${c.cibil_min}+ for this card, though approval depends on the bank's full review of your application.` : 'This card is relatively flexible on credit score; approval still depends on the issuer\'s review.' },
+  { q: `What is the annual fee for the ${c.name}?`, a: `${formatAnnualFee(c.annual_fee_amount)}${c.annual_fee_waiver_spend_amount ? `, waived when you spend ${formatINRCompact(c.annual_fee_waiver_spend_amount)} in a year.` : '.'}` },
+  { q: 'What if something goes wrong with this card?', a: 'Raise a complaint with the issuer\'s grievance team first. If unresolved within 30 days, you can escalate to the RBI Integrated Ombudsman. [NEEDS LEGAL REVIEW — confirm current RBI process/timelines].' },
+];
+
+const jsonLd = [
+  financialProduct(c, b, detail.rating, path),
+  breadcrumbList([{ name: 'Home', path: '/' }, { name: 'Reviews', path: '/best/all-credit-cards' }, { name: b.name, path: `/banks/${b.slug}` }, { name: `${c.name} review`, path }]),
+  faqPage(faqs),
+];
+---
+<PageLayout
+  title={`${title} | ${SITE.name}`}
+  description={`Our independent ${c.name} review: real fees in ₹, reward rate, welcome benefit, eligibility and CIBIL requirement. ${detail.rating?.overall_score ? `Rated ${detail.rating.overall_score}/5.` : ''} Updated ${monthYear}.`}
+  canonicalPath={path}
+  ogType="product"
+  ogImage={c.image_url ? `/card-img/${c.image_url.replace(/^card-img\//, '')}` : undefined}
+  jsonLd={jsonLd}
+>
+  <StickyApplyBanner cardName={c.name} issuer={b.name} image={c.image_url} applyHref={applyHref} />
+
+  <div class="container review">
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Reviews', path: '/best/all-credit-cards' }, { name: b.name, path: `/banks/${b.slug}` }, { name: `${c.name} review` }]} />
+
+    <div class="review__hero">
+      <img class="review__art" src={c.image_url ? `/card-img/${c.image_url.replace(/^card-img\//, '')}` : '/og-default.png'} alt={`${c.name}`} width="360" height="226" />
+      <div>
+        <h1>{c.name} Review</h1>
+        <AuthorByline writtenBy={writtenBy} editedBy={editedBy} reviewedBy={reviewedBy} updated={detail.article?.updated_at ?? c.last_verified_at} />
+        <div class="review__hero-cta">
+          <Button variant="primary" href={applyHref} external microcopy={`on ${b.name}'s secure site`}>Apply Now</Button>
+        </div>
+      </div>
+    </div>
+
+    <AffiliateDisclosure />
+
+    {recentChange && (
+      <aside class="callout callout--change">
+        <p class="eyebrow">Recent change to this card</p>
+        <p><strong>{new Date(recentChange.detected_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}:</strong> {recentChange.summary} <a href="/changes">See all card changes →</a></p>
+      </aside>
+    )}
+
+    <!-- Overall rating + breakdown -->
+    <section class="review__section">
+      <h2>Our rating</h2>
+      <RatingWidget score={detail.rating?.overall_score ?? c.editorial_score_5} size="lg" subscores={detail.rating} idSuffix={c.id} />
+    </section>
+
+    <!-- In a Nutshell -->
+    <section class="review__section callout callout--nutshell">
+      <p class="eyebrow">In a nutshell</p>
+      <p>{nutshell}</p>
+      <div class="review__inline-cta">
+        <Button variant="outline" size="sm" href={applyHref} external>View Fees &amp; MITC</Button>
+        <Button variant="ghost" href={`/banks/${b.slug}`}>Learn more about {b.name}</Button>
+      </div>
+    </section>
+
+    <!-- At a glance -->
+    <section class="review__section">
+      <h2>At a glance</h2>
+      <dl class="glance">
+        <div><dt>Reward Rate</dt><dd><strong>{c.reward_rate_general_text ?? '—'}</strong> <ScoreTierBadge tier={rewT.tier} label={rewT.label} /></dd></div>
+        <div><dt>Welcome Benefit</dt><dd><strong>{welcome ?? '—'}</strong></dd></div>
+        <div><dt>Joining Fee</dt><dd><strong>{formatAnnualFee(c.joining_fee_amount)}</strong></dd></div>
+        <div><dt>Annual Fee</dt><dd><strong>{formatAnnualFee(c.annual_fee_amount)}</strong> <ScoreTierBadge tier={feeT.tier} label={feeT.label} /></dd></div>
+        <div><dt>Forex Markup</dt><dd><strong>{c.forex_markup_pct != null ? `${c.forex_markup_pct}%` : '—'}</strong> <ScoreTierBadge tier={forexT.tier} label={forexT.label} /></dd></div>
+        <div><dt>Min. CIBIL Score</dt><dd><strong>{c.cibil_min ?? 'Flexible'}</strong> <ScoreTierBadge tier={cibT.tier} label={cibT.label} /></dd></div>
+      </dl>
+      {c.data_confidence !== 'verified' && (
+        <p class="glance__note">Some figures are estimated (<code>{c.estimated_fields.join(', ') || 'see MITC'}</code>). Confirm current terms in the issuer's MITC before applying.</p>
+      )}
+    </section>
+
+    <!-- Pros & Cons -->
+    <section class="review__section">
+      <h2>Pros and cons</h2>
+      <ProsConsBlock pros={pros} cons={cons} />
+    </section>
+
+    <!-- Long-form: why you might want this card -->
+    <section class="review__section reading-column">
+      <h2>Why you might want the {c.name}</h2>
+      {detail.article?.body
+        ? <div set:html={detail.article.body} />
+        : (
+          <>
+            <p>The {c.name} earns {headlineReward(detail).toLowerCase()}. {welcome ? `New cardholders get a welcome benefit of ${welcome}. ` : ''}{(c.lounge_domestic_visits_per_year ?? 0) > 0 ? `It also includes ${c.lounge_domestic_visits_per_year} complimentary domestic airport lounge visits a year${(c.lounge_intl_visits_per_year ?? 0) > 0 ? `, plus ${c.lounge_intl_visits_per_year} international visits${c.lounge_intl_network ? ` via ${c.lounge_intl_network}` : ''}` : ''}. ` : ''}</p>
+            <p><em>Tip:</em> {c.annual_fee_waiver_spend_amount ? `spending ${formatINRCompact(c.annual_fee_waiver_spend_amount)} across the year waives the ${formatINR(c.annual_fee_amount)} fee — worth planning your big purchases around if you're close.` : c.annual_fee_amount === 0 ? 'this is a lifetime-free card, so there is no fee threshold to worry about.' : 'weigh the annual fee against the rewards you would realistically earn at your spend level.'}</p>
+          </>
+        )}
+    </section>
+
+    <!-- Counter-argument (always present) -->
+    <section class="review__section reading-column">
+      <h2>Why you might want a different card</h2>
+      <p>
+        No single card is right for everyone. {cons[0]}. {c.forex_markup_pct != null && c.forex_markup_pct >= 3 ? 'If you spend a lot abroad, a zero- or low-forex card will serve you better. ' : ''}
+        If your spending is concentrated in a category this card doesn't reward well, our <a href="/combo-optimizer">combo optimizer</a> may find a better pairing, or try the <a href="/recommend">recommendation tool</a> for a personalised match.
+      </p>
+    </section>
+
+    <!-- Competitor comparison -->
+    {competitors.length > 0 && (
+      <section class="review__section">
+        <h2>How the {c.name} compares</h2>
+        <ComparisonTable variant="cards" caption={`${c.name} compared with similar cards`} columns={compCols} rows={compRows} />
+      </section>
+    )}
+
+    <!-- Who should get this -->
+    <section class="review__section reading-column">
+      <h2>Who should get the {c.name}</h2>
+      <ul>
+        <li>{detail.categorySlugs.join(', ') || 'Everyday'} spenders who want {headlineReward(detail).toLowerCase()}.</li>
+        {(c.lounge_domestic_visits_per_year ?? 0) > 0 && <li>Occasional flyers who value complimentary lounge access.</li>}
+        {c.annual_fee_amount === 0 && <li>First-time cardholders who want zero ongoing cost.</li>}
+        {c.cibil_min && c.cibil_min >= 750 && <li>Applicants with a healthy CIBIL score (750+).</li>}
+      </ul>
+
+      <h2>How to use the {c.name}</h2>
+      <ul>
+        {c.annual_fee_waiver_spend_amount && <li>Track your spend toward the {formatINRCompact(c.annual_fee_waiver_spend_amount)} fee-waiver threshold — add it to <a href="/wallet">My Wallet</a> to get a reminder.</li>}
+        <li>Use it for the categories where its reward rate is highest; use a different card where it isn't.</li>
+        <li>Check the issuer MITC for reward caps and redemption fees before you rely on a benefit.</li>
+      </ul>
+    </section>
+
+    <!-- Verdict -->
+    <section class="review__section callout callout--verdict reading-column">
+      <p class="eyebrow">Bottom line</p>
+      <p><strong>Is the {c.name} right for you?</strong> {nutshell}</p>
+      <div class="review__inline-cta">
+        <Button variant="primary" href={applyHref} external microcopy={`on ${b.name}'s secure site`}>Apply Now</Button>
+      </div>
+    </section>
+
+    <!-- Editorial footnotes -->
+    <section class="review__section reading-column">
+      <h2>Frequently asked questions</h2>
+      <dl class="faq">{faqs.map((f) => (<><dt>{f.q}</dt><dd set:html={f.a} /></>))}</dl>
+      <p class="footnote">
+        Terms apply. Rewards, fees and benefits are subject to change by the issuer — verify current terms in the
+        card's MITC. Figures marked estimated are our best reading of published information, not issuer-confirmed.
+        {c.last_verified_at && ` Last verified ${new Date(c.last_verified_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}.`}
+      </p>
+    </section>
+  </div>
+
+  <NewsletterForm source={`review-${c.slug}`} />
+</PageLayout>
+
+<style>
+  .review { max-width: var(--container-max); }
+  .review__hero { display: grid; gap: var(--space-6); margin-block: var(--space-6); }
+  @media (min-width: 768px) { .review__hero { grid-template-columns: 360px 1fr; align-items: center; } }
+  .review__art { width: 100%; height: auto; aspect-ratio: 1.59/1; object-fit: contain; background: var(--color-surface-alt); border-radius: var(--radius-md); }
+  .review__hero-cta { margin-top: var(--space-4); }
+  .review__section { padding-block: var(--space-8); border-top: var(--border-width-hairline) solid var(--color-border); }
+  .review__inline-cta { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
+  .callout { border-radius: var(--radius-lg); padding: var(--space-6); border-top: none; }
+  .callout--change { background: var(--color-primary-blue-light); margin-block: var(--space-4); }
+  .callout--change p { margin: 0; }
+  .callout--nutshell, .callout--verdict { background: var(--color-surface-alt); }
+  .glance { display: grid; grid-template-columns: 1fr; gap: var(--space-4); }
+  @media (min-width: 600px) { .glance { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 900px) { .glance { grid-template-columns: repeat(3, 1fr); } }
+  .glance dt { font-size: var(--text-caption); text-transform: uppercase; letter-spacing: var(--tracking-wide); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  .glance dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+  .glance__note { margin-top: var(--space-4); font-size: var(--text-body-sm); color: var(--color-text-muted); }
+  .faq dt { font-weight: var(--weight-semibold); margin-top: var(--space-4); }
+  .faq dd { margin: var(--space-1) 0 0; color: var(--color-text-secondary); }
+  .footnote { margin-top: var(--space-8); font-size: var(--text-caption); color: var(--color-text-muted); }
+</style>

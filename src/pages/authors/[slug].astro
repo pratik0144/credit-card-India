@@ -1,0 +1,50 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getAuthors, getAuthorBySlug } from '../../lib/queries';
+import { breadcrumbList } from '../../lib/seo';
+export const prerender = true;
+export async function getStaticPaths() {
+  const authors = await getAuthors();
+  return authors.map((a) => ({ params: { slug: a.slug } }));
+}
+const { slug } = Astro.params;
+const a = await getAuthorBySlug(slug!);
+if (!a) return Astro.redirect('/404');
+const path = `/authors/${slug}`;
+---
+<PageLayout
+  title={`${a.name} — ${a.title ?? 'Contributor'}`}
+  description={a.bio ?? `${a.name} writes and reviews credit-card coverage for CardCompare.in.`}
+  canonicalPath={path}
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'Person', name: a.name, jobTitle: a.title, description: a.bio, knowsAbout: a.expertise_tags },
+    breadcrumbList([{ name: 'Home', path: '/' }, { name: 'Our Team', path: '/authors' }, { name: a.name, path }]),
+  ]}
+>
+  <div class="container author" style="padding-block: var(--space-8);">
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Our Team', path: '/authors' }, { name: a.name }]} />
+    <div class="author__head">
+      <div class="author__avatar" aria-hidden="true">{a.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}</div>
+      <div>
+        <h1>{a.name}</h1>
+        <p class="author__title">{a.title}{a.is_review_board_member ? ' · Review Board member' : ''}</p>
+      </div>
+    </div>
+    {a.expertise_tags?.length > 0 && (
+      <section><h2>Expertise</h2><ul class="tags">{a.expertise_tags.map((t) => <li>{t}</li>)}</ul></section>
+    )}
+    {a.highlights?.length > 0 && (
+      <section><h2>Highlights</h2><ul>{a.highlights.map((h) => <li>{h}</li>)}</ul></section>
+    )}
+    {a.bio && <section><h2>Experience</h2><p class="reading-column">{a.bio}</p></section>}
+  </div>
+</PageLayout>
+<style>
+  .author__head { display: flex; align-items: center; gap: var(--space-4); margin-block: var(--space-4) var(--space-8); }
+  .author__avatar { width: 80px; height: 80px; border-radius: var(--radius-circle); background: var(--color-primary-blue-light); color: var(--color-primary-blue); display: grid; place-items: center; font-weight: var(--weight-bold); font-size: var(--text-h3); }
+  .author__title { color: var(--color-text-secondary); margin: 0; }
+  .author section { margin-bottom: var(--space-8); }
+  .tags { display: flex; flex-wrap: wrap; gap: var(--space-2); list-style: none; padding: 0; }
+  .tags li { background: var(--color-surface-alt); padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); font-size: var(--text-body-sm); }
+</style>

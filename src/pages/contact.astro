@@ -1,0 +1,21 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { SITE } from '../lib/site';
+export const prerender = true;
+---
+<PageLayout title="Contact Us" description={`Get in touch with ${SITE.name} — support, partnerships, and media.`}>
+  <div class="container reading-column" style="padding-block: var(--space-8);">
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Contact' }]} />
+    <h1>Contact us</h1>
+    <p>We'd love to hear from you.</p>
+    <h2>Customer support</h2>
+    <p>Questions about a card, your account, or your wallet: <a href="mailto:support@cardcompare.in">support@cardcompare.in</a>.</p>
+    <h2>Partnership opportunities</h2>
+    <p>Issuers and partners: <a href="mailto:partners@cardcompare.in">partners@cardcompare.in</a>. Note that commercial partnerships never influence our editorial ratings.</p>
+    <h2>Media relations</h2>
+    <p>Press and media: <a href="mailto:press@cardcompare.in">press@cardcompare.in</a>.</p>
+    <p class="note">[PLACEHOLDER] contact addresses are illustrative pending real channels at launch.</p>
+  </div>
+</PageLayout>
+<style>.note { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: var(--space-8); }</style>

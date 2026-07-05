@@ -1,0 +1,22 @@
+---
+/*
+ * My Wallet /wallet (FRONTEND §11.4). prerender = false (on-demand/SSR) — this
+ * route requires an authenticated session and must never be cached publicly
+ * (§5). Auth + data handled client-side by the island (RLS-scoped to auth.uid()).
+ */
+import PageLayout from '../layouts/PageLayout.astro';
+import WalletDashboard from '../islands/WalletDashboard.tsx';
+export const prerender = false;
+---
+<PageLayout
+  title="My Wallet — Fee-waiver & Milestone Tracker"
+  description="Track fee-waiver progress, milestone bonuses, lounge visits, and renewals across the cards you own."
+  noindex
+>
+  <section class="container" style="padding-block: var(--space-12);">
+    <h1>My Wallet</h1>
+    <p class="lede">Fee-waiver progress, milestone bonuses, and renewals for the cards you actually hold.</p>
+    <WalletDashboard client:only="react" />
+  </section>
+</PageLayout>
+<style>.lede { font-size: var(--text-body-lg); color: var(--color-text-secondary); max-width: 52ch; }</style>

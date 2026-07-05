@@ -1,0 +1,31 @@
+---
+/*
+ * Search /search (FRONTEND §8). Prerendered shell + React island calling the
+ * search_site RPC (§8). Builds a lightweight client-side index for preview.
+ */
+import PageLayout from '../layouts/PageLayout.astro';
+import SearchBox from '../islands/SearchBox.tsx';
+import type { IndexItem } from '../islands/SearchBox.tsx';
+import { getCardListing, getArticles } from '../lib/queries';
+export const prerender = true;
+
+const listing = await getCardListing();
+const articles = await getArticles();
+const index: IndexItem[] = [
+  ...listing.map((r) => ({
+    type: 'card' as const, title: r.card_name, subtitle: `${r.bank_name} · ${r.headline_reward_line ?? ''}`,
+    href: `/cards/${r.bank_slug}/${r.card_slug.replace(new RegExp(`^${r.bank_slug}-`), '')}`,
+  })),
+  ...articles.map((a) => ({
+    type: 'article' as const, title: a.title, subtitle: a.meta_description ?? '',
+    href: `/${a.article_type === 'news' ? 'news' : 'guides'}/${a.slug}`,
+  })),
+];
+const initialQuery = Astro.url.searchParams.get('q') ?? '';
+---
+<PageLayout title="Search — CardCompare.in" description="Search across credit card reviews and guides on CardCompare.in." noindex>
+  <section class="container" style="padding-block: var(--space-12);">
+    <h1>Search</h1>
+    <SearchBox client:load index={index} initialQuery={initialQuery} />
+  </section>
+</PageLayout>

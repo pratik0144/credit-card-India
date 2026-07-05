@@ -1,0 +1,95 @@
+/* Shared styles for React islands (quiz, combo, calculator, compare, wallet,
+   search). Islands can't use Astro scoped <style>, so styles live here and are
+   imported by each island. Everything references design tokens. */
+
+.island {
+  max-width: 720px;
+  margin-inline: auto;
+}
+.island--wide { max-width: var(--container-max); }
+
+.wizard__progress {
+  height: 6px;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-bottom: var(--space-6);
+}
+.wizard__progress-bar {
+  height: 100%;
+  background: var(--color-primary-blue);
+  transition: width var(--duration-base) var(--ease-standard);
+}
+.wizard__step-count { font-size: var(--text-body-sm); color: var(--color-text-muted); margin-bottom: var(--space-2); }
+.wizard__question { font-size: var(--text-h2); margin-bottom: var(--space-6); }
+
+.opt-list { display: grid; gap: var(--space-3); margin: 0 0 var(--space-8); padding: 0; list-style: none; }
+.opt {
+  display: flex; align-items: center; gap: var(--space-3);
+  width: 100%; text-align: left;
+  min-height: 56px; padding: var(--space-4);
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-md); background: var(--color-surface);
+  font-size: var(--text-body); font-family: inherit; cursor: pointer;
+  transition: border-color var(--duration-fast), background-color var(--duration-fast);
+}
+.opt:hover { border-color: var(--color-primary-blue); }
+.opt[aria-pressed="true"], .opt--selected {
+  border-color: var(--color-primary-blue);
+  background: var(--color-primary-blue-light);
+  font-weight: var(--weight-semibold);
+}
+.opt__check { width: 22px; height: 22px; border-radius: var(--radius-sm); border: 2px solid var(--color-border-strong); flex: none; display: grid; place-items: center; }
+.opt--selected .opt__check { background: var(--color-primary-blue); border-color: var(--color-primary-blue); color: #fff; }
+
+.wizard__nav { display: flex; justify-content: space-between; gap: var(--space-4); }
+.btn-i {
+  min-height: 48px; padding: 0 var(--btn-padding-x);
+  border-radius: var(--btn-radius); font-weight: var(--weight-semibold);
+  font-size: var(--text-button); cursor: pointer; font-family: inherit;
+  border: var(--border-width-hairline) solid transparent;
+}
+.btn-i--primary { background: var(--color-cta-primary); color: #fff; }
+.btn-i--primary:hover { background: var(--color-cta-primary-hover); }
+.btn-i--primary:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-i--ghost { background: transparent; color: var(--color-primary-blue); border-color: var(--color-border); }
+
+.island__notice {
+  padding: var(--space-4); border-radius: var(--radius-md);
+  background: var(--color-primary-blue-light); color: var(--color-text-secondary);
+  font-size: var(--text-body-sm); margin-bottom: var(--space-6);
+}
+.island__trust {
+  font-size: var(--text-body-sm); color: var(--color-text-secondary);
+  background: var(--color-surface-alt); border-radius: var(--radius-md);
+  padding: var(--space-4); margin-bottom: var(--space-6);
+}
+
+.result-card {
+  border: var(--border-width-hairline) solid var(--color-border);
+  border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-6);
+  display: grid; gap: var(--space-3);
+}
+.result-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+.result-card__score { font-size: var(--text-rating-number); font-weight: var(--weight-bold); color: var(--color-primary-blue); }
+.result-card__reasons { margin: 0; padding-left: var(--space-6); }
+.result-card__reasons li { margin-bottom: var(--space-2); }
+.result-card__value { font-weight: var(--weight-bold); }
+.result-card__label { display: inline-block; font-size: var(--text-caption); text-transform: uppercase; letter-spacing: var(--tracking-wide); color: var(--color-primary-blue); }
+
+.field { display: grid; gap: var(--space-2); margin-bottom: var(--space-4); }
+.field label { font-weight: var(--weight-medium); font-size: var(--text-body-sm); }
+.field input, .field select {
+  min-height: 48px; padding: 0 var(--space-3); font-size: var(--text-body);
+  border: var(--border-width-hairline) solid var(--color-border-strong); border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+.grid-2 { display: grid; gap: var(--space-4); }
+@media (min-width: 600px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+
+.assign-table { border-collapse: collapse; width: 100%; margin-block: var(--space-4); }
+.assign-table th, .assign-table td { padding: var(--space-3); border-bottom: var(--border-width-hairline) solid var(--color-border); text-align: left; font-size: var(--text-body-sm); }
+.assign-table thead th { border-bottom: var(--border-width-thick) solid var(--color-border-strong); }
+.totals { display: flex; flex-wrap: wrap; gap: var(--space-6); margin-block: var(--space-4); }
+.totals div strong { display: block; font-size: var(--text-h3); color: var(--color-primary-blue); }
+.warning { background: #fdf3e6; border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-size: var(--text-body-sm); color: var(--color-text-secondary); margin-bottom: var(--space-2); }

@@ -1,0 +1,177 @@
+---
+/*
+ * GlobalHeader (DESIGN §6.1). Logo + nav with mega-menu flyouts + a persistent
+ * "Check My Eligibility" CTA styled distinctly. Desktop: click/keyboard-operable
+ * flyouts (NOT hover-only — §6.1, §11) with aria-expanded/aria-haspopup. Mobile:
+ * hamburger → full-height drawer with accordion top-level items.
+ */
+import { SITE } from '../lib/site';
+import { CONTENT_CATEGORIES } from '../lib/taxonomy';
+import { FEATURED_ISSUERS } from '../lib/site';
+import { slugify } from '../lib/format';
+
+const categoryLinks = CONTENT_CATEGORIES.map((c) => ({ label: `Best ${c.name} Cards`, href: `/best/${c.slug}` }));
+const issuerLinks = FEATURED_ISSUERS.map((n) => ({ label: n, href: `/banks/${slugify(n === 'SBI Card' ? 'state-bank-of-india' : n)}` }));
+const cibilLinks = [
+  { label: '750+ (Excellent)', href: '/best/all-credit-cards?cibil=750-plus' },
+  { label: '700–749 (Good)', href: '/best/all-credit-cards?cibil=700-749' },
+  { label: '650–699 (Fair)', href: '/best/all-credit-cards?cibil=650-699' },
+  { label: 'New to Credit', href: '/cibil-score' },
+];
+const resourceLinks = [
+  { label: 'Guides', href: '/guides' }, { label: 'News & RBI Updates', href: '/news' },
+  { label: 'CIBIL Score Hub', href: '/cibil-score' }, { label: 'Card Changes Tracker', href: '/changes' },
+  { label: 'Compare Cards', href: '/compare' },
+];
+const menus = [
+  { id: 'cat', label: 'Card Category', links: categoryLinks },
+  { id: 'iss', label: 'Card Issuer', links: issuerLinks },
+  { id: 'cib', label: 'Credit Score Range', links: cibilLinks },
+  { id: 'res', label: 'Resources', links: resourceLinks },
+  { id: 'team', label: 'Our Team', links: [{ label: 'About our review board', href: '/authors' }, { label: 'Editorial Guidelines', href: '/editorial-guidelines' }] },
+];
+---
+<header class="hdr">
+  <div class="container hdr__inner">
+    <a href="/" class="hdr__logo" aria-label={`${SITE.name} home`}>{SITE.name}</a>
+
+    <button class="hdr__burger" type="button" aria-expanded="false" aria-controls="mobile-drawer" data-burger>
+      <span class="sr-only">Open menu</span>
+      <span class="hdr__burger-bar" aria-hidden="true"></span>
+      <span class="hdr__burger-bar" aria-hidden="true"></span>
+      <span class="hdr__burger-bar" aria-hidden="true"></span>
+    </button>
+
+    <nav class="hdr__nav" aria-label="Primary">
+      <a href="/recommend" class="hdr__cta">{SITE.eligibilityToolName}</a>
+      <ul class="hdr__menus">
+        {menus.map((m) => (
+          <li class="hdr__menu">
+            <button
+              type="button" class="hdr__menu-trigger"
+              aria-expanded="false" aria-haspopup="true" aria-controls={`flyout-${m.id}`}
+              data-menu-trigger
+            >
+              {m.label} <span aria-hidden="true">▾</span>
+            </button>
+            <div id={`flyout-${m.id}`} class="hdr__flyout" hidden>
+              <ul>
+                {m.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+              </ul>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+
+  {/* Mobile drawer — accordion top-level items */}
+  <div id="mobile-drawer" class="drawer" hidden>
+    <a href="/recommend" class="hdr__cta hdr__cta--drawer">{SITE.eligibilityToolName}</a>
+    <ul class="drawer__list">
+      {menus.map((m) => (
+        <li>
+          <button type="button" class="drawer__acc" aria-expanded="false" data-acc>{m.label} <span aria-hidden="true">▾</span></button>
+          <ul class="drawer__sub" hidden>
+            {m.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  </div>
+</header>
+
+<style>
+  .hdr { border-bottom: var(--border-width-hairline) solid var(--color-border); background: var(--color-surface); position: sticky; top: 0; z-index: 50; }
+  .hdr__inner { display: flex; align-items: center; justify-content: space-between; min-height: 64px; gap: var(--space-4); }
+  .hdr__logo { font-size: var(--text-h3); font-weight: var(--weight-bold); color: var(--color-primary-blue); text-decoration: none; white-space: nowrap; }
+  .hdr__cta {
+    display: inline-flex; align-items: center; min-height: 40px; padding: 0 var(--space-4);
+    background: var(--color-primary-blue-light); color: var(--color-primary-blue);
+    border-radius: var(--radius-pill); font-weight: var(--weight-semibold);
+    font-size: var(--text-body-sm); text-decoration: none;
+  }
+  .hdr__cta:hover { background: var(--color-primary-blue); color: #fff; text-decoration: none; }
+
+  /* Desktop nav */
+  .hdr__nav { display: none; align-items: center; gap: var(--space-4); }
+  .hdr__menus { display: flex; gap: var(--space-1); list-style: none; margin: 0; padding: 0; }
+  .hdr__menu { position: relative; }
+  .hdr__menu-trigger {
+    background: none; border: none; cursor: pointer; font-family: inherit;
+    font-size: var(--text-body-sm); font-weight: var(--weight-medium);
+    color: var(--color-text-primary); padding: var(--space-2) var(--space-3); min-height: 44px;
+  }
+  .hdr__menu-trigger:hover, .hdr__menu-trigger[aria-expanded="true"] { color: var(--color-primary-blue); }
+  .hdr__flyout {
+    position: absolute; top: 100%; left: 0; min-width: 240px;
+    background: var(--color-surface); border: var(--border-width-hairline) solid var(--color-border);
+    border-radius: var(--radius-md); box-shadow: var(--shadow-elevation-3);
+    padding: var(--space-3); z-index: 60;
+  }
+  .hdr__flyout ul { list-style: none; margin: 0; padding: 0; }
+  .hdr__flyout a { display: block; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-size: var(--text-body-sm); color: var(--color-text-primary); }
+  .hdr__flyout a:hover { background: var(--color-primary-blue-light); text-decoration: none; }
+
+  /* Burger + drawer (mobile) */
+  .hdr__burger { display: inline-flex; flex-direction: column; justify-content: center; gap: 5px; width: 44px; height: 44px; background: none; border: none; cursor: pointer; }
+  .hdr__burger-bar { display: block; height: 2px; width: 22px; background: var(--color-text-primary); margin-inline: auto; }
+  .drawer { padding: var(--space-4); border-top: var(--border-width-hairline) solid var(--color-border); }
+  .hdr__cta--drawer { margin-bottom: var(--space-4); }
+  .drawer__list { list-style: none; margin: 0; padding: 0; }
+  .drawer__acc {
+    width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+    font-size: var(--text-body); font-weight: var(--weight-medium); color: var(--color-text-primary);
+    padding: var(--space-3) 0; min-height: 44px; display: flex; justify-content: space-between;
+    border-bottom: var(--border-width-hairline) solid var(--color-border);
+  }
+  .drawer__sub { list-style: none; margin: 0; padding: var(--space-2) 0 var(--space-3) var(--space-4); }
+  .drawer__sub a { display: block; padding: var(--space-2) 0; font-size: var(--text-body-sm); color: var(--color-text-secondary); }
+
+  @media (min-width: 1024px) {
+    .hdr__nav { display: flex; }
+    .hdr__burger, .drawer { display: none; }
+  }
+</style>
+
+<script>
+  // Desktop flyouts — click + keyboard (Escape closes, returns focus). Not hover-only.
+  const triggers = document.querySelectorAll<HTMLButtonElement>('[data-menu-trigger]');
+  const closeAll = (except?: Element) => triggers.forEach((t) => {
+    if (t === except) return;
+    t.setAttribute('aria-expanded', 'false');
+    document.getElementById(t.getAttribute('aria-controls') || '')?.setAttribute('hidden', '');
+  });
+  triggers.forEach((t) => {
+    const panel = document.getElementById(t.getAttribute('aria-controls') || '');
+    t.addEventListener('click', () => {
+      const open = t.getAttribute('aria-expanded') === 'true';
+      closeAll(t);
+      t.setAttribute('aria-expanded', String(!open));
+      if (panel) panel.hidden = open;
+    });
+    t.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { t.setAttribute('aria-expanded', 'false'); panel?.setAttribute('hidden', ''); }
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!(e.target as Element).closest('.hdr__menu')) closeAll();
+  });
+
+  // Mobile drawer + accordions.
+  const burger = document.querySelector<HTMLButtonElement>('[data-burger]');
+  const drawer = document.getElementById('mobile-drawer');
+  burger?.addEventListener('click', () => {
+    const open = burger.getAttribute('aria-expanded') === 'true';
+    burger.setAttribute('aria-expanded', String(!open));
+    if (drawer) drawer.hidden = open;
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-acc]').forEach((acc) => {
+    const sub = acc.nextElementSibling as HTMLElement | null;
+    acc.addEventListener('click', () => {
+      const open = acc.getAttribute('aria-expanded') === 'true';
+      acc.setAttribute('aria-expanded', String(!open));
+      if (sub) sub.hidden = open;
+    });
+  });
+</script>

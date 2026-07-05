@@ -1,0 +1,111 @@
+---
+/*
+ * Button — the single shared button component (DESIGN §6.5, FRONTEND §7).
+ * One component, `variant` prop; never a one-off styled button elsewhere.
+ *  - primary  : filled "Apply Now" — the dominant CTA. Never red (§6.5, §11).
+ *  - outline  : transparent, blue border ("Learn more", "View Fees & MITC").
+ *  - ghost    : link-styled action ("Read the full review").
+ *  - tertiary : small utility (Back/Next, Add to compare).
+ * Renders <a> when `href` is set, else <button>.
+ */
+export interface Props {
+  variant?: 'primary' | 'outline' | 'ghost' | 'tertiary';
+  size?: 'lg' | 'md' | 'sm';
+  href?: string;
+  type?: 'button' | 'submit';
+  /** trailing microcopy, e.g. "on HDFC Bank's secure site" (§6.3) */
+  microcopy?: string;
+  external?: boolean;
+  class?: string;
+  id?: string;
+  disabled?: boolean;
+  ariaLabel?: string;
+}
+const {
+  variant = 'primary', size = 'md', href, type = 'button',
+  microcopy, external = false, class: className = '', id, disabled = false, ariaLabel,
+} = Astro.props;
+const Tag = href ? 'a' : 'button';
+const rel = external ? 'nofollow sponsored noopener' : undefined;
+const target = external ? '_blank' : undefined;
+---
+<span class="btn-wrap">
+  <Tag
+    id={id}
+    class:list={['btn', `btn--${variant}`, `btn--${size}`, className]}
+    href={href}
+    type={href ? undefined : type}
+    rel={rel}
+    target={target}
+    aria-label={ariaLabel}
+    aria-disabled={disabled ? 'true' : undefined}
+  >
+    <slot />
+  </Tag>
+  {microcopy && <span class="btn-microcopy">{microcopy}</span>}
+</span>
+
+<style>
+  .btn-wrap { display: inline-flex; flex-direction: column; gap: var(--space-1); }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-family: var(--font-primary);
+    font-size: var(--text-button);
+    font-weight: var(--weight-semibold);
+    line-height: 1;
+    border-radius: var(--btn-radius);
+    border: var(--border-width-hairline) solid transparent;
+    padding-inline: var(--btn-padding-x);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard);
+    min-height: 44px; /* 44px tap target (§13) */
+  }
+  .btn:hover { text-decoration: none; }
+  .btn[aria-disabled='true'] { opacity: 0.45; pointer-events: none; }
+
+  .btn--lg { height: var(--btn-height-lg); }
+  .btn--md { height: var(--btn-height-md); min-height: 44px; }
+  .btn--sm { height: var(--btn-height-sm); min-height: 44px; padding-inline: var(--space-4); }
+
+  /* Primary — dominant filled CTA, brand blue (never red). */
+  .btn--primary { background: var(--color-cta-primary); color: #fff; }
+  .btn--primary:hover { background: var(--color-cta-primary-hover); }
+
+  /* Outline */
+  .btn--outline {
+    background: transparent;
+    color: var(--color-primary-blue);
+    border-color: var(--color-cta-secondary-border);
+  }
+  .btn--outline:hover { background: var(--color-primary-blue-light); }
+
+  /* Ghost — link-styled action, weight/colour differentiate from body links. */
+  .btn--ghost {
+    background: transparent;
+    color: var(--color-primary-blue);
+    padding-inline: 0;
+    min-height: 44px;
+  }
+  .btn--ghost:hover { text-decoration: underline; }
+
+  /* Tertiary — small neutral utility. */
+  .btn--tertiary {
+    background: var(--color-surface-alt);
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+  }
+  .btn--tertiary:hover { background: var(--color-primary-blue-light); }
+
+  .btn-microcopy {
+    font-size: var(--text-caption);
+    font-weight: var(--weight-regular);
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+</style>

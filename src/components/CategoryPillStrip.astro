@@ -1,0 +1,61 @@
+---
+/*
+ * CategoryPillStrip (DESIGN §6.2). Real <nav> of <a> links (NOT ARIA tabs) —
+ * each pill is a hard navigation to /best/[slug]. Horizontally scrollable on
+ * mobile with edge affordances. Active pill filled in primary-blue-light.
+ */
+import { CONTENT_CATEGORIES } from '../lib/taxonomy';
+export interface Props { activeSlug?: string; }
+const { activeSlug } = Astro.props;
+// A curated lead set matching DESIGN §6.2 order; the rest still reachable via nav.
+const order = ['cashback', 'lifetime-free', 'travel', 'rewards', 'business', 'fuel', 'low-interest', 'super-premium', 'dining', 'shopping', 'airport-lounge', 'student'];
+const pills = order
+  .map((slug) => CONTENT_CATEGORIES.find((c) => c.slug === slug))
+  .filter((c): c is (typeof CONTENT_CATEGORIES)[number] => Boolean(c));
+---
+<nav class="pills" aria-label="Card categories">
+  <ul>
+    <li>
+      <a href="/best/all-credit-cards" class:list={['pill', { 'pill--active': !activeSlug }]}>
+        Best Credit Cards
+      </a>
+    </li>
+    {pills.map((c) => (
+      <li>
+        <a
+          href={`/best/${c.slug}`}
+          class:list={['pill', { 'pill--active': activeSlug === c.slug }]}
+          aria-current={activeSlug === c.slug ? 'page' : undefined}
+        >{c.name}</a>
+      </li>
+    ))}
+  </ul>
+</nav>
+<style>
+  .pills { position: relative; }
+  .pills ul {
+    display: flex; gap: var(--space-2);
+    list-style: none; margin: 0; padding: var(--space-2) 0;
+    overflow-x: auto; scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .pill {
+    display: inline-flex; align-items: center;
+    white-space: nowrap; scroll-snap-align: start;
+    padding: var(--space-2) var(--space-4);
+    min-height: 44px;
+    border: var(--border-width-hairline) solid var(--color-border);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-body-sm); font-weight: var(--weight-medium);
+    color: var(--color-text-primary); text-decoration: none;
+    transition: background-color var(--duration-fast) var(--ease-standard);
+  }
+  .pill:hover { background: var(--color-surface-alt); text-decoration: none; }
+  .pill--active {
+    background: var(--color-primary-blue-light);
+    color: var(--color-primary-blue);
+    border-color: var(--color-primary-blue);
+    font-weight: var(--weight-semibold);
+  }
+</style>

@@ -1,0 +1,22 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+export const prerender = true;
+---
+<PageLayout title="Editorial Guidelines & Ratings Methodology" description="How CardCompare.in researches, writes, and rates credit cards — our issuer-blind methodology.">
+  <div class="container reading-column" style="padding-block: var(--space-8);">
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Editorial Guidelines' }]} />
+    <h1>Editorial guidelines &amp; ratings methodology</h1>
+    <p>Our reviews exist to help readers make a good decision, not to sell a card. These principles govern every piece of content on the site.</p>
+    <h2>Issuer-blind ratings</h2>
+    <p>We score each card 0–5 across five dimensions — Rewards Value, Fees &amp; Charges, Welcome Benefit, Flexibility, and Issuer Service Experience — and combine them into an overall rating. Issuers cannot pay to change a score or a card's ranking, and reviewers do not see commercial terms when rating.</p>
+    <h2>Numbers first, and always attributed</h2>
+    <p>We prefer concrete figures over adjectives, format all rupee amounts with lakh/crore grouping, and attribute every review to a named writer, editor, and reviewer. We normalise reward rates to an estimated ₹-value per ₹100 spent so different cards can be compared on the same axis.</p>
+    <h2>Estimates are labelled</h2>
+    <p>Where a figure is our best reading of published information rather than issuer-confirmed, we mark it as estimated. Verified figures come from issuer MITC and fee schedules.</p>
+    <h2>We argue against our own picks</h2>
+    <p>Every review includes a "why you might want a different card" section and a balanced pros/cons list. A page that only argues for a card is less trustworthy than one that tells you when to walk away.</p>
+    <p class="note">[NEEDS LEGAL REVIEW] — final methodology and disclosure wording pending compliance sign-off.</p>
+  </div>
+</PageLayout>
+<style>.note { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: var(--space-8); }</style>

@@ -1,0 +1,95 @@
+---
+/*
+ * NewsletterForm (DESIGN §6.13). Email + inline Subscribe, consent microcopy,
+ * inline success state announced via aria-live="polite" (§6.13, §13). Positioned
+ * as an editorial ask ("new launches, fee changes"), not promotional.
+ * Progressive enhancement: inserts into newsletter_subscribers when Supabase env
+ * is present; otherwise shows an optimistic success state (preview).
+ */
+export interface Props { heading?: string; source?: string; }
+const { heading = 'Stay on top of new card launches and fee changes', source = 'site' } = Astro.props;
+---
+<section class="news-band">
+  <div class="container news-band__inner">
+    <div class="news-band__copy">
+      <h2>{heading}</h2>
+      <p>Our weekly newsletter — new cards, reward devaluations, and RBI updates that affect your wallet.</p>
+    </div>
+    <form class="news-form" data-newsletter data-source={source} novalidate>
+      <label class="sr-only" for="news-email">Email address</label>
+      <div class="news-form__row">
+        <input
+          id="news-email" name="email" type="email" inputmode="email"
+          autocomplete="email" required placeholder="you@example.com" class="news-form__input"
+        />
+        <button type="submit" class="news-form__btn">Subscribe</button>
+      </div>
+      <p class="news-form__consent">
+        By subscribing you agree to our <a href="/privacy-policy">Privacy Policy</a>. Unsubscribe anytime.
+      </p>
+      <p class="news-form__status" role="status" aria-live="polite" hidden></p>
+    </form>
+  </div>
+</section>
+<style>
+  .news-band { background: var(--color-surface-alt); padding-block: var(--space-16); }
+  .news-band__inner { display: grid; gap: var(--space-6); }
+  @media (min-width: 1024px) {
+    .news-band__inner { grid-template-columns: 1fr 1fr; align-items: center; }
+  }
+  .news-band__copy h2 { margin-bottom: var(--space-2); }
+  .news-band__copy p { color: var(--color-text-secondary); margin: 0; }
+  .news-form__row { display: flex; flex-direction: column; gap: var(--space-2); }
+  @media (min-width: 480px) { .news-form__row { flex-direction: row; } }
+  .news-form__input {
+    flex: 1; min-height: 48px; padding: 0 var(--space-4);
+    font-size: var(--text-body);
+    border: var(--border-width-hairline) solid var(--color-border-strong);
+    border-radius: var(--radius-sm); background: var(--color-surface);
+  }
+  .news-form__input:focus-visible { border-color: var(--color-primary-blue); }
+  .news-form__btn {
+    min-height: 48px; padding: 0 var(--btn-padding-x);
+    background: var(--color-cta-primary); color: #fff; font-weight: var(--weight-semibold);
+    border: none; border-radius: var(--btn-radius); cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-standard);
+  }
+  .news-form__btn:hover { background: var(--color-cta-primary-hover); }
+  .news-form__consent { font-size: var(--text-caption); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .news-form__status { margin: var(--space-2) 0 0; font-weight: var(--weight-medium); }
+  .news-form__status[data-ok] { color: var(--color-success); }
+  .news-form__status[data-err] { color: var(--color-error); }
+</style>
+
+<script>
+  import { getAnonClient, hasSupabaseEnv } from '../lib/supabase';
+  document.querySelectorAll<HTMLFormElement>('[data-newsletter]').forEach((form) => {
+    const status = form.querySelector<HTMLParagraphElement>('.news-form__status')!;
+    const input = form.querySelector<HTMLInputElement>('input[name="email"]')!;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = input.value.trim();
+      if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        status.hidden = false; status.textContent = 'Please enter a valid email address.';
+        status.setAttribute('data-err', ''); status.removeAttribute('data-ok');
+        return;
+      }
+      try {
+        if (hasSupabaseEnv) {
+          const { error } = await getAnonClient()
+            .from('newsletter_subscribers')
+            .insert({ email, source: form.dataset.source ?? 'site' });
+          if (error && !/duplicate|unique/i.test(error.message)) throw error;
+        }
+        form.querySelector('.news-form__row')?.setAttribute('hidden', '');
+        status.hidden = false;
+        status.textContent = "You're in — watch your inbox for the next issue.";
+        status.setAttribute('data-ok', ''); status.removeAttribute('data-err');
+      } catch {
+        status.hidden = false;
+        status.textContent = 'Something went wrong. Please try again.';
+        status.setAttribute('data-err', ''); status.removeAttribute('data-ok');
+      }
+    });
+  });
+</script>

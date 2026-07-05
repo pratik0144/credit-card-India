@@ -1,0 +1,34 @@
+---
+/*
+ * Affiliate Disclosure label (DESIGN §10.1, §3 principle 3). Static, non-clickable
+ * small-caps label placed immediately below the nav / above the H1 on every page.
+ * This is a self-imposed editorial-ethics commitment and a category differentiator
+ * (DESIGN §1) — never omit it.
+ * [NEEDS LEGAL REVIEW] — §10 compliance copy must be signed off before production.
+ */
+import { SITE } from '../lib/site';
+export interface Props { compact?: boolean; }
+const { compact = false } = Astro.props;
+---
+<aside class="affiliate" aria-label="Affiliate disclosure">
+  <span class="eyebrow affiliate__label">Affiliate Disclosure</span>
+  {!compact && (
+    <p class="affiliate__body">
+      {SITE.name} may earn a commission from card issuers when you apply through links on
+      this page. This does not influence which cards we review, how we rate them, or the
+      order in which we present them. Our review team operates independently of our
+      commercial partnerships. <a href="/editorial-guidelines">Full methodology</a>.
+    </p>
+  )}
+</aside>
+<style>
+  .affiliate { margin-block: var(--space-3); }
+  .affiliate__label { color: var(--color-text-muted); }
+  .affiliate__body {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-body-sm);
+    color: var(--color-text-muted);
+    line-height: var(--leading-normal);
+    max-width: 68ch;
+  }
+</style>

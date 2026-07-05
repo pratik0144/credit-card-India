@@ -1,0 +1,7 @@
+<!-- PLACEHOLDER share image. A real 1200x630 og-default.png must be provided before launch (FRONTEND §16 — no invented brand assets). This SVG documents the intended default; BaseLayout references /og-default.png. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#F7F8FA"/>
+  <rect width="1200" height="12" fill="#0057B8"/>
+  <text x="80" y="300" font-family="Roboto, Arial, sans-serif" font-size="72" font-weight="700" fill="#1A1A1A">CardCompare.in</text>
+  <text x="80" y="370" font-family="Roboto, Arial, sans-serif" font-size="36" fill="#4A4A4A">Independent credit-card reviews and comparisons for India</text>
+</svg>

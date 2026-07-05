@@ -1,0 +1,16 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { SITE } from '../lib/site';
+export const prerender = true;
+---
+<PageLayout title="Affiliate Disclosure" description={`How ${SITE.name} makes money, and why it doesn't affect our ratings.`}>
+  <div class="container reading-column" style="padding-block: var(--space-8);">
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Affiliate Disclosure' }]} />
+    <h1>Affiliate disclosure</h1>
+    {/* [NEEDS LEGAL REVIEW] — DESIGN §10.1. Run past compliance before production. */}
+    <p>{SITE.name} may earn a commission from card issuers when you apply through links on this site. This does not influence which cards we review, how we rate them, or the order in which we present them. Our review team operates independently of our commercial partnerships.</p>
+    <p>We disclose this relationship prominently — near the top of every page and again in the footer — because we think readers deserve to know how a comparison site makes money, and because clarity here is a point of difference we care about.</p>
+    <p>When a link will take you off our site to an issuer's own application, we label it "on [Issuer]'s secure site" so there are no surprises about where you're going.</p>
+  </div>
+</PageLayout>

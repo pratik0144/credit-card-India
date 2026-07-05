@@ -1,0 +1,74 @@
+---
+/*
+ * Pre-generated 2-card comparison /compare/[a]-vs-[b] (FRONTEND §8, §9).
+ * Prerendered for high-traffic pairs from a curated list (NOT all N×N). One
+ * canonical order per pair (§9 — avoid a-vs-b and b-vs-a both indexable).
+ */
+import PageLayout from '../../layouts/PageLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import AffiliateDisclosure from '../../components/AffiliateDisclosure.astro';
+import ComparisonTable from '../../components/ComparisonTable.astro';
+import Button from '../../components/Button.astro';
+import { getComparePairs, getCardDetailByFullSlug } from '../../lib/queries';
+import { formatAnnualFee, formatRating } from '../../lib/format';
+import { breadcrumbList } from '../../lib/seo';
+
+export const prerender = true;
+export async function getStaticPaths() {
+  const pairs = await getComparePairs();
+  const out = [];
+  for (const { a, b } of pairs) {
+    // canonical order: alphabetical, so only one of a-vs-b / b-vs-a is generated.
+    const [x, y] = [a, b].sort();
+    // Only generate pairs where both cards exist in the catalog (avoids a
+    // prerender redirect on a curated slug that doesn't match real data).
+    const [dx, dy] = await Promise.all([getCardDetailByFullSlug(x), getCardDetailByFullSlug(y)]);
+    if (dx && dy) out.push({ params: { pair: `${x}-vs-${y}` }, props: { a: x, b: y } });
+  }
+  return out;
+}
+
+const { a, b } = Astro.props as { a: string; b: string };
+const da = await getCardDetailByFullSlug(a);
+const db = await getCardDetailByFullSlug(b);
+if (!da || !db) return Astro.redirect('/404');
+const path = `/compare/${a}-vs-${b}`;
+const title = `${da.card.name} vs ${db.card.name}`;
+const hrefFor = (d: typeof da) => `/cards/${d.bank.slug}/${d.card.slug.replace(new RegExp(`^${d.bank.slug}-`), '')}`;
+
+const columns = [
+  { header: da.card.name, href: hrefFor(da), image: da.card.image_url },
+  { header: db.card.name, href: hrefFor(db), image: db.card.image_url },
+];
+const val = (d: typeof da, f: (c: typeof da.card) => string) => f(d.card);
+const rows = [
+  { label: 'Our rating', values: [formatRating(da.rating?.overall_score ?? da.card.editorial_score_5), formatRating(db.rating?.overall_score ?? db.card.editorial_score_5)] },
+  { label: 'Reward rate', values: [da.card.reward_rate_general_text ?? '—', db.card.reward_rate_general_text ?? '—'] },
+  { label: 'Annual fee', values: [formatAnnualFee(da.card.annual_fee_amount), formatAnnualFee(db.card.annual_fee_amount)] },
+  { label: 'Forex markup', values: [da.card.forex_markup_pct != null ? `${da.card.forex_markup_pct}%` : '—', db.card.forex_markup_pct != null ? `${db.card.forex_markup_pct}%` : '—'] },
+  { label: 'Domestic lounge', values: [String(da.card.lounge_domestic_visits_per_year ?? 0), String(db.card.lounge_domestic_visits_per_year ?? 0)] },
+  { label: 'Min. CIBIL', values: [da.card.cibil_min ?? 'Flexible', db.card.cibil_min ?? 'Flexible'] },
+];
+---
+<PageLayout
+  title={`${title}: Which Card Wins?`}
+  description={`${da.card.name} vs ${db.card.name} — compare rewards, fees, forex, lounge access, and eligibility to see which credit card is right for you.`}
+  canonicalPath={path}
+  jsonLd={[breadcrumbList([{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare' }, { name: title, path }])]}
+>
+  <div class="container" style="padding-block: var(--space-8);">
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare' }, { name: title }]} />
+    <AffiliateDisclosure />
+    <h1>{da.card.name} vs {db.card.name}</h1>
+    <p class="lede">A head-to-head on the numbers that matter. Prefer to build your own? Use the <a href="/compare">interactive compare tool</a>.</p>
+    <ComparisonTable variant="cards" caption={title} columns={columns} rows={rows} />
+    <div class="cta">
+      <Button variant="outline" href={hrefFor(da)}>Read {da.card.name} review</Button>
+      <Button variant="outline" href={hrefFor(db)}>Read {db.card.name} review</Button>
+    </div>
+  </div>
+</PageLayout>
+<style>
+  .lede { font-size: var(--text-body-lg); color: var(--color-text-secondary); margin-bottom: var(--space-6); }
+  .cta { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-8); }
+</style>

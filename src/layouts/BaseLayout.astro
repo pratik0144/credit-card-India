@@ -1,0 +1,75 @@
+---
+/*
+ * BaseLayout — the single root layout. Sets lang="en-IN" (DESIGN.md §7),
+ * loads design tokens + global styles once, and centralises SEO head tags
+ * (unique title/description, canonical, og:image — FRONTEND_PROMPT.md §9).
+ * Page chrome (header/footer) is composed by the frontend build on top of this.
+ */
+import '../styles/tokens.css';
+import '../styles/global.css';
+import { SITE } from '../lib/site';
+
+export interface Props {
+  title: string;
+  description: string;
+  /** Absolute or root-relative path; canonical is resolved against SITE.url. */
+  canonicalPath?: string;
+  ogImage?: string;
+  ogType?: 'website' | 'article' | 'product';
+  /** Set true on the auth-gated /wallet route etc. to keep it out of the index. */
+  noindex?: boolean;
+  /** JSON-LD objects to emit as <script type="application/ld+json">. */
+  jsonLd?: Record<string, unknown>[];
+}
+
+const {
+  title,
+  description,
+  canonicalPath = Astro.url.pathname,
+  ogImage = '/og-default.png',
+  ogType = 'website',
+  noindex = false,
+  jsonLd = [],
+} = Astro.props;
+
+const canonical = new URL(canonicalPath, SITE.url).href;
+const ogImageUrl = new URL(ogImage, SITE.url).href;
+// Titles must be unique & keyword-first (§9); suffix the brand once.
+const fullTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <!-- Open Graph / social -->
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:locale" content="en_IN" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- font-display: swap for the primary sans stack (§12); no render-blocking fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+    {jsonLd.map((obj) => (
+      <script type="application/ld+json" set:html={JSON.stringify(obj)} />
+    ))}
+
+    <slot name="head" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

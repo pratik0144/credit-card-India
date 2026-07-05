@@ -1,0 +1,62 @@
+---
+/*
+ * ComparisonTable (DESIGN §6.6). Real semantic <table>/<thead>/<th scope> —
+ * never div-grids. Card figures stay un-truncated; horizontal scroll on mobile
+ * (preserves column-per-card). Two supported shapes here:
+ *  - variant="cards": card-image-header columns (2–3 up) + spec rows.
+ *  - variant="listing": wide summary table (Card | Best for | Reward | Fee | Rating).
+ */
+export interface Column { header: string; href?: string; image?: string | null; subhead?: string; }
+export interface Row { label: string; values: (string | number | null)[] }
+export interface Props {
+  caption: string;
+  variant?: 'cards' | 'listing';
+  columns: Column[];
+  rows: Row[];
+}
+const { caption, variant = 'cards', columns, rows } = Astro.props;
+const img = (src?: string | null) => (src ? `/card-img/${src.replace(/^card-img\//, '')}` : '/og-default.png');
+---
+<div class="ctable__scroll">
+  <table class:list={['ctable', `ctable--${variant}`]}>
+    <caption class="sr-only">{caption}</caption>
+    <thead>
+      <tr>
+        <th scope="col" class="ctable__corner">{variant === 'listing' ? 'Credit Card' : ''}</th>
+        {columns.map((c) => (
+          <th scope="col">
+            {variant === 'cards' && (
+              <img src={img(c.image)} alt={`${c.header} card`} width="120" height="76" loading="lazy" />
+            )}
+            {c.href ? <a href={c.href}>{c.header}</a> : c.header}
+            {c.subhead && <span class="ctable__subhead">{c.subhead}</span>}
+          </th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((r) => (
+        <tr>
+          <th scope="row">{r.label}</th>
+          {r.values.map((v) => <td>{v ?? '—'}</td>)}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<style>
+  .ctable__scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ctable { border-collapse: collapse; width: 100%; min-width: 520px; }
+  .ctable caption { text-align: left; }
+  .ctable th, .ctable td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: var(--border-width-hairline) solid var(--color-border);
+    text-align: left; vertical-align: top; font-size: var(--text-body-sm);
+  }
+  .ctable thead th { border-bottom: var(--border-width-thick) solid var(--color-border-strong); font-weight: var(--weight-bold); }
+  .ctable thead img { display: block; margin-bottom: var(--space-2); width: 120px; height: auto; }
+  .ctable tbody th[scope="row"] { font-weight: var(--weight-regular); color: var(--color-text-secondary); white-space: nowrap; }
+  .ctable td { font-weight: var(--weight-medium); }
+  .ctable__subhead { display: block; font-size: var(--text-caption); font-weight: var(--weight-regular); color: var(--color-text-muted); }
+  .ctable--listing tbody td { font-weight: var(--weight-regular); }
+</style>

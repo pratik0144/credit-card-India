@@ -1,0 +1,59 @@
+---
+/*
+ * ProsConsBlock (DESIGN §6.9, §11). Two columns, EQUAL visual weight — never a
+ * single mixed list, never Cons smaller/quieter than Pros. Stacks to two
+ * sequential sections on mobile. Color markers are secondary (small), text primary.
+ */
+export interface Props {
+  pros: string[];
+  cons: string[];
+  heading?: string;
+}
+const { pros, cons, heading = 'Pros and cons' } = Astro.props;
+---
+<section class="proscons" aria-label={heading}>
+  <div class="proscons__col">
+    <h3 class="proscons__title">Pros</h3>
+    <ul class="proscons__list proscons__list--pro">
+      {pros.map((p) => <li>{p}</li>)}
+    </ul>
+  </div>
+  <div class="proscons__col">
+    <h3 class="proscons__title">Cons</h3>
+    <ul class="proscons__list proscons__list--con">
+      {cons.map((c) => <li>{c}</li>)}
+    </ul>
+  </div>
+</section>
+<style>
+  .proscons {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+  @media (min-width: 768px) {
+    .proscons { grid-template-columns: 1fr 1fr; gap: var(--space-8); }
+  }
+  /* Equal weight: identical title styling for both columns. */
+  .proscons__title {
+    font-size: var(--text-h4);
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: var(--border-width-thick) solid var(--color-border);
+  }
+  .proscons__list { margin: 0; padding: 0; list-style: none; }
+  .proscons__list li {
+    position: relative;
+    padding-left: var(--space-6);
+    margin-bottom: var(--space-3);
+    line-height: var(--leading-normal);
+  }
+  .proscons__list li::before {
+    position: absolute;
+    left: 0;
+    font-weight: var(--weight-bold);
+  }
+  /* Small color markers — never the only signal; the Pros/Cons headings carry meaning. */
+  .proscons__list--pro li::before { content: "✓"; color: var(--color-rating-excellent); }
+  .proscons__list--con li::before { content: "–"; color: var(--color-text-muted); }
+</style>

@@ -1,0 +1,43 @@
+---
+/*
+ * ScoreTierBadge (DESIGN §6.14) — translates a spec into a qualitative tier
+ * chip. Color + text label ALWAYS together, never color alone (§6.14, §11).
+ * Used for fee tier, forex tier, CIBIL-requirement tier, etc.
+ */
+export type Tier = 'excellent' | 'very-good' | 'good' | 'fair' | 'poor';
+export interface Props {
+  tier: Tier;
+  /** The qualitative word shown to the user; defaults to the tier's title case. */
+  label?: string;
+}
+const { tier, label } = Astro.props;
+const LABELS: Record<Tier, string> = {
+  excellent: 'Excellent', 'very-good': 'Very Good', good: 'Good', fair: 'Fair', poor: 'Poor',
+};
+const text = label ?? LABELS[tier];
+---
+<span class:list={['tier', `tier--${tier}`]}>
+  <span class="tier__dot" aria-hidden="true"></span>
+  <span class="tier__label">{text}</span>
+</span>
+<style>
+  .tier {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-body-sm);
+    font-weight: var(--weight-medium);
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .tier__dot {
+    width: 10px; height: 10px; border-radius: var(--radius-circle);
+    flex: none; background: currentColor;
+  }
+  .tier--excellent { color: var(--color-rating-excellent); }
+  .tier--very-good { color: var(--color-rating-very-good); }
+  .tier--good      { color: var(--color-rating-good); }
+  .tier--fair      { color: var(--color-rating-fair); }
+  .tier--poor      { color: var(--color-rating-poor); }
+  .tier__label { color: var(--color-text-primary); }
+</style>

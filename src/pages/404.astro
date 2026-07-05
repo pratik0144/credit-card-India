@@ -1,0 +1,15 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import Button from '../components/Button.astro';
+---
+<PageLayout title="Page not found" description="The page you were looking for doesn't exist." noindex>
+  <div class="container" style="padding-block: var(--space-24); text-align: center;">
+    <p class="eyebrow">404</p>
+    <h1>We couldn't find that page</h1>
+    <p style="color: var(--color-text-secondary); max-width: 46ch; margin-inline: auto;">The link may be broken or the card may have moved. Try browsing our latest picks instead.</p>
+    <div style="margin-top: var(--space-6); display: flex; gap: var(--space-4); justify-content: center; flex-wrap: wrap;">
+      <Button variant="primary" href="/best/all-credit-cards">Browse all cards</Button>
+      <Button variant="outline" href="/">Go home</Button>
+    </div>
+  </div>
+</PageLayout>

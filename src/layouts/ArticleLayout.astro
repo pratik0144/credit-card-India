@@ -1,0 +1,54 @@
+---
+/*
+ * ArticleLayout — long-form guide/news template (FRONTEND §8). Byline, body,
+ * optional "On this page" jump nav for long content (DESIGN §5 — a <select>
+ * "Jump to" on mobile), FAQ close-out. Built on PageLayout.
+ */
+import PageLayout from './PageLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
+import AuthorByline from '../components/AuthorByline.astro';
+import NewsletterForm from '../components/NewsletterForm.astro';
+import type { Article, Author } from '../lib/database.types';
+import { articleSchema, breadcrumbList } from '../lib/seo';
+
+export interface Props {
+  article: Article;
+  author: Author | null;
+  editedBy?: Author | null;
+  reviewedBy?: Author | null;
+  section: 'guides' | 'news';
+}
+const { article, author, editedBy = null, reviewedBy = null, section } = Astro.props;
+const path = `/${section}/${article.slug}`;
+const sectionLabel = section === 'news' ? 'News' : 'Guides';
+const jsonLd = [
+  articleSchema({ title: article.title, description: article.meta_description ?? '', path, author: author?.name, published: article.published_at, updated: article.updated_at, image: article.og_image_url }),
+  breadcrumbList([{ name: 'Home', path: '/' }, { name: sectionLabel, path: `/${section}` }, { name: article.title, path }]),
+];
+---
+<PageLayout
+  title={article.title}
+  description={article.meta_description ?? article.title}
+  canonicalPath={path}
+  ogType="article"
+  ogImage={article.og_image_url ?? undefined}
+  jsonLd={jsonLd}
+>
+  <div class="container article">
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: sectionLabel, path: `/${section}` }, { name: article.title }]} />
+    <AffiliateDisclosure />
+    <p class="eyebrow">{section === 'news' ? 'News / RBI Update' : 'Guide'}</p>
+    <h1>{article.title}</h1>
+    <AuthorByline writtenBy={author ? [author] : []} editedBy={editedBy} reviewedBy={reviewedBy} updated={article.updated_at ?? article.published_at} />
+    <div class="article__body reading-column" set:html={article.body} />
+    <slot />
+  </div>
+  <NewsletterForm source={`${section}-${article.slug}`} />
+</PageLayout>
+<style>
+  .article { padding-block: var(--space-6) var(--space-12); }
+  .article__body { margin-top: var(--space-8); line-height: var(--leading-relaxed); }
+  .article__body :global(h2) { margin-top: var(--space-10); }
+  .article__body :global(p) { margin-bottom: var(--space-4); }
+</style>

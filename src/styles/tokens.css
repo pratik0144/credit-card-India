@@ -1,0 +1,163 @@
+/*
+ * CardCompare.in — Design Tokens
+ * Transcribed VERBATIM from DESIGN.md §3.1–§3.7. Do not modify any value here;
+ * a change to a token is a design decision to raise with the team, not an
+ * implementation tweak (FRONTEND_PROMPT.md §6). Values marked [ESTIMATED] in
+ * DESIGN.md are the working values per FRONTEND_PROMPT.md §1.
+ */
+
+:root {
+  /* ============================================================= */
+  /* §3.1 Color System                                             */
+  /* ============================================================= */
+
+  /* ---- Brand / Primary ---- */
+  --color-primary-blue:        #0057B8; /* [ESTIMATED] core brand/link/CTA blue */
+  --color-primary-blue-dark:   #003E82; /* [ESTIMATED] hover/active state of primary blue */
+  --color-primary-blue-light:  #E8F1FC; /* [ESTIMATED] tinted background for callouts, active nav states */
+
+  /* ---- Neutrals ---- */
+  --color-text-primary:        #1A1A1A; /* [ESTIMATED] body copy, headings */
+  --color-text-secondary:      #4A4A4A; /* [ESTIMATED] byline, meta, captions */
+  --color-text-muted:          #767676; /* [ESTIMATED] disclosure copy, fine print, timestamps */
+  --color-border:              #E0E0E0; /* [ESTIMATED] card borders, table borders, dividers */
+  --color-border-strong:       #C7C7C7; /* [ESTIMATED] input borders, table header borders */
+  --color-surface:             #FFFFFF; /* white surface */
+  --color-surface-alt:         #F7F8FA; /* [ESTIMATED] section background alternation, "As seen on" strip */
+  --color-surface-footer:      #F2F3F5; /* [ESTIMATED] footer background, slightly darker than alt */
+
+  /* ---- CTA / Action ---- */
+  --color-cta-primary:          #0057B8; /* [ESTIMATED] "Apply Now" button fill */
+  --color-cta-primary-hover:    #00458F; /* [ESTIMATED] */
+  --color-cta-secondary-border: #0057B8; /* [ESTIMATED] ghost/outline button border */
+
+  /* ---- Semantic / Rating scale ---- */
+  /* Named tiers ("Excellent", "Very Good", "Good", "Fair", "Poor") rendered
+     as small badges next to feature rows in review tables. */
+  --color-rating-excellent:     #1E7B34; /* [ESTIMATED] deep green */
+  --color-rating-very-good:     #4C9A2A; /* [ESTIMATED] mid green */
+  --color-rating-good:          #8CB93B; /* [ESTIMATED] yellow-green */
+  --color-rating-fair:          #E8A02E; /* [ESTIMATED] amber/orange */
+  --color-rating-poor:          #D64545; /* [ESTIMATED] red */
+
+  /* ---- Star / numeric rating ---- */
+  --color-star-fill:            #0057B8; /* [ESTIMATED] star/score fill uses brand blue, not gold */
+  --color-star-empty:           #D8DCE1; /* [ESTIMATED] */
+
+  /* ---- Functional / Feedback ---- */
+  --color-success:              #1E7B34; /* [ESTIMATED] */
+  --color-warning:              #E8A02E; /* [ESTIMATED] */
+  --color-error:                #C0392B; /* [ESTIMATED] form validation errors */
+  --color-info:                 #0057B8; /* [ESTIMATED] reuses primary blue */
+
+  /* ---- Overlay / scrim ---- */
+  --color-overlay:              rgba(0, 0, 0, 0.5); /* [ESTIMATED] modal/tooltip backdrop */
+
+  /* ============================================================= */
+  /* §3.2 Typography System                                        */
+  /* ============================================================= */
+  --font-primary: "Roboto", "Noto Sans", "Helvetica Neue", Arial, sans-serif; /* Indic-safe fallback */
+  --font-fallback: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Arial, sans-serif;
+
+  /* ---- Type scale (desktop) ---- */
+  --text-display:       2.5rem;   /* 40px — H1 on landing/category pages */
+  --text-h1:            2rem;     /* 32px — article/review H1 */
+  --text-h2:            1.5rem;   /* 24px — section headers */
+  --text-h3:            1.25rem;  /* 20px — card titles, subsection headers */
+  --text-h4:            1.125rem; /* 18px — "At A Glance" field labels, table headers */
+  --text-body-lg:       1.125rem; /* 18px — intro/lede paragraph */
+  --text-body:          1rem;     /* 16px — standard paragraph */
+  --text-body-sm:       0.875rem; /* 14px — byline, meta, disclosure inline text */
+  --text-caption:       0.75rem;  /* 12px — legal fine print, footer disclosure body */
+  --text-button:        1rem;     /* 16px, medium/semibold */
+  --text-rating-number: 2rem;     /* 32px — "4.8 / 5" numerals in rating tables */
+
+  /* ---- Line height ---- */
+  --leading-tight:   1.2;  /* headings */
+  --leading-normal:  1.5;  /* body copy */
+  --leading-relaxed: 1.7;  /* long-form article paragraphs */
+
+  /* ---- Letter spacing ---- */
+  --tracking-tight:  -0.01em; /* large display headings */
+  --tracking-normal: 0;
+  --tracking-wide:   0.04em;  /* small-caps labels: "AFFILIATE DISCLOSURE", eyebrow tags */
+
+  /* ---- Font weights ---- */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700; /* headings, rating numbers, CTA text, rupee figures */
+
+  /* ============================================================= */
+  /* §3.3 Spacing Scale (8px base, 4px half-step)                  */
+  /* ============================================================= */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* ============================================================= */
+  /* §3.4 Corner Radius                                            */
+  /* ============================================================= */
+  --radius-sm:     4px;   /* badges, small chips, input fields */
+  --radius-md:     8px;   /* buttons, card containers */
+  --radius-lg:     12px;  /* large card modules, modals/popovers */
+  --radius-pill:   999px; /* category filter pills */
+  --radius-circle: 50%;   /* avatar/author headshots, close (×) buttons */
+
+  /* ============================================================= */
+  /* §3.5 Elevation & Shadows                                      */
+  /* ============================================================= */
+  --shadow-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.06);  /* resting card */
+  --shadow-elevation-2: 0 2px 8px rgba(0, 0, 0, 0.08);  /* sticky apply-now card, dropdowns */
+  --shadow-elevation-3: 0 8px 24px rgba(0, 0, 0, 0.12); /* modals, popover, mega-menu flyout */
+  --shadow-hover:       0 4px 12px rgba(0, 0, 0, 0.10); /* hover lift on clickable teaser */
+
+  /* ============================================================= */
+  /* §3.6 Borders                                                  */
+  /* ============================================================= */
+  --border-width-hairline: 1px;
+  --border-width-thick:    2px; /* focus rings, active tab underline, table header rule */
+  --border-color-default:  var(--color-border);
+  --border-color-strong:   var(--color-border-strong);
+  --border-style:          solid;
+
+  /* ============================================================= */
+  /* §3.7 Motion & Transitions                                     */
+  /* ============================================================= */
+  --duration-fast: 120ms; /* button hover/active state */
+  --duration-base: 200ms; /* dropdown open, tab switch, accordion */
+  --duration-slow: 320ms; /* mega-menu flyout, modal open */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out:      cubic-bezier(0, 0, 0.2, 1);
+  --ease-in:       cubic-bezier(0.4, 0, 1, 1);
+
+  /* ---- §6.5 Button sizing ---- */
+  --btn-height-lg: 48px; /* primary Apply-Now on hero/sticky */
+  --btn-height-md: 40px; /* standard inline CTAs */
+  --btn-height-sm: 32px; /* Add to compare, form Back/Next */
+  --btn-padding-x: 24px;
+  --btn-radius:    var(--radius-md);
+
+  /* ---- §4 Layout container widths ---- */
+  --container-max: 1200px; /* [ESTIMATED] max content width */
+  --reading-max:   720px;  /* [ESTIMATED] article/review reading column */
+  --rail-width:    340px;  /* [ESTIMATED] sticky rail on desktop */
+}
+
+/* §5 Responsive breakpoints — documented here for reference; use in media
+   queries as literals (custom properties can't be used in media conditions). */
+/*
+  --bp-sm:  480px;   large phones
+  --bp-md:  768px;   tablets / nav collapse threshold
+  --bp-lg:  1024px;  small laptops
+  --bp-xl:  1200px;  desktop, matches max container width
+*/

@@ -1,0 +1,48 @@
+---
+/*
+ * Compare tool /compare (FRONTEND §8). Prerendered shell + interactive React
+ * picker (§5). Builds a compare-ready dataset server-side from the catalog.
+ */
+import PageLayout from '../../layouts/PageLayout.astro';
+import AffiliateDisclosure from '../../components/AffiliateDisclosure.astro';
+import CompareTool from '../../islands/CompareTool.tsx';
+import type { CompareCard } from '../../islands/CompareTool.tsx';
+import { getCardListing, getCardDetailsByIds } from '../../lib/queries';
+import { formatAnnualFee, formatRating } from '../../lib/format';
+export const prerender = true;
+
+const listing = await getCardListing();
+const detailMap = await getCardDetailsByIds(listing.map((r) => r.card_id));
+const details = listing.map((r) => detailMap.get(r.card_id) ?? null);
+const cards: CompareCard[] = listing.map((r, i) => {
+  const c = details[i]?.card;
+  return {
+    id: r.card_id, slug: r.card_slug, name: r.card_name, bank_name: r.bank_name, image_url: r.image_url,
+    annual_fee: formatAnnualFee(r.annual_fee_amount),
+    reward_rate: c?.reward_rate_general_text ?? r.headline_reward_line ?? '—',
+    rating: formatRating(r.overall_score),
+    cibil: r.cibil_min != null ? String(r.cibil_min) : 'Flexible',
+    forex: c?.forex_markup_pct != null ? `${c.forex_markup_pct}%` : '—',
+    lounge: c ? `${(c.lounge_domestic_visits_per_year ?? 0)} dom / ${(c.lounge_intl_visits_per_year ?? 0)} intl` : '—',
+    reviewHref: `/cards/${r.bank_slug}/${r.card_slug.replace(new RegExp(`^${r.bank_slug}-`), '')}`,
+    applyHref: c?.official_url ?? '#',
+  };
+});
+---
+<PageLayout
+  title="Compare Credit Cards Side by Side — India"
+  description="Add up to three Indian credit cards and compare rewards, fees, forex markup, lounge access, and eligibility side by side."
+>
+  <section class="container" style="padding-block: var(--space-12) var(--space-6);">
+    <h1>Compare cards side by side</h1>
+    <p class="lede">Add up to three cards to see their rewards, fees, and benefits in one table.</p>
+    <AffiliateDisclosure compact />
+  </section>
+  <section class="container section">
+    <CompareTool client:load cards={cards} />
+  </section>
+</PageLayout>
+<style>
+  .lede { font-size: var(--text-body-lg); color: var(--color-text-secondary); }
+  .section { padding-block: var(--space-4) var(--space-16); }
+</style>

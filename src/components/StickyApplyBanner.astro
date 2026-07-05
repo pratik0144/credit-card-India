@@ -1,0 +1,39 @@
+---
+/*
+ * StickyApplyBanner (DESIGN §6.10). Pinned, dismissible top banner keeping the
+ * Apply CTA reachable while reading a long review. Dismissal respected for the
+ * session via sessionStorage (§6.10, FRONTEND §16 — session-only UI state is the
+ * one appropriate use of web storage here). Does not steal focus on load.
+ */
+import Button from './Button.astro';
+export interface Props { cardName: string; issuer: string; image?: string | null; applyHref: string; }
+const { cardName, issuer, image, applyHref } = Astro.props;
+const src = image ? `/card-img/${image.replace(/^card-img\//, '')}` : '/og-default.png';
+const key = `sab-dismissed:${cardName}`;
+---
+<div class="sab" data-sticky-apply data-key={key} hidden>
+  <div class="container sab__inner">
+    <button type="button" class="sab__close" aria-label="Close banner" data-sab-close>×</button>
+    <img src={src} alt="" width="48" height="30" class="sab__art" />
+    <span class="sab__name">{cardName}</span>
+    <Button variant="primary" size="sm" href={applyHref} external microcopy={`on ${issuer}'s secure site`}>Apply Now</Button>
+  </div>
+</div>
+<style>
+  .sab { position: sticky; top: 0; z-index: 40; background: var(--color-surface); box-shadow: var(--shadow-elevation-2); }
+  .sab__inner { display: flex; align-items: center; gap: var(--space-3); min-height: 56px; }
+  .sab__close { order: -1; background: none; border: none; font-size: 1.5rem; line-height: 1; cursor: pointer; width: 44px; height: 44px; color: var(--color-text-secondary); }
+  .sab__art { border-radius: var(--radius-sm); }
+  .sab__name { font-weight: var(--weight-semibold); flex: 1; }
+</style>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-sticky-apply]').forEach((banner) => {
+    const key = banner.dataset.key || 'sab';
+    if (sessionStorage.getItem(key) === '1') return; // stay hidden
+    banner.hidden = false;
+    banner.querySelector('[data-sab-close]')?.addEventListener('click', () => {
+      banner.hidden = true;
+      try { sessionStorage.setItem(key, '1'); } catch { /* private mode */ }
+    });
+  });
+</script>

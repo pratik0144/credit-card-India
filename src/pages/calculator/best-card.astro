@@ -1,0 +1,29 @@
+---
+/*
+ * "Which card should I use for this?" calculator /calculator/best-card
+ * (FRONTEND §11.3). Prerendered shell + React island.
+ */
+import PageLayout from '../../layouts/PageLayout.astro';
+import AffiliateDisclosure from '../../components/AffiliateDisclosure.astro';
+import BestCardCalculator from '../../islands/BestCardCalculator.tsx';
+import { getCardPickerList } from '../../lib/queries';
+export const prerender = true;
+const cards = await getCardPickerList();
+---
+<PageLayout
+  title="Which Card Should I Use? — Best Card Calculator"
+  description="Enter a spend category and amount to see which of your cards earns the most. Estimated ₹ value, with the redemption caveat spelled out."
+>
+  <section class="container" style="padding-block: var(--space-12) var(--space-6);">
+    <h1>Which card should I use for this purchase?</h1>
+    <p class="lede">Pick a category and amount, choose the cards you hold, and we'll rank them by estimated value earned.</p>
+    <AffiliateDisclosure compact />
+  </section>
+  <section class="container section">
+    <BestCardCalculator client:visible cards={cards} />
+  </section>
+</PageLayout>
+<style>
+  .lede { font-size: var(--text-body-lg); color: var(--color-text-secondary); max-width: 54ch; }
+  .section { padding-block: var(--space-4) var(--space-16); }
+</style>

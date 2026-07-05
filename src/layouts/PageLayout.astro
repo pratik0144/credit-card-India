@@ -1,0 +1,29 @@
+---
+/*
+ * PageLayout — composes GlobalHeader + <main> + SiteFooter on top of BaseLayout.
+ * Standard chrome for every non-bare page. Passes SEO props straight through.
+ */
+import BaseLayout from './BaseLayout.astro';
+import GlobalHeader from '../components/GlobalHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+
+export interface Props {
+  title: string;
+  description: string;
+  canonicalPath?: string;
+  ogImage?: string;
+  ogType?: 'website' | 'article' | 'product';
+  noindex?: boolean;
+  jsonLd?: Record<string, unknown>[];
+}
+const props = Astro.props;
+---
+<BaseLayout {...props}>
+  <slot name="head" slot="head" />
+  <a href="#main" class="skip-link">Skip to content</a>
+  <GlobalHeader />
+  <main id="main">
+    <slot />
+  </main>
+  <SiteFooter />
+</BaseLayout>

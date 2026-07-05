@@ -1,0 +1,188 @@
+---
+/*
+ * CardRow (DESIGN §6.3, FRONTEND §3) — the core conversion unit.
+ * COLLAPSED by default on every listing page: eyebrow, name, art, rating, ONE
+ * headline reward line, a 4-stat At-A-Glance row, and three actions (Apply Now /
+ * Add to Compare / Read full review). Everything else sits behind a single
+ * "Show full card details" toggle (collapsed on mobile AND desktop).
+ * "Apply Now" is the dominant filled CTA, never red, always with "on Issuer's
+ * secure site" microcopy (§6.3, §11). Progressive disclosure ≠ deleting info.
+ */
+import Button from './Button.astro';
+import RatingWidget from './RatingWidget.astro';
+import ScoreTierBadge from './ScoreTierBadge.astro';
+import type { CardListingRow } from '../lib/database.types';
+import type { CardDetail } from '../lib/queries';
+import { formatAnnualFee, formatINRCompact } from '../lib/format';
+import { annualFeeTier, cibilTier, rewardValueTier } from '../lib/tiers';
+import { welcomeBenefit, deriveHighlights } from '../lib/derive';
+
+export interface Props {
+  row: CardListingRow;
+  /** optional full detail enables the inline "full card details" expansion */
+  detail?: CardDetail | null;
+  eyebrow?: string;
+}
+const { row, detail = null, eyebrow } = Astro.props;
+const reviewHref = `/cards/${row.bank_slug}/${row.card_slug.replace(new RegExp(`^${row.bank_slug}-`), '')}`;
+const applyHref = detail?.card.official_url ?? row_official(row);
+const feeT = annualFeeTier(row.annual_fee_amount);
+const cibT = cibilTier(row.cibil_min);
+const rewT = rewardValueTier(detail?.card.base_reward_value_inr_per_100);
+const welcome = detail ? welcomeBenefit(detail) : null;
+const highlights = detail ? deriveHighlights(detail) : [];
+const panelId = `card-details-${row.card_id}`;
+
+function row_official(_r: CardListingRow): string { return '#'; }
+---
+<article class="cardrow">
+  <div class="cardrow__main">
+    <div class="cardrow__art">
+      <img
+        src={row.image_url ? `/card-img/${row.image_url.replace(/^card-img\//, '')}` : '/og-default.png'}
+        alt={`${row.card_name} card`}
+        width="240" height="151" loading="lazy" decoding="async"
+      />
+    </div>
+
+    <div class="cardrow__body">
+      {eyebrow && <p class="eyebrow cardrow__eyebrow">{eyebrow}</p>}
+      <h3 class="cardrow__name"><a href={reviewHref}>{row.card_name}</a></h3>
+      <p class="cardrow__issuer">{row.bank_name}</p>
+
+      <RatingWidget score={row.overall_score} size="sm" idSuffix={row.card_id} />
+
+      {row.headline_reward_line && (
+        <p class="cardrow__headline">
+          <strong>{row.headline_reward_line}</strong>
+        </p>
+      )}
+
+      {/* At A Glance — label/value/badge idiom (§6.3 step 6) */}
+      <dl class="cardrow__glance">
+        <div>
+          <dt>Annual Fee</dt>
+          <dd><strong>{formatAnnualFee(row.annual_fee_amount)}</strong> <ScoreTierBadge tier={feeT.tier} label={feeT.label} /></dd>
+        </div>
+        <div>
+          <dt>Reward Rate</dt>
+          <dd><strong>{detail?.card.reward_rate_general_text ?? row.headline_reward_line ?? '—'}</strong></dd>
+        </div>
+        <div>
+          <dt>Min. CIBIL</dt>
+          <dd><strong>{row.cibil_min ?? 'Flexible'}</strong> <ScoreTierBadge tier={cibT.tier} label={cibT.label} /></dd>
+        </div>
+        <div>
+          <dt>Welcome Benefit</dt>
+          <dd><strong>{welcome ?? '—'}</strong></dd>
+        </div>
+      </dl>
+
+      <div class="cardrow__actions">
+        <Button variant="primary" href={applyHref} external microcopy={`on ${row.bank_name}'s secure site`}>
+          Apply Now
+        </Button>
+        <Button variant="outline" size="sm" href={`/compare?add=${row.card_slug}`}>Add to Compare</Button>
+        <Button variant="ghost" href={reviewHref}>Read full review</Button>
+      </div>
+
+      {detail && (
+        <button type="button" class="cardrow__toggle" aria-expanded="false" aria-controls={panelId} data-card-toggle>
+          <span data-toggle-label>Show full card details</span> <span aria-hidden="true">▾</span>
+        </button>
+      )}
+    </div>
+  </div>
+
+  {detail && (
+    <div id={panelId} class="cardrow__details" hidden>
+      {detail.rewardCategories.length > 0 && (
+        <div class="cardrow__section">
+          <h4>Reward categories</h4>
+          <ul class="cardrow__rewards">
+            {detail.rewardCategories.map((rc) => (
+              <li><strong>{rc.multiplier ? `${rc.multiplier}X` : rc.rate_pct ? `${rc.rate_pct}%` : ''}</strong> {rc.raw_text ?? rc.category_key}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div class="cardrow__section">
+        <h4>Editor's take</h4>
+        <p class="cardrow__take">
+          Rated <ScoreTierBadge tier={rewT.tier} label={`${rewT.label} rewards value`} /> for its category.
+          {' '}Best suited to {detail.categorySlugs.join(', ') || 'everyday'} spenders.
+        </p>
+      </div>
+
+      {highlights.length > 0 && (
+        <div class="cardrow__section">
+          <h4>Highlights</h4>
+          <ul class="cardrow__highlights">{highlights.map((h) => <li>{h}</li>)}</ul>
+        </div>
+      )}
+
+      {detail.fees.length > 0 && (
+        <div class="cardrow__section">
+          <h4>Fees &amp; charges</h4>
+          <table class="cardrow__fees">
+            <tbody>
+              {detail.fees.slice(0, 6).map((f) => (
+                <tr><th scope="row">{f.fee_type.replace(/_/g, ' ')}</th><td>{f.raw_text ?? (f.amount != null ? formatINRCompact(f.amount) : '—')}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <Button variant="outline" size="sm" href={reviewHref}>View full {row.card_name} details &amp; MITC</Button>
+    </div>
+  )}
+</article>
+
+<style>
+  .cardrow {
+    border: var(--border-width-hairline) solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    background: var(--color-surface);
+    margin-bottom: var(--space-8);
+  }
+  .cardrow__main { display: grid; gap: var(--space-6); }
+  @media (min-width: 768px) { .cardrow__main { grid-template-columns: 240px 1fr; } }
+  .cardrow__art img { width: 100%; height: auto; aspect-ratio: 1.59 / 1; object-fit: contain; border-radius: var(--radius-sm); background: var(--color-surface-alt); }
+  .cardrow__eyebrow { color: var(--color-primary-blue); margin-bottom: var(--space-1); }
+  .cardrow__name { font-size: var(--text-h3); margin-bottom: var(--space-1); }
+  .cardrow__issuer { color: var(--color-text-secondary); font-size: var(--text-body-sm); margin-bottom: var(--space-3); }
+  .cardrow__headline { margin: var(--space-3) 0; font-size: var(--text-body-lg); }
+  .cardrow__glance { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin: var(--space-4) 0; }
+  .cardrow__glance dt { font-size: var(--text-caption); text-transform: uppercase; letter-spacing: var(--tracking-wide); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  .cardrow__glance dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--text-body-sm); }
+  .cardrow__actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3); margin-top: var(--space-4); }
+  .cardrow__toggle {
+    margin-top: var(--space-4); background: none; border: none; cursor: pointer;
+    color: var(--color-primary-blue); font-weight: var(--weight-semibold);
+    font-size: var(--text-body-sm); padding: var(--space-2) 0; min-height: 44px;
+  }
+  .cardrow__details { margin-top: var(--space-6); padding-top: var(--space-6); border-top: var(--border-width-hairline) solid var(--color-border); }
+  .cardrow__section { margin-bottom: var(--space-6); }
+  .cardrow__section h4 { font-size: var(--text-h4); margin-bottom: var(--space-2); }
+  .cardrow__rewards, .cardrow__highlights { margin: 0; padding-left: var(--space-6); }
+  .cardrow__rewards li, .cardrow__highlights li { margin-bottom: var(--space-2); }
+  .cardrow__fees { border-collapse: collapse; width: 100%; max-width: 480px; }
+  .cardrow__fees th, .cardrow__fees td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: var(--border-width-hairline) solid var(--color-border); font-size: var(--text-body-sm); text-transform: capitalize; }
+  .cardrow__fees td { text-align: right; font-weight: var(--weight-medium); text-transform: none; }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-card-toggle]').forEach((btn) => {
+    const panel = document.getElementById(btn.getAttribute('aria-controls') || '');
+    const label = btn.querySelector('[data-toggle-label]');
+    btn.addEventListener('click', () => {
+      const open = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!open));
+      if (panel) panel.hidden = open;
+      if (label) label.textContent = open ? 'Show full card details' : 'Hide card details';
+    });
+  });
+</script>

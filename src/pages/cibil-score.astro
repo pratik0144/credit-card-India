@@ -1,0 +1,76 @@
+---
+/*
+ * CIBIL score hub /cibil-score (FRONTEND §8, DESIGN §10.2). Explainer on
+ * CIBIL/CIC scoring, band-based recommendations linking into filtered listings,
+ * link to the recommendation engine. [NEEDS LEGAL REVIEW] — §10 copy.
+ */
+import PageLayout from '../layouts/PageLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Button from '../components/Button.astro';
+import { faqPage, breadcrumbList } from '../lib/seo';
+export const prerender = true;
+const bands = [
+  { range: '750 – 900', label: 'Excellent', tier: 'excellent', note: 'Eligible for most premium and super-premium cards.', href: '/best/all-credit-cards?cibil=750-plus' },
+  { range: '700 – 749', label: 'Good', tier: 'very-good', note: 'Strong choice of mainstream rewards and cashback cards.', href: '/best/all-credit-cards?cibil=700-749' },
+  { range: '650 – 699', label: 'Fair', tier: 'good', note: 'Entry-level and select cashback cards are realistic.', href: '/best/all-credit-cards?cibil=650-699' },
+  { range: 'New to credit', label: 'No score yet', tier: 'fair', note: 'Consider secured (FD-backed) cards to build history.', href: '/best/all-credit-cards' },
+];
+const faqs = [
+  { q: 'What is a good CIBIL score for a credit card in India?', a: 'A CIBIL score of 750 or above is generally considered good to excellent by most Indian issuers, though individual issuer criteria vary and a score alone does not guarantee approval.' },
+  { q: 'Is CIBIL the only credit score in India?', a: 'No. CIBIL (TransUnion CIBIL) is one of four RBI-licensed Credit Information Companies. Experian, Equifax, and CRIF High Mark may generate different scores from the same credit history.' },
+];
+import ScoreTierBadge from '../components/ScoreTierBadge.astro';
+---
+<PageLayout
+  title="CIBIL Score & Credit Cards — Which Card Can You Get?"
+  description="Understand CIBIL score bands and which Indian credit cards you're likely eligible for at each band. CIBIL is one of four RBI-licensed credit bureaus."
+  jsonLd={[faqPage(faqs), breadcrumbList([{ name: 'Home', path: '/' }, { name: 'CIBIL score', path: '/cibil-score' }])]}
+>
+  <div class="container" style="padding-block: var(--space-8);">
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'CIBIL score' }]} />
+    <h1>Your CIBIL score and credit cards</h1>
+    <p class="lede reading-column">
+      Your CIBIL score is the number most Indian issuers check first. It's issued by TransUnion CIBIL — one of four
+      credit information companies (CICs) licensed by the RBI. Here's roughly which cards each band opens up.
+    </p>
+
+    <div class="bands">
+      {bands.map((b) => (
+        <a class="band" href={b.href}>
+          <div class="band__head">
+            <strong>{b.range}</strong>
+            <ScoreTierBadge tier={b.tier as any} label={b.label} />
+          </div>
+          <p>{b.note}</p>
+          <span class="band__cta">See eligible cards →</span>
+        </a>
+      ))}
+    </div>
+
+    <div class="cta-row">
+      <Button variant="primary" href="/recommend">Get a personalised match</Button>
+    </div>
+
+    <section class="reading-column">
+      <h2>Frequently asked questions</h2>
+      <dl class="faq">{faqs.map((f) => (<><dt>{f.q}</dt><dd>{f.a}</dd></>))}</dl>
+      {/* [NEEDS LEGAL REVIEW] — CIBIL/CIC disclosure copy (DESIGN §10.2). */}
+      <p class="note">CIBIL score bands are indicative; individual issuer criteria vary and approval is never guaranteed by score alone.</p>
+    </section>
+  </div>
+</PageLayout>
+<style>
+  .lede { color: var(--color-text-secondary); font-size: var(--text-body-lg); }
+  .bands { display: grid; gap: var(--space-4); margin-block: var(--space-8); }
+  @media (min-width: 768px) { .bands { grid-template-columns: repeat(2, 1fr); } }
+  .band { display: block; padding: var(--space-6); border: var(--border-width-hairline) solid var(--color-border); border-radius: var(--radius-lg); color: inherit; }
+  .band:hover { box-shadow: var(--shadow-hover); text-decoration: none; }
+  .band__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2); }
+  .band__head strong { font-size: var(--text-h4); }
+  .band p { color: var(--color-text-secondary); font-size: var(--text-body-sm); }
+  .band__cta { color: var(--color-primary-blue); font-weight: var(--weight-semibold); font-size: var(--text-body-sm); }
+  .cta-row { margin-bottom: var(--space-12); }
+  .faq dt { font-weight: var(--weight-semibold); margin-top: var(--space-4); }
+  .faq dd { margin: var(--space-1) 0 0; color: var(--color-text-secondary); }
+  .note { margin-top: var(--space-6); font-size: var(--text-caption); color: var(--color-text-muted); }
+</style>
