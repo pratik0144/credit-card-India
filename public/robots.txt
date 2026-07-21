@@ -1,0 +1,9 @@
+# CardCompare.in — allow all public routes (SEO_PROMPT §6).
+# /wallet is auth-gated (zero SEO value, would serve redirect/empty content
+# to crawlers); /search is an internal-search shell, noindexed in-page too.
+User-agent: *
+Allow: /
+Disallow: /wallet
+Disallow: /search
+
+Sitemap: https://cardcompare.in/sitemap-index.xml

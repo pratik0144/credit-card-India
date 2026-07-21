@@ -14,7 +14,15 @@ export default defineConfig({
   site: 'https://cardcompare.in',
   output: 'static',
   adapter: node({ mode: 'standalone' }),
-  integrations: [react(), sitemap()],
+  integrations: [
+    react(),
+    sitemap({
+      // Keep noindexed/error routes out of the sitemap (SEO_PROMPT §6):
+      // /wallet and /search are noindexed shells; /404 is the error page.
+      filter: (page) =>
+        !page.includes('/wallet') && !page.includes('/search') && !page.includes('/404'),
+    }),
+  ],
   vite: {
     // Never leak the service-role key into the client bundle. Only PUBLIC_*
     // env vars are exposed to the client by Astro; this is belt-and-braces.

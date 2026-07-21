@@ -69,11 +69,24 @@ const monthYear = currentMonthYear();
 const title = `${c.name} Review ${monthYear}: Fees, Rewards & Eligibility`;
 const nutshell = `${c.name} is a ${detail.categorySlugs[0] ?? 'rewards'} card from ${b.name} with a ${formatAnnualFee(c.annual_fee_amount).toLowerCase()} annual fee${c.annual_fee_waiver_spend_amount ? ` (waived on ${formatINRCompact(c.annual_fee_waiver_spend_amount)} spend)` : ''} — best for ${detail.categorySlugs.join(', ') || 'everyday'} spenders who value ${headlineReward(detail).toLowerCase()}.`;
 
+// FAQ block (SEO_PROMPT §5): 5–8 real questions, data-conditional so no two
+// cards share an identical set. Answers must agree with the At-a-Glance block.
 const faqs = [
   { q: `Is the ${c.name} worth it?`, a: nutshell },
   { q: `What CIBIL score do I need for the ${c.name}?`, a: c.cibil_min ? `Issuers typically look for a CIBIL score of ${c.cibil_min}+ for this card, though approval depends on the bank's full review of your application.` : 'This card is relatively flexible on credit score; approval still depends on the issuer\'s review.' },
   { q: `What is the annual fee for the ${c.name}?`, a: `${formatAnnualFee(c.annual_fee_amount)}${c.annual_fee_waiver_spend_amount ? `, waived when you spend ${formatINRCompact(c.annual_fee_waiver_spend_amount)} in a year.` : '.'}` },
-  { q: 'What if something goes wrong with this card?', a: 'Raise a complaint with the issuer\'s grievance team first. If unresolved within 30 days, you can escalate to the RBI Integrated Ombudsman. [NEEDS LEGAL REVIEW — confirm current RBI process/timelines].' },
+  ...((c.lounge_domestic_visits_per_year ?? 0) > 0 || (c.lounge_intl_visits_per_year ?? 0) > 0
+    ? [{ q: `Does the ${c.name} offer airport lounge access?`, a: `Yes — ${(c.lounge_domestic_visits_per_year ?? 0) > 0 ? `${c.lounge_domestic_visits_per_year} complimentary domestic lounge visits a year` : ''}${(c.lounge_domestic_visits_per_year ?? 0) > 0 && (c.lounge_intl_visits_per_year ?? 0) > 0 ? ' and ' : ''}${(c.lounge_intl_visits_per_year ?? 0) > 0 ? `${c.lounge_intl_visits_per_year} international visits${c.lounge_intl_network ? ` via ${c.lounge_intl_network}` : ''}` : ''}. Lounge programmes change often — confirm current access rules with ${b.name} before travelling.` }]
+    : [{ q: `Does the ${c.name} offer airport lounge access?`, a: `No complimentary lounge access is listed for this card. If lounges matter to you, compare travel cards in our best-of listings instead.` }]),
+  ...(c.forex_markup_pct != null
+    ? [{ q: `What is the forex markup on the ${c.name}?`, a: `${c.forex_markup_pct}% on international transactions${c.forex_markup_pct >= 3 ? ' — around the standard (and expensive) end for Indian cards, so it is not the card to swipe abroad' : c.forex_markup_pct > 0 ? ' — lower than the typical 3.5%, which makes it a reasonable companion for international spends' : ' — zero markup, one of the strongest reasons to carry it for international spending'}.` }]
+    : []),
+  ...(welcome
+    ? [{ q: `What is the welcome benefit on the ${c.name}?`, a: `${welcome}. Welcome benefits usually require fee payment and sometimes a minimum spend within the first 30–90 days — check the current offer terms on ${b.name}'s site before applying.` }]
+    : []),
+  { q: `How do I apply for the ${c.name}?`, a: `Apply on ${b.name}'s official site (the Apply Now button on this page takes you there). Keep your PAN, address proof, and income documents handy; issuers typically decide within a few working days.` },
+  // [NEEDS LEGAL REVIEW — confirm current RBI Integrated Ombudsman process/timelines before launch.]
+  { q: 'What if something goes wrong with this card?', a: 'Raise a complaint with the issuer\'s grievance team first. If it stays unresolved for 30 days, you can escalate to the RBI Integrated Ombudsman scheme free of charge.' },
 ];
 
 const jsonLd = [
@@ -166,6 +179,39 @@ const jsonLd = [
         )}
     </section>
 
+    <!-- Fees & eligibility prose (SEO_PROMPT §3 — keeps sparse cards above the
+         ~800-word floor with real crawlable analysis, not just the spec table) -->
+    <section class="review__section reading-column">
+      <h2>Fees and charges, in plain terms</h2>
+      <p>
+        {c.joining_fee_amount != null && c.joining_fee_amount > 0
+          ? `You pay ${formatINR(c.joining_fee_amount)} once at joining. `
+          : 'There is no joining fee. '}
+        {c.annual_fee_amount === 0
+          ? `The card is lifetime-free — ${b.name} charges no annual fee, so every rupee of rewards is pure upside and there is no renewal-day maths to do.`
+          : c.annual_fee_waiver_spend_amount
+            ? `The ${formatINR(c.annual_fee_amount)} annual fee is waived if you spend ${formatINRCompact(c.annual_fee_waiver_spend_amount)} in the card year — roughly ${formatINRCompact(Math.round((c.annual_fee_waiver_spend_amount ?? 0) / 12))} a month. If your normal spending clears that bar, treat this as an effectively free card; if it doesn't, count the full fee against the rewards you realistically expect.`
+            : `The annual fee is ${formatINR(c.annual_fee_amount)} with no spend-based waiver, so the card has to earn that back in rewards and benefits every single year to stay in your wallet.`}
+        {c.forex_markup_pct != null
+          ? c.forex_markup_pct === 0
+            ? ' Internationally, there is no forex markup — rare among Indian cards and worth a lot if you travel or shop on foreign sites.'
+            : ` International transactions carry a ${c.forex_markup_pct}% forex markup${c.forex_markup_pct >= 3 ? ", so it's not the card to use abroad" : ', on the lower side for an Indian card'}.`
+          : ''}
+        {' '}As with every Indian credit card, interest on revolved balances is punishing — the reward maths on
+        this page only holds if you pay your statement in full.
+      </p>
+
+      <h2>Eligibility for the {c.name}</h2>
+      <p>
+        {c.cibil_min
+          ? `${b.name} typically looks for a CIBIL score of ${c.cibil_min} or better for this card. A score alone doesn't guarantee approval — income, existing credit lines, and the bank's internal policy all factor in — but below that band an application is a long shot.`
+          : `${b.name} doesn't publish a hard CIBIL cutoff for this card, and our data suggests it is relatively flexible — but income, existing credit lines, and internal policy still decide the outcome.`}
+        {' '}If you're not sure where you stand, our <a href="/cibil-score">CIBIL score guide</a> explains what
+        each band realistically unlocks, and the <a href="/recommend">recommendation tool</a> can filter cards
+        to your band without any impact on your score.
+      </p>
+    </section>
+
     <!-- Counter-argument (always present) -->
     <section class="review__section reading-column">
       <h2>Why you might want a different card</h2>
@@ -187,7 +233,7 @@ const jsonLd = [
     <section class="review__section reading-column">
       <h2>Who should get the {c.name}</h2>
       <ul>
-        <li>{detail.categorySlugs.join(', ') || 'Everyday'} spenders who want {headlineReward(detail).toLowerCase()}.</li>
+        <li>{detail.categorySlugs.join(', ') || 'Everyday'} spenders who want {headlineReward(detail).toLowerCase()}.{detail.categorySlugs[0] ? <> See how it stacks up against every card in our <a href={`/best/${detail.categorySlugs[0]}`}>{detail.categorySlugs[0]} rankings</a>.</> : null}</li>
         {(c.lounge_domestic_visits_per_year ?? 0) > 0 && <li>Occasional flyers who value complimentary lounge access.</li>}
         {c.annual_fee_amount === 0 && <li>First-time cardholders who want zero ongoing cost.</li>}
         {c.cibil_min && c.cibil_min >= 750 && <li>Applicants with a healthy CIBIL score (750+).</li>}

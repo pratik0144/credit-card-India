@@ -14,7 +14,7 @@ const key = `sab-dismissed:${cardName}`;
 <div class="sab" data-sticky-apply data-key={key} hidden>
   <div class="container sab__inner">
     <button type="button" class="sab__close" aria-label="Close banner" data-sab-close>×</button>
-    <img src={src} alt="" width="48" height="30" class="sab__art" />
+    <img src={src} alt={`${cardName} card art`} width="48" height="30" class="sab__art" />
     <span class="sab__name">{cardName}</span>
     <Button variant="primary" size="sm" href={applyHref} external microcopy={`on ${issuer}'s secure site`}>Apply Now</Button>
   </div>

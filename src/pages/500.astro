@@ -1,0 +1,19 @@
+---
+/*
+ * Custom 500 (SEO_PROMPT §6 — no framework default error screens). Astro
+ * serves this for uncaught errors on on-demand routes.
+ */
+import PageLayout from '../layouts/PageLayout.astro';
+import Button from '../components/Button.astro';
+---
+<PageLayout title="Something went wrong" description="An unexpected error occurred on CardCompare.in. Please try again." noindex>
+  <div class="container" style="padding-block: var(--space-24); text-align: center;">
+    <p class="eyebrow">500</p>
+    <h1>Something went wrong on our end</h1>
+    <p style="color: var(--color-text-secondary); max-width: 46ch; margin-inline: auto;">That's on us, not you. Refresh in a moment, or head back to the reviews while we sort it out.</p>
+    <div style="margin-top: var(--space-6); display: flex; gap: var(--space-4); justify-content: center; flex-wrap: wrap;">
+      <Button variant="primary" href="/best/all-credit-cards">Browse all cards</Button>
+      <Button variant="outline" href="/">Go home</Button>
+    </div>
+  </div>
+</PageLayout>

@@ -30,7 +30,7 @@ const path = `/banks/${bank}`;
   title={`${b.name} Credit Cards — Reviews & Comparison`}
   description={`Compare all ${rows.length} ${b.name} credit cards. Independent, issuer-blind reviews with real fees in ₹, reward rates, and eligibility.`}
   canonicalPath={path}
-  jsonLd={[breadcrumbList([{ name: 'Home', path: '/' }, { name: 'Issuers', path: '/banks/' + bank }, { name: b.name, path }])]}
+  jsonLd={[breadcrumbList([{ name: 'Home', path: '/' }, { name: b.name, path }])]}
 >
   <div class="container">
     <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: b.name }]} />

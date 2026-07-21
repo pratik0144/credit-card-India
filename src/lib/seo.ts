@@ -35,7 +35,6 @@ export function financialProduct(
   };
   if (card.image_url) obj.image = card.image_url;
   if (card.annual_fee_amount != null) {
-    obj.annualPercentageRate = undefined;
     obj.feesAndCommissionsSpecification = `Annual fee: ₹${card.annual_fee_amount}`;
   }
   if (rating?.overall_score != null) {
@@ -76,5 +75,38 @@ export function articleSchema(
     ...(opts.updated ? { dateModified: opts.updated } : {}),
     ...(opts.image ? { image: opts.image } : {}),
     publisher: { '@type': 'Organization', name: SITE.name },
+  };
+}
+
+/**
+ * Organization + WebSite (with SearchAction for the Google sitelinks
+ * searchbox) — homepage ONLY (SEO_PROMPT §4).
+ */
+export function organizationSchema(): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SITE.name,
+    url: SITE.url,
+    logo: new URL('/favicon.svg', SITE.url).href,
+    description: SITE.tagline,
+  };
+}
+
+export function webSiteSchema(): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE.name,
+    url: SITE.url,
+    inLanguage: SITE.lang,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${SITE.url}/search?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
   };
 }

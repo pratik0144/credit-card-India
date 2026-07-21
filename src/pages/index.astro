@@ -15,6 +15,7 @@ import AsSeenOnStrip from '../components/AsSeenOnStrip.astro';
 import { SITE } from '../lib/site';
 import { currentMonthYear } from '../lib/format';
 import { getCardListing, getCardDetailsByIds, getArticles } from '../lib/queries';
+import { organizationSchema, webSiteSchema } from '../lib/seo';
 
 export const prerender = true;
 
@@ -29,6 +30,7 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
   title={`${SITE.name} — Compare India's Best Credit Cards`}
   description={`${SITE.tagline}. Independent, issuer-blind reviews of 350+ Indian credit cards — compare rewards, fees, and eligibility. Updated ${currentMonthYear()}.`}
   ogType="website"
+  jsonLd={[organizationSchema(), webSiteSchema()]}
 >
   <!-- Hero -->
   <section class="hero">
@@ -103,6 +105,62 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
       </div>
       <p class="trust__note">Editorial stat callouts are placeholders pending real launch figures.</p>
     </div>
+  </section>
+
+
+  <!-- Below-fold explanatory prose (SEO_PROMPT §3 — 500–700 words, prerendered).
+       Kept after the product sections so it never crowds the hero. -->
+  <section class="container section reading-column about-prose">
+    <h2>Compare credit cards in India, without the sales pitch</h2>
+    <p>
+      {SITE.name} exists to answer one question honestly: <strong>which credit card should you get?</strong>
+      India has more than 350 actively marketed credit cards across 20+ issuers — from lifetime-free starter
+      cards to super-premium metal cards with ₹12,500 annual fees — and almost every site that "compares" them
+      earns more when you pick the card they push hardest. We do earn affiliate commission from some issuers
+      (it's how the site stays free), but our ratings are issuer-blind: the editorial score is locked before
+      anyone looks at what a card pays us, and plenty of our top-rated cards pay us nothing at all.
+    </p>
+
+    <h3>How we compare credit cards</h3>
+    <p>
+      Every card in our catalogue is scored on the same rubric: rewards value at realistic Indian spend levels,
+      total cost of ownership (joining fee, annual fee and its waiver threshold, forex markup), welcome and
+      milestone benefits, redemption flexibility, and issuer service quality. The key step is normalisation —
+      we convert every reward structure, whether it's "5X points on dining" or "1.5% cashback", into an
+      estimated rupee value per ₹100 spent. That's what makes an HDFC points card genuinely comparable with an
+      SBI cashback card or an Axis miles card on a single axis, instead of leaving you to guess what a point
+      is worth.
+    </p>
+
+    <h3>How the recommendation engine works</h3>
+    <p>
+      If you'd rather not read 350 reviews, the <a href="/recommend">card recommendation tool</a> asks about
+      eight questions — your monthly spend by category, whether you travel, your approximate CIBIL score band,
+      and the annual fee you're comfortable with — then ranks cards by the estimated annual value each would
+      return on <em>your</em> spending, net of fees. It's a soft, estimate-based match: no PAN, no OTP, and no
+      hard inquiry on your credit report. If you already hold a card or two, the
+      <a href="/combo-optimizer">combo optimizer</a> goes a step further and finds the best 2- or 3-card
+      pairing, assigning each spend category to whichever card rewards it best.
+    </p>
+
+    <h3>Who this site is for</h3>
+    <p>
+      First-time applicants who want a clear answer on the best credit card in India for their CIBIL score
+      band; frequent flyers deciding between lounge-access travel cards; cashback maximisers weighing a flat
+      2% card against category multipliers; and anyone whose issuer just devalued a reward programme and wants
+      to know whether it's time to switch. Our <a href="/cibil-score">CIBIL score guide</a> explains what
+      score each card realistically requires, and our <a href="/changes">card change log</a> tracks fee hikes
+      and reward devaluations so a review you read today reflects the card as it exists today.
+    </p>
+
+    <h3>What we won't do</h3>
+    <p>
+      We won't tell you a card is "worth it" when the maths says otherwise, we won't hide the annual fee below
+      the fold, and every review includes a "why you might want a different card" section — because the best
+      credit card comparison in India is only useful if it's willing to say <em>no card at all</em> is
+      sometimes the right answer. Figures we can't verify from an issuer's MITC are labelled as estimates, and
+      every rating carries the name of the person who wrote it.
+    </p>
   </section>
 
   <AsSeenOnStrip />

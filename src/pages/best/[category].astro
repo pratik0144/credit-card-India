@@ -50,10 +50,15 @@ const summaryRows = [
   { label: 'Our rating', values: rows.slice(0, 5).map((r) => formatRating(r.overall_score)) },
 ];
 
+const freeCards = rows.filter((r) => r.annual_fee_amount === 0);
+const waiverCards = rows.filter((r) => (r.annual_fee_amount ?? 0) > 0);
 const faqs = [
   { q: `What is the best ${name.toLowerCase()} credit card in India right now?`, a: `Our top-rated pick this month is ${rows[0]?.card_name ?? 'shown above'}, based on our issuer-blind rating of rewards value, fees, and eligibility. Your best card depends on your spending — use our recommendation tool for a personalised match.` },
+  { q: `Can I get a ${name.toLowerCase()} credit card with no annual fee?`, a: freeCards.length > 0 ? `Yes — ${freeCards.length} of the ${rows.length} cards on this list are lifetime-free, including ${freeCards[0].card_name}. Several paid cards also waive their fee at a yearly spend threshold, which works out free if you'd hit that spend anyway.` : `None of the cards currently on this list is lifetime-free, but ${waiverCards.length > 0 ? 'most waive their annual fee once you cross a yearly spend threshold — check the fee row on each card' : 'check each card\'s fee-waiver terms'}, and our all-cards listing can be filtered to zero-fee options.` },
   { q: 'How does CardCompare.in choose these cards?', a: 'We score every card on an issuer-blind rubric covering rewards value, fees and charges, welcome benefits, flexibility, and issuer service. Issuers cannot pay to change a rating or ranking.' },
+  { q: `What CIBIL score do I need for a ${name.toLowerCase()} credit card?`, a: 'Most mainstream cards on this list expect a CIBIL score around 700–750+; premium cards run higher. Each card row shows its minimum band, and our CIBIL score guide explains what your band realistically unlocks.' },
   { q: 'Will applying affect my CIBIL score?', a: 'Checking your eligibility on our site is a soft, estimate-based match and does not affect your CIBIL score. Applying directly with an issuer triggers a hard inquiry with the bank.' },
+  { q: 'How often is this list updated?', a: `Continuously — card data is re-verified against issuer MITC and fee schedules, and our change log tracks fee hikes and reward devaluations as they happen. The rankings you see reflect ${monthYear}.` },
 ];
 
 const jsonLd = [
@@ -111,6 +116,26 @@ const jsonLd = [
       We normalise reward rates to an estimated ₹-value per ₹100 spent so a "5X points" card and a "2% cashback"
       card can be compared on the same axis. Estimated figures are labelled; verified figures come from issuer MITC
       and fee schedules. We do not accept payment to change a rating or a card's position.
+    </p>
+    <p>
+      Two things this ranking deliberately ignores: sign-up commissions (some cards here pay us nothing and
+      rank high anyway) and headline marketing rates that collapse under caps and exclusions. Where a card's
+      advertised "10X" earns a realistic 1.2% after caps, it is scored at 1.2%. We also weigh the annual fee
+      against its waiver threshold — a ₹500-fee card waived at a spend you'd hit anyway is treated as
+      effectively free, while a "free" card with weak rewards still has an opportunity cost.
+    </p>
+
+    <h2>How to choose from this list</h2>
+    <p>
+      Start with your biggest monthly spend category and pick the card that earns hardest there, not the one
+      with the highest overall rating — a 4.5-rated travel card is the wrong answer for someone who never
+      flies. Check the minimum CIBIL band on the row before you apply (our
+      <a href="/cibil-score">CIBIL score guide</a> explains the bands), and open the full review of your
+      shortlist: every review covers the fee maths, the case against the card, and a comparison with its
+      closest competitors. If you'd rather not do this manually, the
+      <a href="/recommend">recommendation engine</a> runs your actual spending against every card here in
+      about a minute, and the <a href="/combo-optimizer">combo optimizer</a> will tell you whether two cards
+      from this list beat any single one.
     </p>
 
     <h2>Frequently asked questions</h2>

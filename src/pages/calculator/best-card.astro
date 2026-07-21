@@ -1,18 +1,34 @@
 ---
 /*
  * "Which card should I use for this?" calculator /calculator/best-card
- * (FRONTEND §11.3). Prerendered shell + React island.
+ * (FRONTEND §11.3). Prerendered shell + React island. Static prose + FAQ below
+ * the island are the crawlable content (SEO_PROMPT §3).
  */
 import PageLayout from '../../layouts/PageLayout.astro';
 import AffiliateDisclosure from '../../components/AffiliateDisclosure.astro';
 import BestCardCalculator from '../../islands/BestCardCalculator.tsx';
 import { getCardPickerList } from '../../lib/queries';
+import { faqPage, breadcrumbList } from '../../lib/seo';
 export const prerender = true;
 const cards = await getCardPickerList();
+
+const faqs = [
+  { q: 'Which credit card should I use for a big purchase?', a: 'The one with the highest effective reward rate for that spend category — which is often not your "main" card. Pick the category and amount above, tick the cards you hold, and the calculator ranks them by estimated rupee value earned on that specific transaction.' },
+  { q: 'Why does the best card change by category?', a: 'Because Indian cards earn at very different rates per category: a card earning 5% on online shopping may earn only 1% on utilities or nothing on fuel, while a fuel card reverses that. Reward caps and category exclusions in the MITC shift the answer further.' },
+  { q: 'Does the calculator account for reward caps?', a: 'It uses published earn rates and our normalised value estimates for a single transaction. Monthly caps you have already partly used are invisible to us — if you are near a cap, the real value will be lower than shown. The redemption caveat is spelled out with every result.' },
+  { q: 'What is a good reward rate on an Indian credit card?', a: 'Measured as rupee value per ₹100 spent, about 1% is baseline, 2% is good, and 3%+ is excellent and usually category-limited. Anything advertised far above that typically depends on point-transfer sweet spots or capped accelerated categories.' },
+  { q: 'Should I use a credit card or UPI for this purchase?', a: 'If the merchant accepts your card without a surcharge and you pay your statement in full, the card usually wins — UPI payments from a bank account earn nothing, while the right card returns 1–5% in rewards plus purchase protections. For small P2P transfers, UPI remains simpler.' },
+];
+const jsonLd = [
+  breadcrumbList([{ name: 'Home', path: '/' }, { name: 'Best card calculator', path: '/calculator/best-card' }]),
+  faqPage(faqs),
+];
 ---
 <PageLayout
   title="Which Card Should I Use? — Best Card Calculator"
   description="Enter a spend category and amount to see which of your cards earns the most. Estimated ₹ value, with the redemption caveat spelled out."
+  canonicalPath="/calculator/best-card"
+  jsonLd={jsonLd}
 >
   <section class="container" style="padding-block: var(--space-12) var(--space-6);">
     <h1>Which card should I use for this purchase?</h1>
@@ -22,8 +38,44 @@ const cards = await getCardPickerList();
   <section class="container section">
     <BestCardCalculator client:visible cards={cards} />
   </section>
+
+  <!-- Prerendered explanatory prose (SEO_PROMPT §3) — the island above renders
+       client-side, so this static copy is what crawlers actually read. -->
+  <section class="container section reading-column">
+    <h2>How the best-card calculator works</h2>
+    <p>
+      Most people default to one card for everything, which quietly costs money: the card that is brilliant
+      for flights may earn a token rate on groceries, and many cards earn nothing at all on fuel or rent-like
+      payments. This calculator answers the narrow, practical question — <em>for this one purchase, which of
+      my cards earns the most?</em> Select the spend category, enter the amount, tick the cards you hold, and
+      it ranks them by estimated rupee value earned on that transaction.
+    </p>
+    <p>
+      Under the hood it uses the same normalisation as the rest of the site: every card's earn structure —
+      points, miles, or cashback — is converted to an estimated value per ₹100 spent in each category, based
+      on published earn rates and sensible redemption assumptions. That lets a "5X reward points" card and a
+      "1.5% unlimited cashback" card compete on one honest axis instead of marketing labels. Points values
+      assume reasonable redemptions (statement credit or catalogue mid-tier, or typical transfer-partner value
+      for miles cards); redeem badly and you will earn less than shown.
+    </p>
+    <h3>What the calculator can't see</h3>
+    <p>
+      It evaluates a single transaction in isolation. Monthly reward caps you have already consumed,
+      limited-time merchant offers, EMI conversions, and surcharge waivers at a specific pump or portal are
+      outside its view, and issuers periodically revise earn rates — the MITC linked from each card's review
+      is always the final word. Use the result as the sensible default for which card to reach for, not a
+      guarantee. If the ranking keeps telling you none of your cards suits your biggest category, that is a
+      signal worth acting on — our <a href="/combo-optimizer">combo optimizer</a> will find the pairing that
+      fixes the gap, and the <a href="/recommend">recommendation engine</a> can match a single new card to
+      your overall spending.
+    </p>
+    <h2>Frequently asked questions</h2>
+    <dl class="faq">{faqs.map((f) => (<><dt>{f.q}</dt><dd>{f.a}</dd></>))}</dl>
+  </section>
 </PageLayout>
 <style>
   .lede { font-size: var(--text-body-lg); color: var(--color-text-secondary); max-width: 54ch; }
   .section { padding-block: var(--space-4) var(--space-16); }
+  .faq dt { font-weight: var(--weight-semibold); margin-top: var(--space-4); }
+  .faq dd { margin: var(--space-1) 0 0; color: var(--color-text-secondary); }
 </style>
