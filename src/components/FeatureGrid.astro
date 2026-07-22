@@ -1,0 +1,41 @@
+---
+/*
+ * FeatureGrid — a titled cluster of FeatureCards on the landing page.
+ * Renders a mono eyebrow + cluster heading, then a responsive grid of whatever
+ * FeatureCards are slotted in. Zero JS, tokens only.
+ */
+export interface Props {
+  eyebrow: string;
+  title: string;
+}
+const { eyebrow, title } = Astro.props;
+---
+<div class="fg">
+  <div class="fg__head">
+    <p class="eyebrow">{eyebrow}</p>
+    <h3 class="fg__title">{title}</h3>
+  </div>
+  <div class="fg__grid">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .fg { display: grid; gap: var(--space-6); }
+  .fg__head { display: grid; gap: var(--space-1); }
+  .fg__title {
+    font-size: var(--text-h3);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-display-sm);
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+  .fg__grid {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 768px) {
+    .fg__grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>

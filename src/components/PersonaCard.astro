@@ -1,0 +1,48 @@
+---
+/*
+ * PersonaCard — a "who it's for" entry on the landing page. Compact: a mono
+ * index label, a persona name, and one line on what they get. Zero JS, tokens only.
+ */
+export interface Props {
+  label: string;
+  name: string;
+  line: string;
+}
+const { label, name, line } = Astro.props;
+---
+<div class="persona">
+  <p class="persona__label">{label}</p>
+  <h3 class="persona__name">{name}</h3>
+  <p class="persona__line">{line}</p>
+</div>
+
+<style>
+  .persona {
+    background: var(--color-surface);
+    border: var(--border-width-hairline) solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+    display: grid;
+    gap: var(--space-2);
+    align-content: start;
+  }
+  .persona__label {
+    font-family: var(--font-mono);
+    font-size: var(--text-caption);
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+  .persona__name {
+    font-size: var(--text-h4);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+  .persona__line {
+    font-size: var(--text-body-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+    margin: 0;
+  }
+</style>

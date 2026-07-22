@@ -1,9 +1,12 @@
 ---
 /*
- * Homepage (FRONTEND §8). Stays sparse by comparison-site standards: hero + CTA
+ * Card-discovery / tool hub (FRONTEND §8). Formerly the homepage — relocated to
+ * /discover so `/` can be a dedicated marketing landing page; content is
+ * otherwise unchanged. Stays sparse by comparison-site standards: hero + CTA
  * into /recommend, category pill strip, 3–5 collapsed CardRows, how-it-works,
  * editorial teasers, trust block, newsletter, footer. No dense tables above the
- * fold (§3). Prerendered (§5).
+ * fold (§3). Prerendered (§5). The Organization + WebSite JSON-LD now lives on
+ * the canonical `/` entry (SEO_PROMPT §4), not here.
  */
 import PageLayout from '../layouts/PageLayout.astro';
 import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
@@ -15,7 +18,6 @@ import AsSeenOnStrip from '../components/AsSeenOnStrip.astro';
 import { SITE } from '../lib/site';
 import { currentMonthYear } from '../lib/format';
 import { getCardListing, getCardDetailsByIds, getArticles } from '../lib/queries';
-import { organizationSchema, webSiteSchema } from '../lib/seo';
 
 export const prerender = true;
 
@@ -28,10 +30,10 @@ const teasers = (await getArticles()).slice(0, 3);
 const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Best lifetime-free'];
 ---
 <PageLayout
-  title={`${SITE.name} — Compare India's Best Credit Cards`}
-  description={`${SITE.tagline}. Independent, issuer-blind reviews of 350+ Indian credit cards — compare rewards, fees, and eligibility. Updated ${currentMonthYear()}.`}
+  title={`Browse & Compare Credit Cards — ${SITE.name}`}
+  description={`${SITE.tagline}. Independent, issuer-blind reviews of Indian credit cards — compare rewards, fees, and eligibility. Updated ${currentMonthYear()}.`}
+  canonicalPath="/discover"
   ogType="website"
-  jsonLd={[organizationSchema(), webSiteSchema()]}
 >
   <!-- Hero — mesh-gradient atmospheric backdrop, hero scale ONLY -->
   <section class="hero mesh-hero">
