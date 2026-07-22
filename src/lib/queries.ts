@@ -25,6 +25,32 @@ function warnOnce(label: string, detail: string) {
   console.warn(`[queries] ${label}: falling back to seed data — ${detail}`);
 }
 
+/* PostgREST serialises Postgres `numeric` columns as strings ("4.8", "10000").
+ * Every downstream consumer (formatRating's .toFixed, tier math, ₹ grouping)
+ * expects real numbers, so coerce known numeric fields at the boundary. */
+const NUMERIC_CARD_FIELDS = [
+  'joining_fee_amount', 'annual_fee_amount', 'annual_fee_waiver_spend_amount',
+  'forex_markup_pct', 'base_reward_value_inr_per_100', 'fuel_surcharge_waiver_pct',
+  'lounge_domestic_visits_per_year', 'lounge_intl_visits_per_year',
+  'age_min', 'age_max', 'cibil_min', 'editorial_score_5', 'overall_score',
+  'rewards_value_score', 'fees_charges_score', 'welcome_benefit_score',
+  'flexibility_score', 'issuer_service_score', 'amount', 'min_amount',
+  'max_amount', 'min_income_amount', 'multiplier', 'rate_pct',
+  'estimated_value_inr', 'estimated_inr_per_point_typical',
+] as const;
+
+function coerceNumerics<T>(row: T): T {
+  if (!row || typeof row !== 'object') return row;
+  const r = row as Record<string, unknown>;
+  for (const f of NUMERIC_CARD_FIELDS) {
+    if (typeof r[f] === 'string' && r[f] !== '') {
+      const n = Number(r[f]);
+      if (!Number.isNaN(n)) r[f] = n;
+    }
+  }
+  return row;
+}
+
 /**
  * Run a live Supabase array query; fall back to `seedValue` on no-env, error, or
  * empty result. `emptyIsFallback` (default true) treats a 0-row result as "not
@@ -44,7 +70,7 @@ async function liveArray<T>(
       warnOnce(label, 'live query returned 0 rows. Import the catalog (npm run import:cards).');
       return seedValue;
     }
-    return data ?? seedValue;
+    return (data ?? seedValue).map(coerceNumerics);
   } catch (e) {
     warnOnce(label, `live query threw: ${(e as Error).message}. Check PUBLIC_SUPABASE_URL/KEY.`);
     return seedValue;
@@ -144,12 +170,12 @@ async function assembleLiveDetail(card: Card): Promise<CardDetail> {
       supabase.from('card_categories').select('category_id, categories(slug)').eq('card_id', cardId),
     ]);
   return {
-    card,
+    card: coerceNumerics(card),
     bank: bank.data as Bank,
-    rating: (rating.data as CardRating) ?? null,
-    rewardCategories: (rewardCategories.data ?? []) as CardRewardCategory[],
-    bonuses: (bonuses.data ?? []) as CardBonus[],
-    fees: (fees.data ?? []) as CardFee[],
+    rating: rating.data ? coerceNumerics(rating.data as CardRating) : null,
+    rewardCategories: ((rewardCategories.data ?? []) as CardRewardCategory[]).map(coerceNumerics),
+    bonuses: ((bonuses.data ?? []) as CardBonus[]).map(coerceNumerics),
+    fees: ((fees.data ?? []) as CardFee[]).map(coerceNumerics),
     eligibility: (eligibility.data ?? []) as CardEligibility[],
     changeLog: (changeLog.data ?? []) as CardChangeLog[],
     article: (article.data as Article) ?? null,
@@ -277,10 +303,14 @@ export async function getCardDetailById(cardId: string): Promise<CardDetail | nu
 export async function getComparePairs(): Promise<{ a: string; b: string }[]> {
   // Curated, not the full N×N permutation (FRONTEND §8). Slugs are full card slugs.
   return [
-    { a: 'hdfc-bank-millennia-credit-card', b: 'sbi-card-cashback-sbi-card' },
+    { a: 'hdfc-bank-millennia-credit-card', b: 'state-bank-of-india-cashback-sbi-card' },
     { a: 'axis-bank-atlas-credit-card', b: 'american-express-platinum-travel-credit-card' },
-    { a: 'icici-bank-amazon-pay-credit-card', b: 'hdfc-bank-swiggy-credit-card' },
+    { a: 'icici-bank-amazon-pay-icici-bank-credit-card', b: 'hdfc-bank-swiggy-hdfc-bank-credit-card' },
     { a: 'hdfc-bank-regalia-gold-credit-card', b: 'axis-bank-magnus-credit-card' },
+    { a: 'hdfc-bank-infinia-metal-credit-card', b: 'axis-bank-magnus-credit-card' },
+    { a: 'hdfc-bank-diners-club-black-credit-card', b: 'hdfc-bank-infinia-metal-credit-card' },
+    { a: 'idfc-first-bank-first-millennia-credit-card', b: 'hdfc-bank-millennia-credit-card' },
+    { a: 'american-express-gold-card', b: 'hdfc-bank-regalia-gold-credit-card' },
   ];
 }
 

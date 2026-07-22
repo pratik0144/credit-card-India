@@ -16,11 +16,13 @@ CardCompare.in helps Indian consumers compare 350+ credit cards across 20+ banks
 | **Smart Recommender** | 8-question wizard that scores and ranks cards based on spend profile, income, CIBIL, and goals |
 | **Combo Optimizer** | Finds the best 2–3 card combination for your spending pattern across categories |
 | **Best Card Calculator** | "Which card should I use for this purchase?" — instant per-transaction advice |
-| **Compare Tool** | Side-by-side comparison of up to 3 cards |
+| **Compare Tool** | Side-by-side comparison of up to 3 cards, plus curated `[a]-vs-[b]` pages |
 | **Change Tracker** | Monitors fee increases, reward devaluations, and benefit changes across the market |
-| **CIBIL Score Hub** | Band-based card recommendations (750+, 700–749, etc.) |
+| **CIBIL Score Hub** | Band-based card recommendations (750+, 700–749, 650–699, below 650) |
 | **My Wallet** | Auth-gated personal tracker for fee-waiver progress and card management |
-| **Full-Text Search** | Weighted search across cards and editorial articles |
+| **Full-Text Search** | Weighted search across cards and editorial articles with offline fallback |
+| **Guides & News** | Editorial guides, category roundups, and industry news articles |
+| **Author Profiles** | Editorial team pages with expertise tags and review board flags |
 
 ---
 
@@ -31,16 +33,17 @@ CardCompare.in helps Indian consumers compare 350+ credit cards across 20+ banks
 | **Framework** | [Astro 5](https://astro.build/) (hybrid SSG + SSR) |
 | **Interactive Islands** | [React 19](https://react.dev/) (6 client-side islands) |
 | **Backend** | [Supabase](https://supabase.com/) (Postgres, Auth, Edge Functions, Storage) |
-| **Styling** | Custom CSS design tokens (no Tailwind, no UI library) |
+| **Styling** | Custom CSS design tokens (no Tailwind, no UI library) — 200 lines of tokens, 237 lines of globals |
 | **Email** | [Resend](https://resend.com/) (change alerts, fee-waiver reminders) |
-| **Enrichment** | Deterministic parser (reward categories/bonuses/offers from the source JSON — no external API) |
-| **Hosting** | Static deploy with Node SSR adapter for `/wallet` |
+| **Enrichment** | Deterministic parser (reward categories/bonuses/offers from source JSON — no external API, no LLM) |
+| **Hosting** | Static deploy with Node SSR adapter for `/wallet` (swappable to Vercel/Netlify) |
+| **TypeScript** | Strict mode with path aliases (`@/*`, `@lib/*`, `@components/*`, `@islands/*`, `@layouts/*`) |
 
 ---
 
 ## 📋 Prerequisites
 
-- **Node.js** ≥ 18
+- **Node.js** ≥ 22.12.0
 - **npm** ≥ 9
 - A **Supabase** project ([supabase.com](https://supabase.com))
 - *(Optional)* Resend API key for email features
@@ -86,7 +89,7 @@ DEPLOY_HOOK_URL=
 > 📘 **Full walkthrough:** [`SUPABASE_GUIDE.md`](./SUPABASE_GUIDE.md) covers project
 > creation, migrations, seeding, import, RLS verification, and a "no cards showing"
 > troubleshooting checklist. For how the system fits together, see
-> [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+> [`architecture.md`](./architecture.md).
 
 Run the 7 migration files **in order** in the Supabase SQL Editor:
 
@@ -141,7 +144,7 @@ npm run dev
 
 The site runs at `http://localhost:4321`.
 
-> **No Supabase? No problem.** The data layer has a built-in seed-data fallback — the site builds and runs with hand-crafted sample data when Supabase environment variables are not set.
+> **No Supabase? No problem.** The data layer has a built-in seed-data fallback — the site builds and runs with hand-crafted sample data (12 cards, 6 banks) when Supabase environment variables are not set. A `warnOnce()` log tells you exactly why and how to switch to live data.
 
 ---
 
@@ -149,16 +152,33 @@ The site runs at `http://localhost:4321`.
 
 ```
 ccIndia.com/
-├── public/                      Static assets (card images, favicon, OG image)
-│   └── card-img/                Card art PNGs
+├── public/                      Static assets
+│   ├── card-img/                368 card art PNGs
+│   ├── favicon.svg
+│   ├── og-default.png           Default Open Graph image
+│   └── robots.txt
 ├── src/
-│   ├── components/              16 Astro components (CardRow, GlobalHeader, etc.)
+│   ├── components/              17 Astro components (zero JS)
+│   │   ├── GlobalHeader.astro   Sticky nav with mega-menu & mobile drawer
+│   │   ├── CardRow.astro        Core card display with expandable detail
+│   │   ├── ComparisonTable.astro  Semantic table (cards + listing variants)
+│   │   ├── FilterSortBar.astro  Client-side filter via data-* attributes
+│   │   ├── RatingWidget.astro   Editorial rating with sub-score breakdown
+│   │   ├── CategoryPillStrip.astro  Horizontal scrolling category pills
+│   │   ├── Button.astro         Polymorphic <a>/<button>, 4 variants
+│   │   ├── StickyApplyBanner.astro  Bottom sticky CTA on reviews
+│   │   ├── OnThisPage.astro     Table-of-contents sidebar nav
+│   │   ├── NewsletterForm.astro Email subscribe → Supabase
+│   │   ├── Breadcrumbs.astro, AuthorByline.astro, ProsConsBlock.astro,
+│   │   │   ScoreTierBadge.astro, AffiliateDisclosure.astro,
+│   │   │   AsSeenOnStrip.astro, SiteFooter.astro
+│   │   └── ...
 │   ├── islands/                 6 React interactive islands
 │   │   ├── RecommendWizard.tsx  8-question recommendation quiz
 │   │   ├── ComboOptimizer.tsx   Best card combo finder
 │   │   ├── CompareTool.tsx      Side-by-side comparison
 │   │   ├── BestCardCalculator.tsx  Per-purchase card picker
-│   │   ├── SearchBox.tsx        Full-text search
+│   │   ├── SearchBox.tsx        Full-text search + offline fallback
 │   │   └── WalletDashboard.tsx  Auth-gated wallet tracker
 │   ├── layouts/                 3 layouts (Base → Page → Article)
 │   ├── lib/                     11 utility modules
@@ -168,16 +188,20 @@ ccIndia.com/
 │   │   ├── seo.ts               JSON-LD structured data builders
 │   │   ├── format.ts            ₹ formatting with Indian digit grouping
 │   │   ├── taxonomy.ts          Spend categories & input enums
-│   │   └── ...
-│   ├── pages/                   25+ routes (SSG + 1 SSR)
+│   │   ├── database.types.ts    Full DB schema TypeScript contracts
+│   │   ├── seed-data.ts         Offline fallback dataset (12 cards, 6 banks)
+│   │   ├── derive.ts            Data-driven fallback helpers (pros/cons/highlights)
+│   │   ├── site.ts              Site config (name, domain, tagline)
+│   │   └── tiers.ts             Qualitative badge tier mapping
+│   ├── pages/                   27 page files
 │   └── styles/                  Design token system
-│       ├── tokens.css           80+ CSS custom properties
-│       ├── global.css           Resets & utilities
-│       └── islands.css          Shared React island styles
+│       ├── tokens.css           200 lines — 80+ CSS custom properties
+│       ├── global.css           237 lines — resets, typography, utilities
+│       └── islands.css          99 lines — shared React island styles
 ├── scripts/
 │   ├── import-cards.ts          Structured data import (368 cards)
 │   ├── enrich-cards.ts          Deterministic reward/bonus/offer parsing (no API)
-│   └── lib/parse.ts             Pure parsing library (25+ parsers)
+│   └── lib/parse.ts             Pure parsing library (620 lines, 25+ parsers)
 ├── supabase/
 │   ├── migrations/              7 SQL migration files
 │   ├── functions/               6 Edge Functions + shared lib
@@ -190,11 +214,57 @@ ccIndia.com/
 │   │   └── _shared/             Shared scoring, taxonomy, client utils
 │   └── seed/                    Reference data (categories, point valuations)
 ├── bank-data/                   Source data (368 cards, Excel, images)
+│   └── cc-data/
+│       ├── Master-data-banks.json  585KB source JSON
+│       ├── axisfinaldone18jun2026.xlsx
+│       ├── convert_xlsx_to_json.py
+│       └── card-img/            368 card art PNGs (source)
 ├── instructions/                Design & build specifications
+│   ├── FRONTEND_PROMPT.md       Frontend design spec
+│   ├── BACKEND_PROMPT.md        Backend & database spec
+│   └── DESIGN (1).md            Full design system spec
 ├── astro.config.mjs
 ├── package.json
-└── tsconfig.json
+├── tsconfig.json
+├── CHANGELOG.md                 Full development history
+├── SUPABASE_GUIDE.md            Database setup walkthrough
+├── DESIGN-vercel.md             Vercel deployment design spec
+└── architecture.md              Technical architecture guide
 ```
+
+---
+
+## 🗺 Route Map
+
+| Route | Page | Mode | Description |
+|---|---|---|---|
+| `/` | `index.astro` | SSG | Homepage with featured cards, category pills, tools |
+| `/cards/[bank]/[card]` | `cards/[bank]/[card].astro` | SSG | Individual card review (full detail, JSON-LD) |
+| `/banks/[bank]` | `banks/[bank].astro` | SSG | Bank detail with all its cards |
+| `/best/[category]` | `best/[category].astro` | SSG | Category card listing (e.g., /best/cashback) |
+| `/cibil-score` | `cibil-score.astro` | SSG | CIBIL score hub with band-based recommendations |
+| `/compare` | `compare/index.astro` | SSG | Side-by-side comparison tool |
+| `/compare/[pair]` | `compare/[pair].astro` | SSG | Curated card vs card comparisons |
+| `/recommend` | `recommend.astro` | SSG | Smart recommendation wizard (React island) |
+| `/combo-optimizer` | `combo-optimizer.astro` | SSG | Best card combo finder (React island) |
+| `/calculator/best-card` | `calculator/best-card.astro` | SSG | Per-purchase card picker (React island) |
+| `/search` | `search.astro` | SSG | Full-text search (noindexed) |
+| `/changes` | `changes.astro` | SSG | Card change history |
+| `/guides` | `guides/index.astro` | SSG | All editorial guides |
+| `/guides/[slug]` | `guides/[slug].astro` | SSG | Individual guide article |
+| `/news` | `news/index.astro` | SSG | Industry news listing |
+| `/news/[slug]` | `news/[slug].astro` | SSG | Individual news article |
+| `/authors` | `authors/index.astro` | SSG | Editorial team listing |
+| `/authors/[slug]` | `authors/[slug].astro` | SSG | Author profile page |
+| `/wallet` | `wallet.astro` | **SSR** | Auth-gated personal wallet tracker |
+| `/about` | `about.astro` | SSG | About CardCompare.in |
+| `/contact` | `contact.astro` | SSG | Contact page |
+| `/affiliate-disclosure` | `affiliate-disclosure.astro` | SSG | Affiliate disclosure |
+| `/editorial-guidelines` | `editorial-guidelines.astro` | SSG | Editorial independence policy |
+| `/privacy-policy` | `privacy-policy.astro` | SSG | Privacy policy |
+| `/terms-of-use` | `terms-of-use.astro` | SSG | Terms of use |
+| `/404` | `404.astro` | SSG | Not found error page |
+| `/500` | `500.astro` | SSG | Server error page |
 
 ---
 
@@ -212,21 +282,46 @@ ccIndia.com/
 
 ## 🔐 Security Model
 
-- **Row Level Security (RLS)** enabled on all 24 tables
-- **Public catalog:** Read-only for anonymous and authenticated users
-- **User data:** Owner-scoped — users can only access their own wallet, spend logs, and reminders
+- **Row Level Security (RLS)** enabled on all 24 tables (~50 policies)
+- **Public catalog:** Read-only for anonymous and authenticated users (13 tables)
+- **User data:** Owner-scoped — users can only access their own wallet, spend logs, and reminders (`user_id = auth.uid()`)
 - **Internal data:** `card_snapshots` and `data_quality_flags` are service-role only
 - **Articles:** Only `is_published = true` articles are publicly visible
 - **Analytics tables** (`newsletter_subscribers`, `card_click_events`): Insert-only, never client-readable
 - **No PAN/Aadhaar** collected anywhere
-- Service-role key is **never** exposed to the client
+- Service-role key is **never** exposed to the client (`typeof window` guard + Vite `define: {}` belt-and-braces)
+- Email dedupe via `reminders_sent` with 14-day window prevents spam
+- `.gitignore` excludes all `.env` files except `.env.example`
+
+---
+
+## 📊 Summary Statistics
+
+| Metric | Count |
+|---|---|
+| **Page files** | 27 |
+| **Astro Components** | 17 |
+| **React Islands** | 6 |
+| **Layouts** | 3 |
+| **Lib modules** | 11 |
+| **Edge Functions** | 6 (+ 3 shared utility files) |
+| **Database Tables** | 24 |
+| **Database Views** | 3 |
+| **Storage Buckets** | 2 |
+| **RLS Policies** | ~50 |
+| **CSS Custom Properties** | 80+ |
+| **Source Cards** | 368 |
+| **Supported Banks** | 20+ |
+| **Content Categories** | 12 |
+| **Parser Functions** | 25+ (620 lines) |
+| **Seed Fallback Cards** | 12 |
 
 ---
 
 ## 📄 Legal & Compliance
 
-- **Affiliate disclosure** prominently displayed on every page with external apply links
-- **Editorial independence statement** in site footer
+- **Affiliate disclosure** prominently displayed on every page with external apply links (dedicated `/affiliate-disclosure` page)
+- **Editorial independence statement** in site footer and `/editorial-guidelines`
 - **CIBIL/CIC disclaimer** — recommendations are rule-based estimates, not bureau soft-pulls
 - Apply buttons always include "on [Issuer]'s secure site" microcopy
 - External links use `rel="nofollow sponsored noopener"`

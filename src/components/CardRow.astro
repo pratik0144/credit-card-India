@@ -142,16 +142,18 @@ function row_official(_r: CardListingRow): string { return '#'; }
 
 <style>
   .cardrow {
-    border: var(--border-width-hairline) solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     padding: var(--space-6);
     background: var(--color-surface);
+    box-shadow: var(--shadow-hairline-inset), var(--shadow-elevation-1);
     margin-bottom: var(--space-8);
+    transition: box-shadow var(--duration-base) var(--ease-out);
   }
+  .cardrow:hover { box-shadow: var(--shadow-hairline-inset), var(--shadow-elevation-2); }
   .cardrow__main { display: grid; gap: var(--space-6); }
   @media (min-width: 768px) { .cardrow__main { grid-template-columns: 240px 1fr; } }
   .cardrow__art img { width: 100%; height: auto; aspect-ratio: 1.59 / 1; object-fit: contain; border-radius: var(--radius-sm); background: var(--color-surface-alt); }
-  .cardrow__eyebrow { color: var(--color-primary-blue); margin-bottom: var(--space-1); }
+  .cardrow__eyebrow { color: var(--color-text-secondary); margin-bottom: var(--space-1); }
   .cardrow__name { font-size: var(--text-h3); margin-bottom: var(--space-1); }
   .cardrow__issuer { color: var(--color-text-secondary); font-size: var(--text-body-sm); margin-bottom: var(--space-3); }
   .cardrow__headline { margin: var(--space-3) 0; font-size: var(--text-body-lg); }

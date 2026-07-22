@@ -8,7 +8,7 @@ import AffiliateDisclosure from '../../components/AffiliateDisclosure.astro';
 import CompareTool from '../../islands/CompareTool.tsx';
 import type { CompareCard } from '../../islands/CompareTool.tsx';
 import { getCardListing, getCardDetailsByIds } from '../../lib/queries';
-import { formatAnnualFee, formatRating } from '../../lib/format';
+import { formatAnnualFee, formatRating , formatLounge } from '../../lib/format';
 export const prerender = true;
 
 const listing = await getCardListing();
@@ -23,7 +23,7 @@ const cards: CompareCard[] = listing.map((r, i) => {
     rating: formatRating(r.overall_score),
     cibil: r.cibil_min != null ? String(r.cibil_min) : 'Flexible',
     forex: c?.forex_markup_pct != null ? `${c.forex_markup_pct}%` : '—',
-    lounge: c ? `${(c.lounge_domestic_visits_per_year ?? 0)} dom / ${(c.lounge_intl_visits_per_year ?? 0)} intl` : '—',
+    lounge: c ? `${formatLounge(c.lounge_domestic_visits_per_year ?? 0)} dom / ${formatLounge(c.lounge_intl_visits_per_year ?? 0)} intl` : '—',
     reviewHref: `/cards/${r.bank_slug}/${r.card_slug.replace(new RegExp(`^${r.bank_slug}-`), '')}`,
     applyHref: c?.official_url ?? '#',
   };

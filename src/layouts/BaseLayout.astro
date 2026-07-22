@@ -43,6 +43,7 @@ const fullTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
     <title>{fullTitle}</title>
@@ -60,8 +61,15 @@ const fullTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
     <meta property="og:locale" content="en_IN" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <!-- font-display: swap for the primary sans stack (§12); no render-blocking fonts -->
+    <!-- Inter (Geist substitute) + JetBrains Mono (Geist Mono substitute) —
+         DESIGN-vercel.md font-substitute note; display=swap, non-blocking. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap"
+    />
+    <script is:inline>document.documentElement.classList.add('js');</script>
 
     {jsonLd.map((obj) => (
       <script type="application/ld+json" set:html={JSON.stringify(obj)} />
@@ -71,5 +79,20 @@ const fullTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
   </head>
   <body>
     <slot />
+    <script>
+      // Scroll-reveal (global.css .reveal) — opacity/transform only, once per
+      // element, disabled implicitly under prefers-reduced-motion by CSS.
+      const els = document.querySelectorAll('.reveal');
+      if (els.length && 'IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); }
+          }
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        els.forEach((el) => io.observe(el));
+      } else {
+        els.forEach((el) => el.classList.add('is-visible'));
+      }
+    </script>
   </body>
 </html>

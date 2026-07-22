@@ -451,6 +451,10 @@ export function slugify(s: string): string {
   return String(s)
     .toLowerCase()
     .normalize('NFKD')
+    // '+' is product-significant in Indian card names (Air+ vs Air, Zenith+ vs
+    // Zenith, Power+ vs Power) — map it to '-plus' BEFORE stripping symbols so
+    // distinct products never collapse onto one slug.
+    .replace(/\+/g, '-plus')
     .replace(/[^\w\s-]/g, ' ')
     .replace(/[\s_]+/g, '-')
     .replace(/-+/g, '-')

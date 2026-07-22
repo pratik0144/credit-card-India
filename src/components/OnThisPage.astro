@@ -1,0 +1,57 @@
+---
+/*
+ * OnThisPage (DESIGN §4, §12) — anchor jump nav for content over ~1,200 words,
+ * generated from the page's H2 structure. Desktop: plain link list. Narrow
+ * widths: collapses to a "Jump to" <select> (§11 "Prefer" — select over hidden
+ * hamburger anchor menu).
+ */
+export interface Props {
+  items: { id: string; label: string }[];
+}
+const { items } = Astro.props;
+---
+<nav class="otp" aria-label="On this page">
+  <p class="eyebrow otp__title">On this page</p>
+
+  <ul class="otp__list">
+    {items.map((it) => <li><a href={`#${it.id}`}>{it.label}</a></li>)}
+  </ul>
+
+  <label class="otp__jump">
+    <span class="sr-only">Jump to section</span>
+    <select data-otp-jump>
+      <option value="">Jump to…</option>
+      {items.map((it) => <option value={it.id}>{it.label}</option>)}
+    </select>
+  </label>
+</nav>
+
+<style>
+  .otp { margin-block: var(--space-6); }
+  .otp__title { margin-bottom: var(--space-2); }
+  .otp__list { display: none; }
+  .otp__jump select {
+    width: 100%; max-width: 320px; min-height: 44px;
+    font-size: var(--text-body); font-family: inherit;
+    border: var(--border-width-hairline) solid var(--color-border-strong);
+    border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3);
+    background: var(--color-surface); color: var(--color-text-primary);
+  }
+  @media (min-width: 768px) {
+    .otp__jump { display: none; }
+    .otp__list {
+      display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4);
+      list-style: none; margin: 0; padding: 0;
+    }
+    .otp__list a { font-size: var(--text-body-sm); }
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLSelectElement>('[data-otp-jump]').forEach((sel) => {
+    sel.addEventListener('change', () => {
+      if (sel.value) document.getElementById(sel.value)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      sel.value = '';
+    });
+  });
+</script>

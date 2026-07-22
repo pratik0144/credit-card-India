@@ -12,13 +12,14 @@ import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import AffiliateDisclosure from '../../../components/AffiliateDisclosure.astro';
 import AuthorByline from '../../../components/AuthorByline.astro';
 import RatingWidget from '../../../components/RatingWidget.astro';
+import OnThisPage from '../../../components/OnThisPage.astro';
 import ScoreTierBadge from '../../../components/ScoreTierBadge.astro';
 import ProsConsBlock from '../../../components/ProsConsBlock.astro';
 import ComparisonTable from '../../../components/ComparisonTable.astro';
 import Button from '../../../components/Button.astro';
 import NewsletterForm from '../../../components/NewsletterForm.astro';
 import { getAllCardSlugs, getCardBySlug, getCardListing, getAuthorById, getAuthors, getRecentChangeForCard } from '../../../lib/queries';
-import { formatAnnualFee, formatINR, formatINRCompact, currentMonthYear } from '../../../lib/format';
+import { formatAnnualFee, formatINR, formatINRCompact, formatLounge, currentMonthYear } from '../../../lib/format';
 import { annualFeeTier, forexTier, cibilTier, rewardValueTier } from '../../../lib/tiers';
 import { derivePros, deriveCons, welcomeBenefit, headlineReward } from '../../../lib/derive';
 import { breadcrumbList, faqPage, financialProduct } from '../../../lib/seo';
@@ -76,7 +77,7 @@ const faqs = [
   { q: `What CIBIL score do I need for the ${c.name}?`, a: c.cibil_min ? `Issuers typically look for a CIBIL score of ${c.cibil_min}+ for this card, though approval depends on the bank's full review of your application.` : 'This card is relatively flexible on credit score; approval still depends on the issuer\'s review.' },
   { q: `What is the annual fee for the ${c.name}?`, a: `${formatAnnualFee(c.annual_fee_amount)}${c.annual_fee_waiver_spend_amount ? `, waived when you spend ${formatINRCompact(c.annual_fee_waiver_spend_amount)} in a year.` : '.'}` },
   ...((c.lounge_domestic_visits_per_year ?? 0) > 0 || (c.lounge_intl_visits_per_year ?? 0) > 0
-    ? [{ q: `Does the ${c.name} offer airport lounge access?`, a: `Yes — ${(c.lounge_domestic_visits_per_year ?? 0) > 0 ? `${c.lounge_domestic_visits_per_year} complimentary domestic lounge visits a year` : ''}${(c.lounge_domestic_visits_per_year ?? 0) > 0 && (c.lounge_intl_visits_per_year ?? 0) > 0 ? ' and ' : ''}${(c.lounge_intl_visits_per_year ?? 0) > 0 ? `${c.lounge_intl_visits_per_year} international visits${c.lounge_intl_network ? ` via ${c.lounge_intl_network}` : ''}` : ''}. Lounge programmes change often — confirm current access rules with ${b.name} before travelling.` }]
+    ? [{ q: `Does the ${c.name} offer airport lounge access?`, a: `Yes — ${(c.lounge_domestic_visits_per_year ?? 0) > 0 ? `${formatLounge(c.lounge_domestic_visits_per_year)} complimentary domestic lounge visits a year` : ''}${(c.lounge_domestic_visits_per_year ?? 0) > 0 && (c.lounge_intl_visits_per_year ?? 0) > 0 ? ' and ' : ''}${(c.lounge_intl_visits_per_year ?? 0) > 0 ? `${formatLounge(c.lounge_intl_visits_per_year)} international visits${c.lounge_intl_network ? ` via ${c.lounge_intl_network}` : ''}` : ''}. Lounge programmes change often — confirm current access rules with ${b.name} before travelling.` }]
     : [{ q: `Does the ${c.name} offer airport lounge access?`, a: `No complimentary lounge access is listed for this card. If lounges matter to you, compare travel cards in our best-of listings instead.` }]),
   ...(c.forex_markup_pct != null
     ? [{ q: `What is the forex markup on the ${c.name}?`, a: `${c.forex_markup_pct}% on international transactions${c.forex_markup_pct >= 3 ? ' — around the standard (and expensive) end for Indian cards, so it is not the card to swipe abroad' : c.forex_markup_pct > 0 ? ' — lower than the typical 3.5%, which makes it a reasonable companion for international spends' : ' — zero markup, one of the strongest reasons to carry it for international spending'}.` }]
@@ -121,6 +122,16 @@ const jsonLd = [
 
     <AffiliateDisclosure />
 
+    <OnThisPage items={[
+      { id: 'our-rating', label: 'Our rating' },
+      { id: 'at-a-glance', label: 'At a glance' },
+      { id: 'pros-cons', label: 'Pros & cons' },
+      { id: 'why-this-card', label: 'Why this card' },
+      { id: 'fees-charges', label: 'Fees & charges' },
+      { id: 'who-should-get-it', label: 'Who should get it' },
+      { id: 'faq', label: 'FAQ' },
+    ]} />
+
     {recentChange && (
       <aside class="callout callout--change">
         <p class="eyebrow">Recent change to this card</p>
@@ -129,7 +140,7 @@ const jsonLd = [
     )}
 
     <!-- Overall rating + breakdown -->
-    <section class="review__section">
+    <section class="review__section" id="our-rating">
       <h2>Our rating</h2>
       <RatingWidget score={detail.rating?.overall_score ?? c.editorial_score_5} size="lg" subscores={detail.rating} idSuffix={c.id} />
     </section>
@@ -145,7 +156,7 @@ const jsonLd = [
     </section>
 
     <!-- At a glance -->
-    <section class="review__section">
+    <section class="review__section" id="at-a-glance">
       <h2>At a glance</h2>
       <dl class="glance">
         <div><dt>Reward Rate</dt><dd><strong>{c.reward_rate_general_text ?? '—'}</strong> <ScoreTierBadge tier={rewT.tier} label={rewT.label} /></dd></div>
@@ -161,19 +172,19 @@ const jsonLd = [
     </section>
 
     <!-- Pros & Cons -->
-    <section class="review__section">
+    <section class="review__section" id="pros-cons">
       <h2>Pros and cons</h2>
       <ProsConsBlock pros={pros} cons={cons} />
     </section>
 
     <!-- Long-form: why you might want this card -->
-    <section class="review__section reading-column">
+    <section class="review__section reading-column" id="why-this-card">
       <h2>Why you might want the {c.name}</h2>
       {detail.article?.body
         ? <div set:html={detail.article.body} />
         : (
           <>
-            <p>The {c.name} earns {headlineReward(detail).toLowerCase()}. {welcome ? `New cardholders get a welcome benefit of ${welcome}. ` : ''}{(c.lounge_domestic_visits_per_year ?? 0) > 0 ? `It also includes ${c.lounge_domestic_visits_per_year} complimentary domestic airport lounge visits a year${(c.lounge_intl_visits_per_year ?? 0) > 0 ? `, plus ${c.lounge_intl_visits_per_year} international visits${c.lounge_intl_network ? ` via ${c.lounge_intl_network}` : ''}` : ''}. ` : ''}</p>
+            <p>The {c.name} earns {headlineReward(detail).toLowerCase()}. {welcome ? `New cardholders get a welcome benefit of ${welcome}. ` : ''}{(c.lounge_domestic_visits_per_year ?? 0) > 0 ? `It also includes ${formatLounge(c.lounge_domestic_visits_per_year).toLowerCase() === 'unlimited' ? 'unlimited' : c.lounge_domestic_visits_per_year} complimentary domestic airport lounge visits a year${(c.lounge_intl_visits_per_year ?? 0) > 0 ? `, plus ${formatLounge(c.lounge_intl_visits_per_year).toLowerCase() === 'unlimited' ? 'unlimited' : c.lounge_intl_visits_per_year} international visits${c.lounge_intl_network ? ` via ${c.lounge_intl_network}` : ''}` : ''}. ` : ''}</p>
             <p><em>Tip:</em> {c.annual_fee_waiver_spend_amount ? `spending ${formatINRCompact(c.annual_fee_waiver_spend_amount)} across the year waives the ${formatINR(c.annual_fee_amount)} fee — worth planning your big purchases around if you're close.` : c.annual_fee_amount === 0 ? 'this is a lifetime-free card, so there is no fee threshold to worry about.' : 'weigh the annual fee against the rewards you would realistically earn at your spend level.'}</p>
           </>
         )}
@@ -181,7 +192,7 @@ const jsonLd = [
 
     <!-- Fees & eligibility prose (SEO_PROMPT §3 — keeps sparse cards above the
          ~800-word floor with real crawlable analysis, not just the spec table) -->
-    <section class="review__section reading-column">
+    <section class="review__section reading-column" id="fees-charges">
       <h2>Fees and charges, in plain terms</h2>
       <p>
         {c.joining_fee_amount != null && c.joining_fee_amount > 0
@@ -213,7 +224,7 @@ const jsonLd = [
     </section>
 
     <!-- Counter-argument (always present) -->
-    <section class="review__section reading-column">
+    <section class="review__section reading-column" id="why-a-different-card">
       <h2>Why you might want a different card</h2>
       <p>
         No single card is right for everyone. {cons[0]}. {c.forex_markup_pct != null && c.forex_markup_pct >= 3 ? 'If you spend a lot abroad, a zero- or low-forex card will serve you better. ' : ''}
@@ -230,7 +241,7 @@ const jsonLd = [
     )}
 
     <!-- Who should get this -->
-    <section class="review__section reading-column">
+    <section class="review__section reading-column" id="who-should-get-it">
       <h2>Who should get the {c.name}</h2>
       <ul>
         <li>{detail.categorySlugs.join(', ') || 'Everyday'} spenders who want {headlineReward(detail).toLowerCase()}.{detail.categorySlugs[0] ? <> See how it stacks up against every card in our <a href={`/best/${detail.categorySlugs[0]}`}>{detail.categorySlugs[0]} rankings</a>.</> : null}</li>
@@ -257,7 +268,7 @@ const jsonLd = [
     </section>
 
     <!-- Editorial footnotes -->
-    <section class="review__section reading-column">
+    <section class="review__section reading-column" id="faq">
       <h2>Frequently asked questions</h2>
       <dl class="faq">{faqs.map((f) => (<><dt>{f.q}</dt><dd set:html={f.a} /></>))}</dl>
       <p class="footnote">
@@ -278,9 +289,10 @@ const jsonLd = [
   .review__art { width: 100%; height: auto; aspect-ratio: 1.59/1; object-fit: contain; background: var(--color-surface-alt); border-radius: var(--radius-md); }
   .review__hero-cta { margin-top: var(--space-4); }
   .review__section { padding-block: var(--space-8); border-top: var(--border-width-hairline) solid var(--color-border); }
+  .review__section, .callout { scroll-margin-top: var(--space-16); }
   .review__inline-cta { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
   .callout { border-radius: var(--radius-lg); padding: var(--space-6); border-top: none; }
-  .callout--change { background: var(--color-primary-blue-light); margin-block: var(--space-4); }
+  .callout--change { background: var(--color-primary-blue-light); margin-block: var(--space-4); } /* link-bg-soft informational fill */
   .callout--change p { margin: 0; }
   .callout--nutshell, .callout--verdict { background: var(--color-surface-alt); }
   .glance { display: grid; grid-template-columns: 1fr; gap: var(--space-4); }

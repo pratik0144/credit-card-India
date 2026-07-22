@@ -54,7 +54,7 @@ const target = external ? '_blank' : undefined;
     gap: var(--space-2);
     font-family: var(--font-primary);
     font-size: var(--text-button);
-    font-weight: var(--weight-semibold);
+    font-weight: var(--weight-medium);
     line-height: 1;
     border-radius: var(--btn-radius);
     border: var(--border-width-hairline) solid transparent;
@@ -63,7 +63,8 @@ const target = external ? '_blank' : undefined;
     cursor: pointer;
     transition: background-color var(--duration-fast) var(--ease-standard),
       color var(--duration-fast) var(--ease-standard),
-      border-color var(--duration-fast) var(--ease-standard);
+      border-color var(--duration-fast) var(--ease-standard),
+      box-shadow var(--duration-fast) var(--ease-standard);
     min-height: 44px; /* 44px tap target (§13) */
   }
   .btn:hover { text-decoration: none; }
@@ -71,36 +72,38 @@ const target = external ? '_blank' : undefined;
 
   .btn--lg { height: var(--btn-height-lg); }
   .btn--md { height: var(--btn-height-md); min-height: 44px; }
-  .btn--sm { height: var(--btn-height-sm); min-height: 44px; padding-inline: var(--space-4); }
+  .btn--sm { height: var(--btn-height-sm); min-height: 44px; padding-inline: var(--space-4); font-size: var(--text-button-sm); }
 
-  /* Primary — dominant filled CTA, brand blue (never red). */
-  .btn--primary { background: var(--color-cta-primary); color: #fff; }
+  /* Primary — the canonical ink pill (DESIGN-vercel.md button-primary).
+     Black ink IS the conversion target; weight 500, never red. */
+  .btn--primary { background: var(--color-cta-primary); color: var(--color-on-primary); }
   .btn--primary:hover { background: var(--color-cta-primary-hover); }
 
-  /* Outline */
+  /* Outline → button-secondary: white pill, ink text, hairline border. */
   .btn--outline {
-    background: transparent;
-    color: var(--color-primary-blue);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
     border-color: var(--color-cta-secondary-border);
+    box-shadow: var(--shadow-elevation-1);
   }
-  .btn--outline:hover { background: var(--color-primary-blue-light); }
+  .btn--outline:hover { background: var(--color-surface-footer); }
 
-  /* Ghost — link-styled action, weight/colour differentiate from body links. */
+  /* Ghost — link-styled action; link blue is the only inline accent. */
   .btn--ghost {
     background: transparent;
     color: var(--color-primary-blue);
     padding-inline: 0;
     min-height: 44px;
   }
-  .btn--ghost:hover { text-decoration: underline; }
+  .btn--ghost:hover { text-decoration: underline; color: var(--color-primary-blue-dark); }
 
-  /* Tertiary — small neutral utility. */
+  /* Tertiary — small neutral utility on canvas-soft. */
   .btn--tertiary {
     background: var(--color-surface-alt);
     color: var(--color-text-primary);
     border-color: var(--color-border);
   }
-  .btn--tertiary:hover { background: var(--color-primary-blue-light); }
+  .btn--tertiary:hover { background: var(--color-surface-footer); }
 
   .btn-microcopy {
     font-size: var(--text-caption);

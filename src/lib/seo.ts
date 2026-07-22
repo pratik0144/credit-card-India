@@ -3,6 +3,7 @@
  * BaseLayout's jsonLd prop. Keeps schema construction out of page templates.
  */
 import { SITE } from './site';
+import { groupIndian } from './format';
 import type { Card, Bank, CardRating } from './database.types';
 
 export function breadcrumbList(items: { name: string; path: string }[]): Record<string, unknown> {
@@ -35,7 +36,7 @@ export function financialProduct(
   };
   if (card.image_url) obj.image = card.image_url;
   if (card.annual_fee_amount != null) {
-    obj.feesAndCommissionsSpecification = `Annual fee: ₹${card.annual_fee_amount}`;
+    obj.feesAndCommissionsSpecification = `Annual fee: ₹${groupIndian(card.annual_fee_amount)}`;
   }
   if (rating?.overall_score != null) {
     obj.aggregateRating = {

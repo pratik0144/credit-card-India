@@ -31,9 +31,9 @@ export function derivePros(detail: CardDetail): string[] {
   else if (c.annual_fee_waiver_spend_amount)
     pros.push(`Annual fee waived on ${formatINRCompact(c.annual_fee_waiver_spend_amount)} annual spend`);
   if ((c.lounge_domestic_visits_per_year ?? 0) > 0)
-    pros.push(`${c.lounge_domestic_visits_per_year} complimentary domestic lounge visits a year`);
+    pros.push(`${(c.lounge_domestic_visits_per_year ?? 0) >= 99 ? 'Unlimited' : c.lounge_domestic_visits_per_year} complimentary domestic lounge visits a year`);
   if ((c.lounge_intl_visits_per_year ?? 0) > 0)
-    pros.push(`${c.lounge_intl_visits_per_year} international lounge visits${c.lounge_intl_network ? ` via ${c.lounge_intl_network}` : ''}`);
+    pros.push(`${(c.lounge_intl_visits_per_year ?? 0) >= 99 ? 'Unlimited' : c.lounge_intl_visits_per_year} international lounge visits${c.lounge_intl_network ? ` via ${c.lounge_intl_network}` : ''}`);
   if (c.forex_markup_pct != null && c.forex_markup_pct <= 2)
     pros.push(`Low forex markup of ${c.forex_markup_pct}% on international spends`);
   if ((c.base_reward_value_inr_per_100 ?? 0) >= 3)

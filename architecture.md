@@ -34,6 +34,8 @@ CardCompare.in is an **Astro 5 hybrid SSG/SSR** application using the **Islands 
 | **Dual-mode data layer** | Seed-data fallback lets the site build without Supabase — enables CI/CD and local dev without a live database |
 | **Edge Functions for scoring** | Recommendation/optimization logic runs server-side to protect business logic and avoid shipping large scoring code to the client |
 | **Custom CSS tokens** | Full design control without framework lock-in. 80+ CSS custom properties, zero hardcoded values |
+| **Path aliases** | `@/*`, `@lib/*`, `@components/*`, `@islands/*`, `@layouts/*` via tsconfig for clean imports |
+| **Deterministic enrichment** | Reward/bonus/offer parsing uses pure functions with no LLM or external API — reproducible, auditable, fast |
 
 ---
 
@@ -120,9 +122,43 @@ BaseLayout.astro
               Article body, NewsletterForm
 ```
 
+### Page Routes (27 page files)
+
+| Route Pattern | Page File | Rendering | Description |
+|---|---|---|---|
+| `/` | `index.astro` | SSG | Homepage with featured cards, category pills, tools |
+| `/cards/[bank]/[card]` | `cards/[bank]/[card].astro` | SSG | Individual card review with full detail |
+| `/banks/[bank]` | `banks/[bank].astro` | SSG | Bank detail with all its cards |
+| `/best/[category]` | `best/[category].astro` | SSG | Category card listing (e.g., /best/cashback) |
+| `/compare` | `compare/index.astro` | SSG | Side-by-side comparison tool |
+| `/compare/[pair]` | `compare/[pair].astro` | SSG | Curated card vs card pages (e.g., a-vs-b) |
+| `/recommend` | `recommend.astro` | SSG | Smart recommendation wizard (React island) |
+| `/combo-optimizer` | `combo-optimizer.astro` | SSG | Best card combo finder (React island) |
+| `/calculator/best-card` | `calculator/best-card.astro` | SSG | Per-purchase card picker (React island) |
+| `/search` | `search.astro` | SSG | Full-text search (noindexed) |
+| `/changes` | `changes.astro` | SSG | Card change history timeline |
+| `/cibil-score` | `cibil-score.astro` | SSG | CIBIL score hub with band-based recommendations |
+| `/guides` | `guides/index.astro` | SSG | All editorial guides |
+| `/guides/[slug]` | `guides/[slug].astro` | SSG | Individual guide article |
+| `/news` | `news/index.astro` | SSG | Industry news listing |
+| `/news/[slug]` | `news/[slug].astro` | SSG | Individual news article |
+| `/authors` | `authors/index.astro` | SSG | Editorial team listing |
+| `/authors/[slug]` | `authors/[slug].astro` | SSG | Author profile page |
+| `/wallet` | `wallet.astro` | **SSR** | Auth-gated personal wallet tracker |
+| `/about` | `about.astro` | SSG | About CardCompare.in |
+| `/contact` | `contact.astro` | SSG | Contact page |
+| `/affiliate-disclosure` | `affiliate-disclosure.astro` | SSG | Affiliate disclosure page |
+| `/editorial-guidelines` | `editorial-guidelines.astro` | SSG | Editorial independence policy |
+| `/privacy-policy` | `privacy-policy.astro` | SSG | Privacy policy |
+| `/terms-of-use` | `terms-of-use.astro` | SSG | Terms of use |
+| `/404` | `404.astro` | SSG | Not found error page |
+| `/500` | `500.astro` | SSG | Server error page |
+
+Sitemap is auto-generated via `@astrojs/sitemap` (filters out `/wallet`, `/search`, `/404`).
+
 ### Component Architecture
 
-**16 Astro Components** — server-rendered, zero JS:
+**17 Astro Components** — server-rendered, zero JS:
 
 | Component | Responsibility |
 |---|---|
@@ -134,8 +170,15 @@ BaseLayout.astro
 | `CategoryPillStrip` | Horizontal scrolling category pills → `/best/[category]` |
 | `Button` | Polymorphic button (renders `<a>` or `<button>`, 4 variants, optional microcopy) |
 | `StickyApplyBanner` | Bottom sticky bar on card reviews with affiliate "Apply Now" CTA |
+| `OnThisPage` | Table-of-contents sidebar navigation for long pages |
 | `NewsletterForm` | Email subscribe → direct Supabase insert to `newsletter_subscribers` |
-| `Breadcrumbs`, `AuthorByline`, `ProsConsBlock`, `ScoreTierBadge`, `AffiliateDisclosure`, `AsSeenOnStrip`, `SiteFooter` | Supporting UI |
+| `Breadcrumbs` | Navigation breadcrumb trail |
+| `AuthorByline` | Author attribution with headshot and expertise tags |
+| `ProsConsBlock` | Structured pros/cons list for card reviews |
+| `ScoreTierBadge` | Visual badge for card tier/rating classification |
+| `AffiliateDisclosure` | Mandatory affiliate link disclosure |
+| `AsSeenOnStrip` | Brand credibility strip |
+| `SiteFooter` | 4-column footer with nav links and 3 legal disclosures |
 
 **6 React Islands** — client-hydrated interactive tools:
 
@@ -145,14 +188,12 @@ BaseLayout.astro
 | `ComboOptimizer` | `client:visible` | `optimize-combo` Edge Function | Seed-based preview |
 | `BestCardCalculator` | `client:visible` | `best-card-for-purchase` Edge Function | Seed-based preview |
 | `CompareTool` | `client:load` | Supabase queries (anon) | Seed data |
-| `SearchBox` | `client:load` | `search_site` RPC | Client-side fallback index |
+| `SearchBox` | `client:load` | `search_site` RPC | Client-side fallback index (`offlineSearch.ts`) |
 | `WalletDashboard` | `client:only="react"` | Supabase Auth + RLS queries | Auth gate (no fallback) |
 
 ### Data Access Layer
 
-`src/lib/queries.ts` is the single source of page data. Each **catalog** read is
-**three-way resilient** — it never lets a misconfigured or empty database blank
-the site:
+`src/lib/queries.ts` is the single source of page data (~590 lines). Each **catalog** read is **three-way resilient** — it never lets a misconfigured or empty database blank the site:
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
@@ -168,9 +209,15 @@ the site:
 │                                                                 │
 │  helper: liveArray(label, run, seedValue, emptyIsFallback=true) │
 │                                                                 │
-│  Exported: getCardListing(category?), getCardBySlug(bank,card), │
-│    getBanks, getBankBySlug, getCategories, getAuthors,          │
-│    getArticles(type?), getChangeLog, getAllCardSlugs, …         │
+│  Exported catalog queries:                                      │
+│    getCardListing(category?), getCardBySlug(bank,card),         │
+│    getCardDetailsByIds(ids), getCardsByBank(slug),               │
+│    getCardDetailById(id), getCardDetailByFullSlug(slug),         │
+│    getBanks, getBankBySlug, getCategories, getCategoryBySlug,    │
+│    getAuthors, getAuthorBySlug, getAuthorById,                   │
+│    getArticles(type?), getArticleBySlug,                         │
+│    getChangeLog, getRecentChangeForCard,                         │
+│    getAllCardSlugs, getComparePairs, getCardPickerList            │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -191,10 +238,11 @@ This design means:
 
 ### Supabase Client Factories (`src/lib/supabase.ts`)
 
-| Client | Usage | Scope |
-|---|---|---|
-| `getAnonClient()` | Build-time SSG queries + browser-side calls | `PUBLIC_SUPABASE_URL` + `PUBLIC_SUPABASE_ANON_KEY` |
-| `getServiceClient()` | Import/enrich scripts only | `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` — guarded against browser import |
+| Export | Type | Usage | Scope |
+|---|---|---|---|
+| `getAnonClient()` | `SupabaseClient` | Build-time SSG queries + browser-side calls. Singleton-cached. | `PUBLIC_SUPABASE_URL` + `PUBLIC_SUPABASE_ANON_KEY` |
+| `getServiceClient()` | `SupabaseClient` | Import/enrich scripts only. Throws if called in browser. Singleton-cached. | `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` |
+| `hasSupabaseEnv` | `boolean` | Quick check if Supabase env vars are set (controls seed-data fallback path) | — |
 
 ### Edge Function Wrappers (`src/lib/edge-functions.ts`)
 
@@ -209,6 +257,24 @@ searchSite(query)             → RPC  search_site(query)
 
 All islands have **preview/fallback modes** — if Edge Functions are unavailable, they display seed-based preview data with a "Preview mode" banner.
 
+### Utility Modules (`src/lib/`)
+
+11 modules covering data access, formatting, SEO, and offline fallback:
+
+| Module | Size | Purpose |
+|---|---|---|
+| `queries.ts` | 19KB | Three-way resilient data access layer (Supabase → seed-data fallback). 20+ exported query functions |
+| `seed-data.ts` | 44KB | Full hand-crafted offline fallback dataset (12 cards, 6 banks, categories, rewards, bonuses, fees, eligibility, ratings, change logs, authors, articles, point valuations) |
+| `database.types.ts` | 8KB | TypeScript contracts matching Supabase DB schema — all table row types, view rows, Edge Function I/O contracts (`RecommendInput/Result`, `ComboInput/Result`, `BestCardInput/Result`, `SearchResult`) |
+| `taxonomy.ts` | 4KB | Canonical spend categories (11 keys), content categories (12 slugs), quiz enums (goals, spend bands, income bands, CIBIL bands, employment types, fee preferences, air travel frequencies), midpoint/floor mappings |
+| `derive.ts` | 4KB | Data-driven derivation fallback helpers: `welcomeBenefit()`, `headlineReward()`, `derivePros()`, `deriveCons()`, `deriveHighlights()` — used when editorial prose is missing |
+| `seo.ts` | 3KB | JSON-LD builders: `financialProduct()`, `breadcrumbList()`, `faqPage()`, `articleSchema()`, `organizationSchema()`, `webSiteSchema()` |
+| `format.ts` | 3KB | `groupIndian()`, `formatINR()` (₹ with Indian digit grouping), `formatINRCompact()` ("₹3 lakh"), `formatAnnualFee()` ("Lifetime Free" for ₹0), `formatRating()`, `formatLounge()`, `slugify()`, `currentMonthYear()` |
+| `tiers.ts` | 2KB | Qualitative badge tier mapping: `annualFeeTier()`, `forexTier()`, `cibilTier()`, `rewardValueTier()` returning `{ tier, label }` |
+| `supabase.ts` | 2KB | Client factories (anon + service-role), `hasSupabaseEnv` flag |
+| `edge-functions.ts` | 2KB | Typed wrappers for 3 Edge Functions + 1 RPC call |
+| `site.ts` | 1KB | Site-wide config object `SITE` (name: `'CardCompare.in'`, domain, URL, lang: `'en-IN'`, tagline) + `FEATURED_ISSUERS` array |
+
 ---
 
 ## Backend Architecture
@@ -220,16 +286,24 @@ All Edge Functions live under `supabase/functions/` and share common utilities f
 ```
 supabase/functions/
 ├── _shared/
-│   ├── client.ts          CORS, service/user client factories, json() helper
-│   ├── scoring.ts         inrPerPoint(), categoryValuePer100()
-│   └── taxonomy.ts        Spend categories, goal enums, spend bands, etc.
-├── recommend-cards/
-├── optimize-combo/
-├── best-card-for-purchase/
-├── detect-card-changes/
-├── send-change-alerts/
-└── send-fee-waiver-reminders/
+│   ├── client.ts          CORS, service/user client factories, json() helper, handleOptions()
+│   ├── scoring.ts         inrPerPoint(), categoryValuePer100(), estimateAnnualValue(), netAnnualValue()
+│   └── taxonomy.ts        Spend categories, goal enums, spend bands, midpoints/floors, eligibilityEmploymentMatch()
+├── recommend-cards/       index.ts
+├── optimize-combo/        index.ts
+├── best-card-for-purchase/ index.ts
+├── detect-card-changes/   index.ts
+├── send-change-alerts/    index.ts
+└── send-fee-waiver-reminders/ index.ts
 ```
+
+### Shared Utilities (`_shared/`)
+
+| File | Exports | Purpose |
+|---|---|---|
+| `client.ts` | `corsHeaders`, `getServiceClient()`, `getUserClient(req)`, `json(body, status)`, `handleOptions(req)` | CORS headers, Supabase client factories for Deno runtime, JSON response helper with CORS, OPTIONS preflight handler |
+| `scoring.ts` | `inrPerPoint(card, valuations)`, `categoryValuePer100(card, key, rewardCats, perPoint)`, `estimateAnnualValue(card, spendProfile)`, `netAnnualValue(card, spendProfile)` | Reward valuation math (cashback=1.0, bank-specific point/mile lookups, per-category rates, annual value estimates net of fees) |
+| `taxonomy.ts` | All enums from `src/lib/taxonomy.ts` + `SCORING_WEIGHTS`, `eligibilityEmploymentMatch(userType)` | Deno-compatible mirror of taxonomy plus scoring weights: `category_match: 0.35`, `net_value: 0.30`, `travel_fit: 0.15`, `fee_pref: 0.10`, `editorial_prior: 0.10` |
 
 ### Edge Function Details
 
@@ -530,15 +604,27 @@ idx_changelog_card           → card_change_log(card_id)
 
 ### Stage 2: Structured Import (`scripts/import-cards.ts`)
 
-- **Parser library** (`scripts/lib/parse.ts`, 24KB): 20+ pure functions for Indian credit card data:
-  - `parseMoney()` — handles ₹, Rs., Lakh, Crore, "Nil"/"Lifetime Free"
-  - `parseCibil()` — "750+ (est)" → `{750, estimated: true}`
+- **Parser library** (`scripts/lib/parse.ts`, 620 lines): 25+ pure functions for Indian credit card data:
+  - `parseMoney()` — handles ₹, Rs., Lakh/Lac, Crore/Cr, "Nil"/"Lifetime Free", Indian comma format
+  - `parseCibil()` — "750+ (est)" → `{min: 750, estimated: true}`
   - `parseNetwork()` — multi-network support, Visa/MC/RuPay/Amex/Diners
   - `parseRewardType()` — normalizes CashPoints/NeuCoins/InterMiles → standard types
   - `parseLounge()` — annualizes per-quarter/month, handles "unlimited" → 99
   - `parseEligibility()` — splits salaried/self-employed income segments
+  - `parseRewardCategories()` — semicolon-separated or comma-separated rates
+  - `parseBonuses()` — welcome, milestone, anniversary bonuses
+  - `parseOffers()` — merchant/category offers
+  - `parseForexMarkup()` — "3.5% + GST" patterns
+  - `parseFuelSurcharge()` — waiver percentage, min transaction, max waiver
+  - `parseBillingCycle()` — day of month extraction
+  - `parsePercent()` — percentage values
+  - `deriveCardType()` — credit vs debit classification
   - `deriveConfidence()` — counts estimated fields → data confidence level
-  - Plus 10+ more parsers
+  - `normalizeSlug()` — URL-safe slug generation
+  - `extractTier()` — tier classification from card name
+  - `isBlank()` — detects N/A, nil, none, TBD values
+  - `hasEstMarker()` / `stripEst()` — estimate marker handling
+  - Plus additional utility parsers
 
 - **Import modes:**
   - `--dry-run` (default): Parse + validate + print stats, no DB writes
@@ -643,6 +729,8 @@ WalletDashboard renders with RLS-scoped wallet data
 | Snapshot data internal | `card_snapshots` has zero anon/authenticated policies |
 | Email dedupe | `reminders_sent` with 14-day window prevents spam |
 | No PII collection | No PAN, Aadhaar, or sensitive financial data stored |
+| Env var isolation | `.gitignore` excludes all `.env` files except `.env.example` |
+| Vite guard | `astro.config.mjs` uses belt-and-braces `define: {}` to prevent key leakage |
 
 ---
 
@@ -661,17 +749,19 @@ Every page includes:
 
 ### JSON-LD Structured Data (`src/lib/seo.ts`)
 
-| Schema Type | Used On |
-|---|---|
-| `FinancialProduct` | Card review pages (`/cards/[bank]/[card]`) |
-| `BreadcrumbList` | Nearly all pages |
-| `FAQPage` | Card reviews, category listings, CIBIL hub |
-| `Article` | Guide and news pages |
-| `Person` | Author profile pages |
+| Builder Function | Schema Type | Used On |
+|---|---|---|
+| `financialProduct()` | `FinancialProduct` | Card review pages (`/cards/[bank]/[card]`) |
+| `breadcrumbList()` | `BreadcrumbList` | Nearly all pages |
+| `faqPage()` | `FAQPage` | Card reviews, category listings, CIBIL hub |
+| `articleSchema()` | `Article` | Guide and news pages |
+| `organizationSchema()` | `Organization` | About page |
+| `webSiteSchema()` | `WebSite` + `SearchAction` | Homepage (enables Google sitelinks search box) |
 
 ### Search Engine Features
 
-- **Sitemap** auto-generated via `@astrojs/sitemap`
+- **Sitemap** auto-generated via `@astrojs/sitemap` (filters out `/wallet`, `/search`, `/404`)
+- **`robots.txt`** served from `public/robots.txt`
 - **`noindex`** on `/wallet` and `/search` (dynamic, personalized content)
 - External apply links use `rel="nofollow sponsored noopener"`
 
@@ -683,9 +773,9 @@ Every page includes:
 
 ```
 src/styles/
-├── tokens.css      164 lines — 80+ CSS custom properties
-├── global.css      131 lines — resets, typography, utilities
-└── islands.css      96 lines — shared React island styles
+├── tokens.css      200 lines — 80+ CSS custom properties
+├── global.css      237 lines — resets, typography, utilities
+└── islands.css      99 lines — shared React island styles
 ```
 
 **Zero hardcoded hex or px values** — every Astro component and page references `var(--token)`.
@@ -728,6 +818,10 @@ Produces:
 - **Static HTML/CSS/JS** for all SSG pages → deploy to any CDN
 - **Node.js SSR server** for `/wallet` → requires Node runtime
 
+### Adapter Configuration
+
+The project currently uses `@astrojs/node` (standalone mode) as the SSR adapter. This is swappable to `@astrojs/vercel` or `@astrojs/netlify` at deploy time with no code change — see `DESIGN-vercel.md` for the Vercel deployment plan.
+
 ### Environment Variables
 
 | Variable | Required | Scope | Purpose |
@@ -736,7 +830,6 @@ Produces:
 | `PUBLIC_SUPABASE_ANON_KEY` | Yes | Client + Server | Anon key for RLS-scoped queries |
 | `SUPABASE_URL` | For scripts | Server only | Same URL, used by import scripts |
 | `SUPABASE_SERVICE_ROLE_KEY` | For scripts | Server only | Admin access for data imports |
-| `SUPABASE_PUBLISHABLE_KEY` | For Edge Functions | Server only | New-style publishable key |
 | `RESEND_API_KEY` | Optional | Server only | Email sending (change alerts, reminders) |
 | `DEPLOY_HOOK_URL` | Optional | Server only | Trigger rebuild after data import |
 
@@ -768,18 +861,24 @@ CDN cache invalidated → users see updated content
 
 | Metric | Count |
 |---|---|
-| **Routes** | 25+ (24 SSG + 1 SSR) |
-| **Astro Components** | 16 |
+| **Page files** | 27 |
+| **Astro Components** | 17 |
 | **React Islands** | 6 |
-| **Edge Functions** | 6 |
+| **Layouts** | 3 |
+| **Lib modules** | 11 |
+| **Edge Functions** | 6 (+ 3 shared utility files) |
 | **Database Tables** | 24 |
 | **Database Views** | 3 |
 | **Storage Buckets** | 2 |
 | **RLS Policies** | ~50 |
 | **CSS Custom Properties** | 80+ |
+| **CSS Total Lines** | 536 |
 | **Source Cards** | 368 |
 | **Supported Banks** | 20+ |
 | **Content Categories** | 12 |
+| **Seed Fallback Cards** | 12 |
+| **Parser Functions** | 25+ (620 lines) |
+| **Instruction Documents** | 3 |
 
 ---
 

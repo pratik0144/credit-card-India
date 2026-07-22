@@ -17,7 +17,7 @@
 }
 .wizard__progress-bar {
   height: 100%;
-  background: var(--color-primary-blue);
+  background: var(--color-cta-primary);
   transition: width var(--duration-base) var(--ease-standard);
 }
 .wizard__step-count { font-size: var(--text-body-sm); color: var(--color-text-muted); margin-bottom: var(--space-2); }
@@ -33,30 +33,34 @@
   font-size: var(--text-body); font-family: inherit; cursor: pointer;
   transition: border-color var(--duration-fast), background-color var(--duration-fast);
 }
-.opt:hover { border-color: var(--color-primary-blue); }
+.opt { transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard); }
+.opt:hover { border-color: var(--color-border-strong); }
 .opt[aria-pressed="true"], .opt--selected {
-  border-color: var(--color-primary-blue);
-  background: var(--color-primary-blue-light);
+  border-color: var(--color-cta-primary);
+  background: var(--color-surface-footer);
   font-weight: var(--weight-semibold);
 }
 .opt__check { width: 22px; height: 22px; border-radius: var(--radius-sm); border: 2px solid var(--color-border-strong); flex: none; display: grid; place-items: center; }
-.opt--selected .opt__check { background: var(--color-primary-blue); border-color: var(--color-primary-blue); color: #fff; }
+.opt--selected .opt__check { background: var(--color-cta-primary); border-color: var(--color-cta-primary); color: var(--color-on-primary); }
 
 .wizard__nav { display: flex; justify-content: space-between; gap: var(--space-4); }
 .btn-i {
   min-height: 48px; padding: 0 var(--btn-padding-x);
-  border-radius: var(--btn-radius); font-weight: var(--weight-semibold);
+  border-radius: var(--btn-radius); font-weight: var(--weight-medium);
   font-size: var(--text-button); cursor: pointer; font-family: inherit;
   border: var(--border-width-hairline) solid transparent;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
 }
-.btn-i--primary { background: var(--color-cta-primary); color: #fff; }
+.btn-i--primary { background: var(--color-cta-primary); color: var(--color-on-primary); }
 .btn-i--primary:hover { background: var(--color-cta-primary-hover); }
 .btn-i--primary:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-i--ghost { background: transparent; color: var(--color-primary-blue); border-color: var(--color-border); }
 
 .island__notice {
   padding: var(--space-4); border-radius: var(--radius-md);
-  background: var(--color-primary-blue-light); color: var(--color-text-secondary);
+  background: var(--color-surface-footer); color: var(--color-text-secondary);
   font-size: var(--text-body-sm); margin-bottom: var(--space-6);
 }
 .island__trust {
@@ -71,11 +75,11 @@
   display: grid; gap: var(--space-3);
 }
 .result-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
-.result-card__score { font-size: var(--text-rating-number); font-weight: var(--weight-bold); color: var(--color-primary-blue); }
+.result-card__score { font-size: var(--text-rating-number); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-display-lg); color: var(--color-text-primary); }
 .result-card__reasons { margin: 0; padding-left: var(--space-6); }
 .result-card__reasons li { margin-bottom: var(--space-2); }
 .result-card__value { font-weight: var(--weight-bold); }
-.result-card__label { display: inline-block; font-size: var(--text-caption); text-transform: uppercase; letter-spacing: var(--tracking-wide); color: var(--color-primary-blue); }
+.result-card__label { display: inline-block; font-family: var(--font-mono); font-size: var(--text-caption); text-transform: uppercase; letter-spacing: var(--tracking-wide); color: var(--color-text-secondary); }
 
 .field { display: grid; gap: var(--space-2); margin-bottom: var(--space-4); }
 .field label { font-weight: var(--weight-medium); font-size: var(--text-body-sm); }
@@ -91,5 +95,5 @@
 .assign-table th, .assign-table td { padding: var(--space-3); border-bottom: var(--border-width-hairline) solid var(--color-border); text-align: left; font-size: var(--text-body-sm); }
 .assign-table thead th { border-bottom: var(--border-width-thick) solid var(--color-border-strong); }
 .totals { display: flex; flex-wrap: wrap; gap: var(--space-6); margin-block: var(--space-4); }
-.totals div strong { display: block; font-size: var(--text-h3); color: var(--color-primary-blue); }
+.totals div strong { display: block; font-size: var(--text-h3); letter-spacing: var(--tracking-display-sm); color: var(--color-text-primary); }
 .warning { background: #fdf3e6; border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-size: var(--text-body-sm); color: var(--color-text-secondary); margin-bottom: var(--space-2); }

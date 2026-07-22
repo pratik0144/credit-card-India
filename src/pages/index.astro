@@ -20,6 +20,7 @@ import { organizationSchema, webSiteSchema } from '../lib/seo';
 export const prerender = true;
 
 const listing = await getCardListing();
+const issuerCount = new Set(listing.map((r) => r.bank_name)).size;
 const featured = listing.slice(0, 4);
 const featuredMap = await getCardDetailsByIds(featured.map((r) => r.card_id));
 const featuredDetails = featured.map((r) => featuredMap.get(r.card_id) ?? null);
@@ -32,11 +33,11 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
   ogType="website"
   jsonLd={[organizationSchema(), webSiteSchema()]}
 >
-  <!-- Hero -->
-  <section class="hero">
+  <!-- Hero — mesh-gradient atmospheric backdrop, hero scale ONLY -->
+  <section class="hero mesh-hero">
     <div class="container">
       <p class="eyebrow">Independent · Issuer-blind · Updated {currentMonthYear()}</p>
-      <h1 class="hero__title">Find the right credit card, without the sales pitch.</h1>
+      <h1 class="hero__title">Find the right credit card, without the sales pitch.</h1>{/* sentence-case, period-terminated (brand voice) */}
       <p class="hero__sub">
         We review India's cards the way a research desk would — numbers first, every rating attributed,
         and we tell you when a card <em>isn't</em> for you.
@@ -55,7 +56,7 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
   </div>
 
   <!-- Featured cards (collapsed rows) -->
-  <section class="container section">
+  <section class="container section reveal">
     <h2>Top card picks this month</h2>
     <p class="section__lede">A few standouts from our latest reviews. Expand any card for the full breakdown.</p>
     {featured.map((row, i) => (
@@ -66,7 +67,7 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
 
   <!-- How it works -->
   <section class="surface-alt">
-    <div class="container section">
+    <div class="container section reveal">
       <h2>How it works</h2>
       <ol class="how">
         <li><span class="how__n">1</span><h3>Answer a few questions</h3><p>Tell us how you spend and what you want. Takes about a minute.</p></li>
@@ -97,20 +98,19 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
     <div class="container section trust">
       <h2>Why trust {SITE.name}</h2>
       <div class="trust__grid">
-        {/* [PLACEHOLDER] real editorial stats required before launch (DESIGN §6.8, §13.8). */}
-        <div><strong>350+</strong><span>cards tracked across 20 issuers</span></div>
+        {/* Counts derived from the live catalog at build time — never invented (DESIGN §6.8, §13.8). */}
+        <div><strong>{listing.length}</strong><span>cards tracked across {issuerCount} issuers</span></div>
         <div><strong>Issuer-blind</strong><span>ratings — issuers can't influence rank</span></div>
         <div><strong>Every rating</strong><span>attributed to a named reviewer</span></div>
         <div><strong>Fee-change</strong><span>tracking so reviews never go stale</span></div>
       </div>
-      <p class="trust__note">Editorial stat callouts are placeholders pending real launch figures.</p>
     </div>
   </section>
 
 
   <!-- Below-fold explanatory prose (SEO_PROMPT §3 — 500–700 words, prerendered).
        Kept after the product sections so it never crowds the hero. -->
-  <section class="container section reading-column about-prose">
+  <section class="container section reading-column about-prose reveal">
     <h2>Compare credit cards in India, without the sales pitch</h2>
     <p>
       {SITE.name} exists to answer one question honestly: <strong>which credit card should you get?</strong>
@@ -168,28 +168,35 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
 </PageLayout>
 
 <style>
-  .hero { padding-block: var(--space-20) var(--space-12); }
-  .hero__title { font-size: var(--text-display); max-width: 16ch; margin-block: var(--space-2) var(--space-4); }
+  .hero { padding-block: var(--space-20) var(--space-16); }
+  .hero__title {
+    font-size: var(--text-display);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-display-xl);
+    max-width: 18ch;
+    margin-block: var(--space-2) var(--space-4);
+  }
+  @media (max-width: 600px) { .hero__title { font-size: var(--text-h1); letter-spacing: var(--tracking-display-lg); } }
   .hero__sub { font-size: var(--text-body-lg); color: var(--color-text-secondary); max-width: 52ch; }
   .hero__cta { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-6); }
   .hero__trust { margin-top: var(--space-3); font-size: var(--text-body-sm); color: var(--color-text-muted); }
   .section { padding-block: var(--space-16); }
   .section__lede { color: var(--color-text-secondary); margin-bottom: var(--space-8); max-width: 60ch; }
-  .surface-alt { background: var(--color-surface-alt); }
+  .surface-alt { background: var(--color-surface-footer); }
   .how { display: grid; gap: var(--space-8); list-style: none; padding: 0; margin: 0; }
   @media (min-width: 768px) { .how { grid-template-columns: repeat(3, 1fr); } }
-  .how__n { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-circle); background: var(--color-primary-blue-light); color: var(--color-primary-blue); font-weight: var(--weight-bold); margin-bottom: var(--space-3); }
+  .how__n { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-circle); background: var(--color-cta-primary); color: var(--color-on-primary); font-weight: var(--weight-medium); font-family: var(--font-mono); margin-bottom: var(--space-3); }
   .how h3 { font-size: var(--text-h4); margin-bottom: var(--space-1); }
   .how p { color: var(--color-text-secondary); font-size: var(--text-body-sm); margin: 0; }
   .teasers { display: grid; gap: var(--space-6); }
   @media (min-width: 768px) { .teasers { grid-template-columns: repeat(3, 1fr); } }
-  .teaser { display: block; border: var(--border-width-hairline) solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); color: inherit; text-decoration: none; transition: box-shadow var(--duration-base) var(--ease-standard); }
-  .teaser:hover { box-shadow: var(--shadow-hover); text-decoration: none; }
+  .teaser { display: block; background: var(--color-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-hairline-inset), var(--shadow-elevation-1); padding: var(--space-6); color: inherit; text-decoration: none; transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out); }
+  .teaser:hover { transform: translateY(-2px); box-shadow: var(--shadow-hairline-inset), var(--shadow-hover); text-decoration: none; }
   .teaser h3 { font-size: var(--text-h4); margin-block: var(--space-1) var(--space-2); }
   .teaser__excerpt { color: var(--color-text-secondary); font-size: var(--text-body-sm); margin: 0; }
   .trust__grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-8); margin-top: var(--space-4); }
   @media (min-width: 768px) { .trust__grid { grid-template-columns: repeat(4, 1fr); } }
-  .trust__grid strong { display: block; font-size: var(--text-h2); color: var(--color-primary-blue); }
+  .trust__grid strong { display: block; font-size: var(--text-h2); letter-spacing: var(--tracking-display-md); color: var(--color-text-primary); }
   .trust__grid span { color: var(--color-text-secondary); font-size: var(--text-body-sm); }
   .trust__note { margin-top: var(--space-8); font-size: var(--text-caption); color: var(--color-text-muted); }
 </style>

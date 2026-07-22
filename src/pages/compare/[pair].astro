@@ -13,7 +13,7 @@ import ComparisonTable from '../../components/ComparisonTable.astro';
 import Button from '../../components/Button.astro';
 import NewsletterForm from '../../components/NewsletterForm.astro';
 import { getComparePairs, getCardDetailByFullSlug } from '../../lib/queries';
-import { formatAnnualFee, formatINRCompact, formatRating } from '../../lib/format';
+import { formatAnnualFee, formatINRCompact, formatRating, formatLounge } from '../../lib/format';
 import { breadcrumbList, faqPage } from '../../lib/seo';
 
 export const prerender = true;
@@ -56,7 +56,7 @@ const rows = [
   { label: 'Reward rate', values: [da.card.reward_rate_general_text ?? '—', db.card.reward_rate_general_text ?? '—'] },
   { label: 'Annual fee', values: [formatAnnualFee(da.card.annual_fee_amount), formatAnnualFee(db.card.annual_fee_amount)] },
   { label: 'Forex markup', values: [da.card.forex_markup_pct != null ? `${da.card.forex_markup_pct}%` : '—', db.card.forex_markup_pct != null ? `${db.card.forex_markup_pct}%` : '—'] },
-  { label: 'Domestic lounge', values: [String(da.card.lounge_domestic_visits_per_year ?? 0), String(db.card.lounge_domestic_visits_per_year ?? 0)] },
+  { label: 'Domestic lounge', values: [formatLounge(da.card.lounge_domestic_visits_per_year ?? 0), formatLounge(db.card.lounge_domestic_visits_per_year ?? 0)] },
   { label: 'Min. CIBIL', values: [da.card.cibil_min ?? 'Flexible', db.card.cibil_min ?? 'Flexible'] },
 ];
 
@@ -134,7 +134,7 @@ const jsonLd = [
           ? ` If you spend abroad, note the forex column: the ${betterForex.card.name}'s ${betterForex === da ? fxA : fxB}% markup beats the other's ${betterForex === da ? fxB : fxA}% on every international transaction.`
           : ''}
         {betterLounge
-          ? ` For airport lounge access, the ${betterLounge.card.name} is the clear pick with ${betterLounge === da ? loungeA : loungeB} domestic visits a year versus ${betterLounge === da ? loungeB : loungeA}.`
+          ? ` For airport lounge access, the ${betterLounge.card.name} is the clear pick with ${formatLounge(betterLounge === da ? loungeA : loungeB)} domestic visits a year versus ${formatLounge(betterLounge === da ? loungeB : loungeA)}.`
           : ''}
       </p>
       <p>

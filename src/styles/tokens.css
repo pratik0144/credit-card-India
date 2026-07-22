@@ -1,163 +1,200 @@
 /*
  * CardCompare.in — Design Tokens
- * Transcribed VERBATIM from DESIGN.md §3.1–§3.7. Do not modify any value here;
- * a change to a token is a design decision to raise with the team, not an
- * implementation tweak (FRONTEND_PROMPT.md §6). Values marked [ESTIMATED] in
- * DESIGN.md are the working values per FRONTEND_PROMPT.md §1.
+ * Transcribed from DESIGN-vercel.md (supersedes the old blue system in
+ * instructions/DESIGN (1).md §3 per explicit direction). Token NAMES are kept
+ * stable so every component's var() reference re-resolves without edits;
+ * VALUES now follow the Vercel-inspired ink/near-white system:
+ *   - ink #171717 is the single primary CTA + heading/body text color
+ *   - link blue #0070f3 is the only inline-link accent
+ *   - the multi-stop mesh gradient (develop/preview/ship pairs) is the ONLY
+ *     decorative chrome, used at hero scale only
+ *   - stacked shadows + inset hairline, never single heavy drops
+ *   - display weight ceiling is 600, aggressive negative tracking
  */
 
 :root {
   /* ============================================================= */
-  /* §3.1 Color System                                             */
+  /* Colors (DESIGN-vercel.md `colors`)                            */
   /* ============================================================= */
 
   /* ---- Brand / Primary ---- */
-  --color-primary-blue:        #0057B8; /* [ESTIMATED] core brand/link/CTA blue */
-  --color-primary-blue-dark:   #003E82; /* [ESTIMATED] hover/active state of primary blue */
-  --color-primary-blue-light:  #E8F1FC; /* [ESTIMATED] tinted background for callouts, active nav states */
+  --color-primary-blue:        #0070f3; /* link — the brand's only inline accent */
+  --color-primary-blue-dark:   #0761d1; /* link-deep — pressed/visited link */
+  --color-primary-blue-light:  #d3e5ff; /* link-bg-soft — informational pill fills */
 
   /* ---- Neutrals ---- */
-  --color-text-primary:        #1A1A1A; /* [ESTIMATED] body copy, headings */
-  --color-text-secondary:      #4A4A4A; /* [ESTIMATED] byline, meta, captions */
-  --color-text-muted:          #767676; /* [ESTIMATED] disclosure copy, fine print, timestamps */
-  --color-border:              #E0E0E0; /* [ESTIMATED] card borders, table borders, dividers */
-  --color-border-strong:       #C7C7C7; /* [ESTIMATED] input borders, table header borders */
-  --color-surface:             #FFFFFF; /* white surface */
-  --color-surface-alt:         #F7F8FA; /* [ESTIMATED] section background alternation, "As seen on" strip */
-  --color-surface-footer:      #F2F3F5; /* [ESTIMATED] footer background, slightly darker than alt */
+  --color-text-primary:        #171717; /* ink — headings + body on light surfaces */
+  --color-text-secondary:      #4d4d4d; /* body — secondary text, bylines, captions */
+  --color-text-muted:          #888888; /* mute — fine print, placeholders */
+  --color-border:              #ebebeb; /* hairline — 1px dividers, card borders */
+  --color-border-strong:       #a1a1a1; /* hairline-strong — input borders, th rules */
+  --color-surface:             #ffffff; /* canvas — cards, dialogs, modals */
+  --color-surface-alt:         #fafafa; /* canvas-soft — the default page body */
+  --color-surface-footer:      #f5f5f5; /* canvas-soft-2 — inset regions, footer */
 
-  /* ---- CTA / Action ---- */
-  --color-cta-primary:          #0057B8; /* [ESTIMATED] "Apply Now" button fill */
-  --color-cta-primary-hover:    #00458F; /* [ESTIMATED] */
-  --color-cta-secondary-border: #0057B8; /* [ESTIMATED] ghost/outline button border */
+  /* ---- CTA / Action (ink IS the conversion target) ---- */
+  --color-cta-primary:          #171717; /* button-primary fill */
+  --color-cta-primary-hover:    #383838; /* hover — one gray step up from ink */
+  --color-cta-secondary-border: #ebebeb; /* button-secondary hairline */
+  --color-on-primary:           #ffffff; /* text on ink surfaces */
 
   /* ---- Semantic / Rating scale ---- */
-  /* Named tiers ("Excellent", "Very Good", "Good", "Fair", "Poor") rendered
-     as small badges next to feature rows in review tables. */
-  --color-rating-excellent:     #1E7B34; /* [ESTIMATED] deep green */
-  --color-rating-very-good:     #4C9A2A; /* [ESTIMATED] mid green */
-  --color-rating-good:          #8CB93B; /* [ESTIMATED] yellow-green */
-  --color-rating-fair:          #E8A02E; /* [ESTIMATED] amber/orange */
-  --color-rating-poor:          #D64545; /* [ESTIMATED] red */
+  /* Tier badges (Excellent → Poor). Mapped onto the Vercel semantic palette —
+     blue → teal → amber → deep-amber → red. Text label ALWAYS accompanies the
+     color (WCAG "don't rely on color alone"). */
+  --color-rating-excellent:     #0070f3; /* success/link blue */
+  --color-rating-very-good:     #29bc9b; /* cyan-deep */
+  --color-rating-good:          #f5a623; /* warning amber */
+  --color-rating-fair:          #ab570a; /* warning-deep */
+  --color-rating-poor:          #ee0000; /* error */
 
   /* ---- Star / numeric rating ---- */
-  --color-star-fill:            #0057B8; /* [ESTIMATED] star/score fill uses brand blue, not gold */
-  --color-star-empty:           #D8DCE1; /* [ESTIMATED] */
+  --color-star-fill:            #0070f3; /* link blue, not gold */
+  --color-star-empty:           #ebebeb;
 
   /* ---- Functional / Feedback ---- */
-  --color-success:              #1E7B34; /* [ESTIMATED] */
-  --color-warning:              #E8A02E; /* [ESTIMATED] */
-  --color-error:                #C0392B; /* [ESTIMATED] form validation errors */
-  --color-info:                 #0057B8; /* [ESTIMATED] reuses primary blue */
+  --color-success:              #0070f3; /* legacy geist-success doubles as link */
+  --color-warning:              #f5a623;
+  --color-warning-soft:         #ffefcf;
+  --color-warning-deep:         #ab570a;
+  --color-error:                #ee0000;
+  --color-error-soft:           #f7d4d6;
+  --color-error-deep:           #c50000;
+  --color-info:                 #0070f3;
+
+  /* ---- Accent set (gradient stops ONLY — never standalone decoration) ---- */
+  --color-violet:               #7928ca;
+  --color-cyan:                 #50e3c2;
+  --color-highlight-pink:       #ff0080;
+  --gradient-develop-start:     #007cf0;
+  --gradient-develop-end:       #00dfd8;
+  --gradient-preview-start:     #7928ca;
+  --gradient-preview-end:       #ff0080;
+  --gradient-ship-start:        #ff4d4d;
+  --gradient-ship-end:          #f9cb28;
+
+  /* ---- Selection ---- */
+  --color-selection-bg:         #171717;
+  --color-selection-fg:         #f2f2f2;
 
   /* ---- Overlay / scrim ---- */
-  --color-overlay:              rgba(0, 0, 0, 0.5); /* [ESTIMATED] modal/tooltip backdrop */
+  --color-overlay:              rgba(0, 0, 0, 0.5);
 
   /* ============================================================= */
-  /* §3.2 Typography System                                        */
+  /* Typography (DESIGN-vercel.md `typography`)                    */
+  /* Geist with Inter as the open substitute; JetBrains Mono for   */
+  /* the technical caption layer (eyebrows, code, table headers).  */
   /* ============================================================= */
-  --font-primary: "Roboto", "Noto Sans", "Helvetica Neue", Arial, sans-serif; /* Indic-safe fallback */
-  --font-fallback: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Arial, sans-serif;
+  --font-primary: "Geist", "Inter", system-ui, -apple-system, "Segoe UI", "Noto Sans", Arial, sans-serif;
+  --font-fallback: "Inter", system-ui, -apple-system, "Segoe UI", "Noto Sans", Arial, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 
-  /* ---- Type scale (desktop) ---- */
-  --text-display:       2.5rem;   /* 40px — H1 on landing/category pages */
-  --text-h1:            2rem;     /* 32px — article/review H1 */
-  --text-h2:            1.5rem;   /* 24px — section headers */
-  --text-h3:            1.25rem;  /* 20px — card titles, subsection headers */
-  --text-h4:            1.125rem; /* 18px — "At A Glance" field labels, table headers */
-  --text-body-lg:       1.125rem; /* 18px — intro/lede paragraph */
-  --text-body:          1rem;     /* 16px — standard paragraph */
-  --text-body-sm:       0.875rem; /* 14px — byline, meta, disclosure inline text */
-  --text-caption:       0.75rem;  /* 12px — legal fine print, footer disclosure body */
-  --text-button:        1rem;     /* 16px, medium/semibold */
-  --text-rating-number: 2rem;     /* 32px — "4.8 / 5" numerals in rating tables */
+  /* ---- Type scale ---- */
+  --text-display:       3rem;     /* 48px — display-xl hero headline */
+  --text-h1:            2rem;     /* 32px — display-lg section/article H1 */
+  --text-h2:            1.5rem;   /* 24px — display-md */
+  --text-h3:            1.25rem;  /* 20px — display-sm */
+  --text-h4:            1rem;     /* 16px — body-md-strong micro-headings */
+  --text-body-lg:       1.125rem; /* 18px — lead paragraphs */
+  --text-body:          1rem;     /* 16px — default body */
+  --text-body-sm:       0.875rem; /* 14px — secondary body, nav links */
+  --text-caption:       0.75rem;  /* 12px — captions, badges, legal */
+  --text-code:          0.8125rem;/* 13px — inline code / mono blocks */
+  --text-button:        1rem;     /* 16px — button-lg labels */
+  --text-button-sm:     0.875rem; /* 14px — button-md labels */
+  --text-rating-number: 2rem;     /* 32px — "4.8 / 5" numerals */
 
   /* ---- Line height ---- */
-  --leading-tight:   1.2;  /* headings */
-  --leading-normal:  1.5;  /* body copy */
-  --leading-relaxed: 1.7;  /* long-form article paragraphs */
+  --leading-tight:   1.0;  /* display-xl is 48/48 */
+  --leading-snug:    1.25; /* display-lg/md */
+  --leading-normal:  1.5;  /* body */
+  --leading-relaxed: 1.6;  /* long-form (body-lg is 28/18) */
 
-  /* ---- Letter spacing ---- */
-  --tracking-tight:  -0.01em; /* large display headings */
+  /* ---- Letter spacing (negative tracking IS the voice) ---- */
+  --tracking-display-xl: -2.4px;  /* 48px */
+  --tracking-display-lg: -1.28px; /* 32px */
+  --tracking-display-md: -0.96px; /* 24px */
+  --tracking-display-sm: -0.6px;  /* 20px */
+  --tracking-body-sm:    -0.28px; /* 14px */
+  --tracking-tight:  -0.01em;     /* legacy alias */
   --tracking-normal: 0;
-  --tracking-wide:   0.04em;  /* small-caps labels: "AFFILIATE DISCLOSURE", eyebrow tags */
+  --tracking-wide:   0.04em;      /* mono eyebrow labels only */
 
-  /* ---- Font weights ---- */
+  /* ---- Font weights (display ceiling is 600 — never 700+) ---- */
   --weight-regular:  400;
   --weight-medium:   500;
   --weight-semibold: 600;
-  --weight-bold:     700; /* headings, rating numbers, CTA text, rupee figures */
+  --weight-bold:     600; /* alias kept for existing var() refs; ceiling 600 */
 
   /* ============================================================= */
-  /* §3.3 Spacing Scale (8px base, 4px half-step)                  */
+  /* Spacing (4px base — DESIGN-vercel.md `spacing`)               */
   /* ============================================================= */
-  --space-1:  4px;
-  --space-2:  8px;
-  --space-3:  12px;
-  --space-4:  16px;
+  --space-1:  4px;   /* xxs */
+  --space-2:  8px;   /* xs */
+  --space-3:  12px;  /* sm */
+  --space-4:  16px;  /* md */
   --space-5:  20px;
-  --space-6:  24px;
-  --space-8:  32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
-  --space-20: 80px;
-  --space-24: 96px;
+  --space-6:  24px;  /* lg */
+  --space-8:  32px;  /* xl */
+  --space-10: 40px;  /* 2xl */
+  --space-12: 48px;  /* 3xl */
+  --space-16: 64px;  /* 4xl */
+  --space-20: 96px;  /* 5xl */
+  --space-24: 128px; /* 6xl */
+  --space-section: 192px; /* hero bands */
 
   /* ============================================================= */
-  /* §3.4 Corner Radius                                            */
+  /* Corner Radius (DESIGN-vercel.md `rounded`)                    */
   /* ============================================================= */
-  --radius-sm:     4px;   /* badges, small chips, input fields */
-  --radius-md:     8px;   /* buttons, card containers */
-  --radius-lg:     12px;  /* large card modules, modals/popovers */
-  --radius-pill:   999px; /* category filter pills */
-  --radius-circle: 50%;   /* avatar/author headshots, close (×) buttons */
+  --radius-xs:     4px;
+  --radius-sm:     6px;   /* geist-radius — inputs, nav buttons, dropdowns */
+  --radius-md:     8px;   /* geist-marketing-radius — feature/template cards */
+  --radius-lg:     12px;  /* pricing-card chrome, large modules */
+  --radius-xl:     16px;
+  --radius-pill:   100px; /* marketing CTA pill */
+  --radius-circle: 50%;
 
   /* ============================================================= */
-  /* §3.5 Elevation & Shadows                                      */
+  /* Elevation (stacked shadows + inset hairline — never a single  */
+  /* heavy drop; DESIGN-vercel.md Elevation & Depth table)         */
   /* ============================================================= */
-  --shadow-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.06);  /* resting card */
-  --shadow-elevation-2: 0 2px 8px rgba(0, 0, 0, 0.08);  /* sticky apply-now card, dropdowns */
-  --shadow-elevation-3: 0 8px 24px rgba(0, 0, 0, 0.12); /* modals, popover, mega-menu flyout */
-  --shadow-hover:       0 4px 12px rgba(0, 0, 0, 0.10); /* hover lift on clickable teaser */
+  --shadow-hairline-inset: 0 0 0 1px #00000014 inset;
+  --shadow-elevation-1: 0px 1px 1px #00000005, 0px 2px 2px #0000000a;                       /* Level 2 subtle drop */
+  --shadow-elevation-2: 0px 2px 2px #0000000a, 0px 8px 8px -8px #0000000a;                  /* Level 3 soft stack */
+  --shadow-elevation-3: 0px 1px 1px #00000005, 0px 8px 16px -4px #0000000a, 0px 24px 32px -8px #0000000f; /* Level 5 modal */
+  --shadow-hover:       0px 2px 2px #0000000a, 0px 8px 16px -4px #0000000a;                 /* Level 4 float stack */
 
   /* ============================================================= */
-  /* §3.6 Borders                                                  */
+  /* Borders                                                       */
   /* ============================================================= */
   --border-width-hairline: 1px;
-  --border-width-thick:    2px; /* focus rings, active tab underline, table header rule */
+  --border-width-thick:    2px;
   --border-color-default:  var(--color-border);
   --border-color-strong:   var(--color-border-strong);
   --border-style:          solid;
 
   /* ============================================================= */
-  /* §3.7 Motion & Transitions                                     */
+  /* Motion (unchanged utilitarian set)                            */
   /* ============================================================= */
-  --duration-fast: 120ms; /* button hover/active state */
-  --duration-base: 200ms; /* dropdown open, tab switch, accordion */
-  --duration-slow: 320ms; /* mega-menu flyout, modal open */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out:      cubic-bezier(0, 0, 0.2, 1);
   --ease-in:       cubic-bezier(0.4, 0, 1, 1);
 
-  /* ---- §6.5 Button sizing ---- */
-  --btn-height-lg: 48px; /* primary Apply-Now on hero/sticky */
-  --btn-height-md: 40px; /* standard inline CTAs */
-  --btn-height-sm: 32px; /* Add to compare, form Back/Next */
+  /* ---- Button sizing (marketing pill scale) ---- */
+  --btn-height-lg: 48px;
+  --btn-height-md: 40px;
+  --btn-height-sm: 32px;
   --btn-padding-x: 24px;
-  --btn-radius:    var(--radius-md);
+  --btn-radius:    var(--radius-pill); /* 100px marketing pill */
 
-  /* ---- §4 Layout container widths ---- */
-  --container-max: 1200px; /* [ESTIMATED] max content width */
-  --reading-max:   720px;  /* [ESTIMATED] article/review reading column */
-  --rail-width:    340px;  /* [ESTIMATED] sticky rail on desktop */
+  /* ---- Layout container widths ---- */
+  --container-max: 1200px; /* geist-page-width */
+  --reading-max:   720px;
+  --rail-width:    340px;
 }
 
-/* §5 Responsive breakpoints — documented here for reference; use in media
-   queries as literals (custom properties can't be used in media conditions). */
-/*
-  --bp-sm:  480px;   large phones
-  --bp-md:  768px;   tablets / nav collapse threshold
-  --bp-lg:  1024px;  small laptops
-  --bp-xl:  1200px;  desktop, matches max container width
-*/
+/* Responsive breakpoints — reference (unusable in media conditions):
+   Mobile <600 · Tablet 600–959 · Desktop 960–1199 · Wide 1200+ */

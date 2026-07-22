@@ -57,3 +57,14 @@ export function formatRating(score: number | null | undefined): string {
   if (score === null || score === undefined) return 'Not yet rated';
   return `${score.toFixed(1)} / 5`;
 }
+
+/**
+ * Lounge visits display. The import uses 99 as the "Unlimited" sentinel
+ * (scripts/lib/parse.ts) — never render a literal "99 visits".
+ */
+export function formatLounge(visits: number | null | undefined): string {
+  if (visits === null || visits === undefined) return '—';
+  if (visits === 0) return 'None';
+  if (visits >= 99) return 'Unlimited';
+  return String(visits);
+}
