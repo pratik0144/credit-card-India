@@ -5,13 +5,12 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@lib/*": ["src/lib/*"],
-      "@components/*": ["src/components/*"],
-      "@islands/*": ["src/islands/*"],
-      "@layouts/*": ["src/layouts/*"]
+      "@/*": ["./src/*"],
+      "@lib/*": ["./src/lib/*"],
+      "@components/*": ["./src/components/*"],
+      "@islands/*": ["./src/islands/*"],
+      "@layouts/*": ["./src/layouts/*"]
     }
   }
 }
