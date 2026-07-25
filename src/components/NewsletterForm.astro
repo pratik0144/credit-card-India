@@ -13,7 +13,7 @@ const { heading = 'Stay on top of new card launches and fee changes', source = '
   <div class="container news-band__inner">
     <div class="news-band__copy">
       <h2>{heading}</h2>
-      <p>Our weekly newsletter — new cards, reward devaluations, and RBI updates that affect your wallet.</p>
+      <p>Our weekly newsletter, new cards, reward devaluations, and RBI updates that affect your wallet.</p>
     </div>
     <form class="news-form" data-newsletter data-source={source} novalidate>
       <label class="sr-only" for="news-email">Email address</label>
@@ -83,7 +83,7 @@ const { heading = 'Stay on top of new card launches and fee changes', source = '
         }
         form.querySelector('.news-form__row')?.setAttribute('hidden', '');
         status.hidden = false;
-        status.textContent = "You're in — watch your inbox for the next issue.";
+        status.textContent = "You're in, watch your inbox for the next issue.";
         status.setAttribute('data-ok', ''); status.removeAttribute('data-err');
       } catch {
         status.hidden = false;

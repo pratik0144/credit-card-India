@@ -12,7 +12,7 @@ const PUBLIC_URL = import.meta.env.PUBLIC_SUPABASE_URL as string | undefined;
 const PUBLIC_ANON = import.meta.env.PUBLIC_SUPABASE_ANON_KEY as string | undefined;
 
 /**
- * Anon client — public reads, client-side, and prerender build queries.
+ * Anon client, public reads, client-side, and prerender build queries.
  * Returns null-safe usage: during scaffold (no env yet) callers should handle
  * a thrown error and fall back to seed/mock data.
  */
@@ -27,11 +27,11 @@ export function getAnonClient(): SupabaseClient {
   });
 }
 
-/** True when public Supabase env is present — lets pages choose seed vs live. */
+/** True when public Supabase env is present, lets pages choose seed vs live. */
 export const hasSupabaseEnv = Boolean(PUBLIC_URL && PUBLIC_ANON);
 
 /**
- * Service-role client — SERVER ONLY. Guards against accidental client import
+ * Service-role client, SERVER ONLY. Guards against accidental client import
  * by checking that we're not in a browser context.
  */
 export function getServiceClient(): SupabaseClient {

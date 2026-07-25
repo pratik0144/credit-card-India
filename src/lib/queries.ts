@@ -5,9 +5,9 @@
  *   - Supabase env is not configured, OR
  *   - the live query errors (e.g. tables not migrated yet), OR
  *   - the live query returns zero rows (e.g. catalog not imported yet).
- * This means the site is never blank while Supabase is still being set up — you
+ * This means the site is never blank while Supabase is still being set up, you
  * only see live data once the catalog is actually populated. A one-time console
- * warning explains which case you're in. (User-scoped reads — wallet — do NOT
+ * warning explains which case you're in. (User-scoped reads, wallet, do NOT
  * fall back to seed; they legitimately return empty for a new user.)
  */
 import { getAnonClient, hasSupabaseEnv } from './supabase';
@@ -16,13 +16,15 @@ import type {
   CardRating, CardChangeLog, Author, Article, CardListingRow,
 } from './database.types';
 import { seed, type SeedCard } from './seed-data';
+import type { BestCardCandidate, RewardCatLite, PointValuationLite } from './best-card-engine';
+import type { RecommendCandidate } from './recommend-engine';
 
 /* ---- resilient live-or-seed helpers ---- */
 const _warned = new Set<string>();
 function warnOnce(label: string, detail: string) {
   if (_warned.has(label)) return;
   _warned.add(label);
-  console.warn(`[queries] ${label}: falling back to seed data — ${detail}`);
+  console.warn(`[queries] ${label}: falling back to seed data, ${detail}`);
 }
 
 /* PostgREST serialises Postgres `numeric` columns as strings ("4.8", "10000").
@@ -409,4 +411,206 @@ export async function getCardPickerList(): Promise<
     id: r.card_id, name: r.card_name, bank_name: r.bank_name,
     image_url: r.image_url, slug: r.card_slug,
   }));
+}
+
+/**
+ * Scoring inputs for the best-card calculator's client-side ranking engine
+ * (best-card-engine.ts). Ships the reward structure and point valuations the
+ * engine needs to rank a purchase, with the usual live-or-seed fallback so the
+ * calculator works before Supabase is wired up.
+ */
+export async function getBestCardCandidates(): Promise<{
+  cards: BestCardCandidate[];
+  valuations: PointValuationLite[];
+}> {
+  const buildSeed = (): { cards: BestCardCandidate[]; valuations: PointValuationLite[] } => ({
+    cards: seed.cards
+      .filter((c) => c.is_active)
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        bank_name: seed.bankById[c.bank_id]?.name ?? '',
+        bank_id: c.bank_id,
+        reward_type: c.reward_type,
+        base_reward_value_inr_per_100: c.base_reward_value_inr_per_100,
+        annual_fee_amount: c.annual_fee_amount,
+        annual_fee_waiver_spend_amount: c.annual_fee_waiver_spend_amount,
+        rewardCategories: seed.cardRewardCategories
+          .filter((r) => r.card_id === c.id)
+          .map((r) => ({ category_key: r.category_key, multiplier: r.multiplier, rate_pct: r.rate_pct })),
+      })),
+    valuations: seed.pointValuations.map((v) => ({
+      bank_id: v.bank_id,
+      reward_type: v.reward_type,
+      estimated_inr_per_point_typical: v.estimated_inr_per_point_typical,
+    })),
+  });
+
+  if (!hasSupabaseEnv) return buildSeed();
+  try {
+    const supabase = getAnonClient();
+    const [cardsRes, banksRes, rewardsRes, valsRes] = await Promise.all([
+      supabase.from('cards').select(
+        'id,bank_id,name,reward_type,base_reward_value_inr_per_100,annual_fee_amount,annual_fee_waiver_spend_amount',
+      ).eq('is_active', true),
+      supabase.from('banks').select('id,name'),
+      supabase.from('card_reward_categories').select('card_id,category_key,multiplier,rate_pct'),
+      supabase.from('point_valuations').select('bank_id,reward_type,estimated_inr_per_point_typical'),
+    ]);
+    const cardRows = (cardsRes.data ?? []) as any[];
+    if (cardsRes.error || cardRows.length === 0) {
+      warnOnce('best-card-candidates', 'live query empty/errored; using seed.');
+      return buildSeed();
+    }
+    const bankName = new Map((banksRes.data ?? []).map((b: any) => [b.id, b.name as string]));
+    const rewardsByCard = new Map<string, RewardCatLite[]>();
+    for (const r of (rewardsRes.data ?? []) as any[]) {
+      const list = rewardsByCard.get(r.card_id) ?? [];
+      list.push({ category_key: r.category_key, multiplier: r.multiplier != null ? Number(r.multiplier) : null, rate_pct: r.rate_pct != null ? Number(r.rate_pct) : null });
+      rewardsByCard.set(r.card_id, list);
+    }
+    return {
+      cards: cardRows.map((c) => ({
+        id: c.id,
+        name: c.name,
+        bank_name: bankName.get(c.bank_id) ?? '',
+        bank_id: c.bank_id,
+        reward_type: c.reward_type,
+        base_reward_value_inr_per_100: c.base_reward_value_inr_per_100 != null ? Number(c.base_reward_value_inr_per_100) : null,
+        annual_fee_amount: c.annual_fee_amount != null ? Number(c.annual_fee_amount) : null,
+        annual_fee_waiver_spend_amount: c.annual_fee_waiver_spend_amount != null ? Number(c.annual_fee_waiver_spend_amount) : null,
+        rewardCategories: rewardsByCard.get(c.id) ?? [],
+      })),
+      valuations: ((valsRes.data ?? []) as any[]).map((v) => ({
+        bank_id: v.bank_id,
+        reward_type: v.reward_type,
+        estimated_inr_per_point_typical: v.estimated_inr_per_point_typical != null ? Number(v.estimated_inr_per_point_typical) : null,
+      })),
+    };
+  } catch (e) {
+    warnOnce('best-card-candidates', (e as Error).message);
+    return buildSeed();
+  }
+}
+
+/**
+ * Rich candidate data for the recommendation engine (recommend-engine.ts): card
+ * scoring fields plus fees, forex, lounge, age/CIBIL, reward categories WITH caps,
+ * eligibility rows, and welcome/milestone bonuses. Live-or-seed, same guards as
+ * getBestCardCandidates so the wizard works before Supabase is wired up.
+ */
+export async function getRecommendCandidates(): Promise<{
+  cards: RecommendCandidate[];
+  valuations: PointValuationLite[];
+}> {
+  const valuationsSeed: PointValuationLite[] = seed.pointValuations.map((v) => ({
+    bank_id: v.bank_id,
+    reward_type: v.reward_type,
+    estimated_inr_per_point_typical: v.estimated_inr_per_point_typical,
+  }));
+
+  const buildSeed = (): { cards: RecommendCandidate[]; valuations: PointValuationLite[] } => ({
+    cards: seed.cards
+      .filter((c) => c.is_active)
+      .map((c) => ({
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        bank_name: seed.bankById[c.bank_id]?.name ?? '',
+        bank_slug: seed.bankById[c.bank_id]?.slug ?? '',
+        bank_id: c.bank_id,
+        reward_type: c.reward_type,
+        base_reward_value_inr_per_100: c.base_reward_value_inr_per_100,
+        joining_fee_amount: c.joining_fee_amount,
+        annual_fee_amount: c.annual_fee_amount,
+        annual_fee_waiver_spend_amount: c.annual_fee_waiver_spend_amount,
+        forex_markup_pct: c.forex_markup_pct,
+        lounge_domestic_visits_per_year: c.lounge_domestic_visits_per_year,
+        lounge_intl_visits_per_year: c.lounge_intl_visits_per_year,
+        age_min: c.age_min,
+        age_max: c.age_max,
+        cibil_min: c.cibil_min,
+        editorial_score_5: c.editorial_score_5,
+        rewardCategories: seed.cardRewardCategories
+          .filter((r) => r.card_id === c.id)
+          .map((r) => ({ category_key: r.category_key, multiplier: r.multiplier, rate_pct: r.rate_pct, cap_amount: r.cap_amount, cap_period: r.cap_period })),
+        eligibility: seed.cardEligibility
+          .filter((e) => e.card_id === c.id)
+          .map((e) => ({ employment_type: e.employment_type, min_income_amount: e.min_income_amount, min_income_period: e.min_income_period })),
+        bonuses: seed.cardBonuses
+          .filter((b) => b.card_id === c.id)
+          .map((b) => ({ bonus_type: b.bonus_type, threshold_spend_amount: b.threshold_spend_amount, estimated_value_inr: b.estimated_value_inr })),
+      })),
+    valuations: valuationsSeed,
+  });
+
+  if (!hasSupabaseEnv) return buildSeed();
+  try {
+    const supabase = getAnonClient();
+    const [cardsRes, banksRes, rewardsRes, eligRes, bonusRes, valsRes] = await Promise.all([
+      supabase.from('cards').select(
+        'id,slug,bank_id,name,reward_type,base_reward_value_inr_per_100,joining_fee_amount,annual_fee_amount,annual_fee_waiver_spend_amount,forex_markup_pct,lounge_domestic_visits_per_year,lounge_intl_visits_per_year,age_min,age_max,cibil_min,editorial_score_5',
+      ).eq('is_active', true),
+      supabase.from('banks').select('id,name,slug'),
+      supabase.from('card_reward_categories').select('card_id,category_key,multiplier,rate_pct,cap_amount,cap_period'),
+      supabase.from('card_eligibility').select('card_id,employment_type,min_income_amount,min_income_period'),
+      supabase.from('card_bonuses').select('card_id,bonus_type,threshold_spend_amount,estimated_value_inr'),
+      supabase.from('point_valuations').select('bank_id,reward_type,estimated_inr_per_point_typical'),
+    ]);
+    const cardRows = (cardsRes.data ?? []) as any[];
+    if (cardsRes.error || cardRows.length === 0) {
+      warnOnce('recommend-candidates', 'live query empty/errored; using seed.');
+      return buildSeed();
+    }
+    const bankName = new Map((banksRes.data ?? []).map((b: any) => [b.id, b.name as string]));
+    const bankSlug = new Map((banksRes.data ?? []).map((b: any) => [b.id, b.slug as string]));
+    const num = (v: any): number | null => (v != null ? Number(v) : null);
+    const groupBy = <T extends { card_id: string }>(rows: T[] | null) => {
+      const m = new Map<string, T[]>();
+      for (const r of rows ?? []) (m.get(r.card_id) ?? m.set(r.card_id, []).get(r.card_id)!).push(r);
+      return m;
+    };
+    const rewardsByCard = groupBy((rewardsRes.data ?? []) as any[]);
+    const eligByCard = groupBy((eligRes.data ?? []) as any[]);
+    const bonusByCard = groupBy((bonusRes.data ?? []) as any[]);
+    return {
+      cards: cardRows.map((c) => ({
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        bank_name: bankName.get(c.bank_id) ?? '',
+        bank_slug: bankSlug.get(c.bank_id) ?? '',
+        bank_id: c.bank_id,
+        reward_type: c.reward_type,
+        base_reward_value_inr_per_100: num(c.base_reward_value_inr_per_100),
+        joining_fee_amount: num(c.joining_fee_amount),
+        annual_fee_amount: num(c.annual_fee_amount),
+        annual_fee_waiver_spend_amount: num(c.annual_fee_waiver_spend_amount),
+        forex_markup_pct: num(c.forex_markup_pct),
+        lounge_domestic_visits_per_year: num(c.lounge_domestic_visits_per_year),
+        lounge_intl_visits_per_year: num(c.lounge_intl_visits_per_year),
+        age_min: num(c.age_min),
+        age_max: num(c.age_max),
+        cibil_min: num(c.cibil_min),
+        editorial_score_5: num(c.editorial_score_5),
+        rewardCategories: (rewardsByCard.get(c.id) ?? []).map((r: any) => ({
+          category_key: r.category_key, multiplier: num(r.multiplier), rate_pct: num(r.rate_pct),
+          cap_amount: num(r.cap_amount), cap_period: r.cap_period,
+        })),
+        eligibility: (eligByCard.get(c.id) ?? []).map((e: any) => ({
+          employment_type: e.employment_type, min_income_amount: num(e.min_income_amount), min_income_period: e.min_income_period,
+        })),
+        bonuses: (bonusByCard.get(c.id) ?? []).map((b: any) => ({
+          bonus_type: b.bonus_type, threshold_spend_amount: num(b.threshold_spend_amount), estimated_value_inr: num(b.estimated_value_inr),
+        })),
+      })),
+      valuations: ((valsRes.data ?? []) as any[]).map((v) => ({
+        bank_id: v.bank_id, reward_type: v.reward_type,
+        estimated_inr_per_point_typical: v.estimated_inr_per_point_typical != null ? Number(v.estimated_inr_per_point_typical) : null,
+      })),
+    };
+  } catch (e) {
+    warnOnce('recommend-candidates', (e as Error).message);
+    return buildSeed();
+  }
 }

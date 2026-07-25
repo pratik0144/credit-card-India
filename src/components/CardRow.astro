@@ -1,190 +1,857 @@
 ---
 /*
- * CardRow (DESIGN §6.3, FRONTEND §3) — the core conversion unit.
- * COLLAPSED by default on every listing page: eyebrow, name, art, rating, ONE
- * headline reward line, a 4-stat At-A-Glance row, and three actions (Apply Now /
- * Add to Compare / Read full review). Everything else sits behind a single
- * "Show full card details" toggle (collapsed on mobile AND desktop).
- * "Apply Now" is the dominant filled CTA, never red, always with "on Issuer's
- * secure site" microcopy (§6.3, §11). Progressive disclosure ≠ deleting info.
+ * CardRow — NerdWallet-inspired card display, adapted for Indian credit cards.
+ * (DESIGN §6.3, FRONTEND §3)
+ *
+ * Layout (collapsed, always visible):
+ *   1. Category eyebrow badge ("BEST FOR CASHBACK")
+ *   2. Card name (H3 linked to full review)
+ *   3. 3-column grid: card art | rewards rate breakdown | Apply Now CTA
+ *   4. 4-stat row: Welcome Offer, Annual Fee, Forex Markup, Recommended CIBIL
+ *   5. Star rating with "Our rating: ★★★★☆ 4.2 ⓘ" + "See Rates & Fees" link
+ *   6. "Add to compare" checkbox
+ *
+ * Expandable accordions (collapsed by default):
+ *   • "Editor's take" — overall rating breakdown (5 sub-scores), pros/cons, "Why we like" prose, "Read the full review →"
+ *   • "Card details"  — Highlights list, Rates & Fees table, "View All [Card] Details →"
+ *
+ * Indian adaptations: ₹ fees with Indian grouping, CIBIL score bands (not "credit score range"),
+ * forex markup % (not APR), reward types (cashback/points/miles), bank-specific official URLs.
  */
 import Button from './Button.astro';
-import RatingWidget from './RatingWidget.astro';
 import ScoreTierBadge from './ScoreTierBadge.astro';
 import type { CardListingRow } from '../lib/database.types';
 import type { CardDetail } from '../lib/queries';
 import { formatAnnualFee, formatINRCompact } from '../lib/format';
-import { annualFeeTier, cibilTier, rewardValueTier } from '../lib/tiers';
-import { welcomeBenefit, deriveHighlights } from '../lib/derive';
+import { annualFeeTier, cibilTier, rewardValueTier, forexTier } from '../lib/tiers';
+import { welcomeBenefit, deriveHighlights, derivePros, deriveCons, headlineReward } from '../lib/derive';
 
 export interface Props {
   row: CardListingRow;
-  /** optional full detail enables the inline "full card details" expansion */
+  /** optional full detail enables the inline accordion expansions */
   detail?: CardDetail | null;
   eyebrow?: string;
 }
 const { row, detail = null, eyebrow } = Astro.props;
 const reviewHref = `/cards/${row.bank_slug}/${row.card_slug.replace(new RegExp(`^${row.bank_slug}-`), '')}`;
-const applyHref = detail?.card.official_url ?? row_official(row);
+const applyHref = detail?.card.official_url ?? '#';
+const bankPageHref = `/banks/${row.bank_slug}`;
 const feeT = annualFeeTier(row.annual_fee_amount);
 const cibT = cibilTier(row.cibil_min);
 const rewT = rewardValueTier(detail?.card.base_reward_value_inr_per_100);
+const forexT = forexTier(detail?.card.forex_markup_pct);
 const welcome = detail ? welcomeBenefit(detail) : null;
 const highlights = detail ? deriveHighlights(detail) : [];
-const panelId = `card-details-${row.card_id}`;
+const pros = detail ? derivePros(detail) : [];
+const cons = detail ? deriveCons(detail) : [];
+const cardRating = detail ? (detail as any).rating : null;
+const score = row.overall_score ?? cardRating?.overall_score ?? detail?.card.editorial_score_5 ?? null;
+const stars = score != null ? Math.round(score) : 0;
+const editorPanelId = `editor-take-${row.card_id}`;
+const detailPanelId = `card-details-${row.card_id}`;
+const categoryLabel = eyebrow || (row.primary_category_slug ? `Best for ${row.primary_category_slug.replace(/-/g, ' ')}` : null);
 
-function row_official(_r: CardListingRow): string { return '#'; }
+// Reward categories breakdown for the middle column — always show 3-4 lines.
+// Start with actual reward categories, then pad with supplementary card features.
+const baseRewardLines = detail?.rewardCategories?.slice(0, 4).map((rc) => ({
+  rate: rc.multiplier ? `${rc.multiplier}X` : rc.rate_pct ? `${rc.rate_pct}%` : '',
+  desc: rc.raw_text ?? rc.category_key?.replace(/_/g, ' ') ?? '',
+})) ?? [];
+
+// Supplementary feature lines to fill gaps when reward categories are sparse
+const supplementLines: { rate: string; desc: string }[] = [];
+if (detail) {
+  const c = detail.card;
+  if (c.fuel_surcharge_waiver_text)
+    supplementLines.push({ rate: '1%', desc: `Fuel surcharge waiver — ${c.fuel_surcharge_waiver_text}` });
+  else if (c.fuel_surcharge_waiver_pct)
+    supplementLines.push({ rate: `${c.fuel_surcharge_waiver_pct}%`, desc: 'Fuel surcharge waiver on fuel transactions' });
+  if ((c.lounge_domestic_visits_per_year ?? 0) > 0)
+    supplementLines.push({ rate: `${(c.lounge_domestic_visits_per_year ?? 0) >= 99 ? '∞' : c.lounge_domestic_visits_per_year}`, desc: 'Complimentary domestic airport lounge visits/yr' });
+  if ((c.lounge_intl_visits_per_year ?? 0) > 0)
+    supplementLines.push({ rate: `${(c.lounge_intl_visits_per_year ?? 0) >= 99 ? '∞' : c.lounge_intl_visits_per_year}`, desc: `International lounge visits/yr${c.lounge_intl_network ? ` via ${c.lounge_intl_network}` : ''}` });
+  if (welcome)
+    supplementLines.push({ rate: '-', desc: `Welcome benefit: ${welcome}` });
+  if (c.annual_fee_amount === 0)
+    supplementLines.push({ rate: '₹0', desc: 'Lifetime free — no joining or annual fee' });
+  else if (c.annual_fee_waiver_spend_amount)
+    supplementLines.push({ rate: '✓', desc: `Fee waived on ${formatINRCompact(c.annual_fee_waiver_spend_amount)}/yr spend` });
+  if (c.forex_markup_pct != null && c.forex_markup_pct <= 2)
+    supplementLines.push({ rate: `${c.forex_markup_pct}%`, desc: 'Low forex markup on international spends' });
+  if (c.supports_contactless)
+    supplementLines.push({ rate: '-', desc: 'Tap-to-pay contactless enabled' });
+}
+
+// Merge: take reward categories first, fill to at least 3 with supplements
+const rewardLines = baseRewardLines.length >= 3
+  ? baseRewardLines.slice(0, 4)
+  : [...baseRewardLines, ...supplementLines.filter((s) =>
+      !baseRewardLines.some((b) => b.desc === s.desc)
+    )].slice(0, 4);
+
+// Sub-score breakdown
+const subscores = cardRating ? [
+  ['Rewards Value', cardRating.rewards_value_score],
+  ['Fees & Charges', cardRating.fees_charges_score],
+  ['Welcome Benefit', cardRating.welcome_benefit_score],
+  ['Flexibility', cardRating.flexibility_score],
+  ['Issuer Service', cardRating.issuer_service_score],
+].filter(([, v]) => v != null) : [];
 ---
-<article class="cardrow">
-  <div class="cardrow__main">
-    <div class="cardrow__art">
-      <img
-        src={row.image_url ? `/card-img/${row.image_url.replace(/^card-img\//, '')}` : '/og-default.png'}
-        alt={`${row.card_name} card`}
-        width="240" height="151" loading="lazy" decoding="async"
-      />
+<article class="nw-card">
+  {/* ── Category eyebrow ── */}
+  {categoryLabel && (
+    <div class="nw-card__eyebrow">
+      <span class="nw-card__badge">{categoryLabel.toUpperCase()}</span>
     </div>
+  )}
 
-    <div class="cardrow__body">
-      {eyebrow && <p class="eyebrow cardrow__eyebrow">{eyebrow}</p>}
-      <h3 class="cardrow__name"><a href={reviewHref}>{row.card_name}</a></h3>
-      <p class="cardrow__issuer">{row.bank_name}</p>
+  {/* ── Card name (H3, linked) ── */}
+  <h3 class="nw-card__title"><a href={reviewHref}>{row.card_name}</a></h3>
 
-      <RatingWidget score={row.overall_score} size="sm" idSuffix={row.card_id} />
-
-      {row.headline_reward_line && (
-        <p class="cardrow__headline">
-          <strong>{row.headline_reward_line}</strong>
-        </p>
-      )}
-
-      {/* At A Glance — label/value/badge idiom (§6.3 step 6) */}
-      <dl class="cardrow__glance">
-        <div>
-          <dt>Annual Fee</dt>
-          <dd><strong>{formatAnnualFee(row.annual_fee_amount)}</strong> <ScoreTierBadge tier={feeT.tier} label={feeT.label} /></dd>
-        </div>
-        <div>
-          <dt>Reward Rate</dt>
-          <dd><strong>{detail?.card.reward_rate_general_text ?? row.headline_reward_line ?? '—'}</strong></dd>
-        </div>
-        <div>
-          <dt>Min. CIBIL</dt>
-          <dd><strong>{row.cibil_min ?? 'Flexible'}</strong> <ScoreTierBadge tier={cibT.tier} label={cibT.label} /></dd>
-        </div>
-        <div>
-          <dt>Welcome Benefit</dt>
-          <dd><strong>{welcome ?? '—'}</strong></dd>
-        </div>
-      </dl>
-
-      <div class="cardrow__actions">
-        <Button variant="primary" href={applyHref} external microcopy={`on ${row.bank_name}'s secure site`}>
-          Apply Now
-        </Button>
-        <Button variant="outline" size="sm" href={`/compare?add=${row.card_slug}`}>Add to Compare</Button>
-        <Button variant="ghost" href={reviewHref}>Read full review</Button>
+  {/* ── 3-column hero: Art | Rewards | CTA ── */}
+  <div class="nw-card__hero">
+    {/* Left: card art + rating + "See Rates & Fees" */}
+    <div class="nw-card__left">
+      <div class="nw-card__art">
+        <img
+          src={row.image_url ? `/card-img/${row.image_url.replace(/^card-img\//, '')}` : '/og-default.png'}
+          alt={`${row.card_name}`}
+          width="280" height="176" loading="lazy" decoding="async"
+        />
       </div>
 
-      {detail && (
-        <button type="button" class="cardrow__toggle" aria-expanded="false" aria-controls={panelId} data-card-toggle>
-          <span data-toggle-label>Show full card details</span> <span aria-hidden="true">▾</span>
-        </button>
-      )}
+      {/* Rating row */}
+      <div class="nw-card__rating">
+        <span class="nw-card__rating-label">Our rating:</span>
+        {score != null && (
+          <span class="nw-card__stars" aria-hidden="true">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <span class:list={['nw-star', { 'nw-star--full': i < stars }]}>★</span>
+            ))}
+          </span>
+        )}
+        <span class="nw-card__score">{score != null ? score.toFixed(1) : '-'}</span>
+      </div>
+
+      <a href={reviewHref} class="nw-card__rates-link">See Rates & Fees</a>
+
+      {/* Compare checkbox */}
+      <label class="nw-card__compare">
+        <input type="checkbox" data-compare-card={row.card_slug} />
+        <span>Add to compare</span>
+      </label>
+    </div>
+
+    {/* Middle: Rewards rate breakdown */}
+    <div class="nw-card__middle">
+      {rewardLines.length > 0 ? (
+        <div>
+          <h4 class="nw-card__rewards-title">{baseRewardLines.length >= 2 ? 'Rewards rate' : 'Key features'}</h4>
+          <dl class="nw-card__rewards-list">
+            {rewardLines.map((rl) => (
+              <div class="nw-card__reward-row">
+                <dt class="nw-card__reward-rate">{rl.rate}</dt>
+                <dd class="nw-card__reward-desc">{rl.desc}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ) : row.headline_reward_line ? (
+        <div>
+          <h4 class="nw-card__rewards-title">Rewards rate</h4>
+          <p class="nw-card__reward-headline">{row.headline_reward_line}</p>
+        </div>
+      ) : null}
+    </div>
+
+    {/* Right: Apply Now CTA */}
+    <div class="nw-card__right">
+      <Button variant="primary" size="lg" href={applyHref} external microcopy={`at ${row.bank_name}'s secure site`}>
+        Apply now
+      </Button>
     </div>
   </div>
 
+  {/* ── 4-stat row ── */}
+  <dl class="nw-card__specs">
+    <div class="nw-card__spec">
+      <dt>Welcome offer</dt>
+      <dd><strong>{welcome ?? '-'}</strong></dd>
+    </div>
+    <div class="nw-card__spec">
+      <dt>Annual fee</dt>
+      <dd><strong>{formatAnnualFee(row.annual_fee_amount)}</strong></dd>
+    </div>
+    <div class="nw-card__spec">
+      <dt>Forex markup</dt>
+      <dd><strong>{detail?.card.forex_markup_pct != null ? `${detail.card.forex_markup_pct}%` : '-'}</strong></dd>
+    </div>
+    <div class="nw-card__spec">
+      <dt>Recommended CIBIL</dt>
+      <dd><strong>{row.cibil_min ? `${row.cibil_min}+ (${cibT.label})` : 'Flexible'}</strong></dd>
+    </div>
+  </dl>
+
+  {/* ── Accordion: Editor's take ── */}
   {detail && (
-    <div id={panelId} class="cardrow__details" hidden>
-      {detail.rewardCategories.length > 0 && (
-        <div class="cardrow__section">
-          <h4>Reward categories</h4>
-          <ul class="cardrow__rewards">
-            {detail.rewardCategories.map((rc) => (
-              <li><strong>{rc.multiplier ? `${rc.multiplier}X` : rc.rate_pct ? `${rc.rate_pct}%` : ''}</strong> {rc.raw_text ?? rc.category_key}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+    <div class="nw-card__accordion">
+      <button
+        type="button"
+        class="nw-card__accordion-btn"
+        aria-expanded="false"
+        aria-controls={editorPanelId}
+        data-nw-accordion
+      >
+        <span>Editor's take</span>
+        <span class="nw-card__accordion-icon" aria-hidden="true">+</span>
+      </button>
+      <div id={editorPanelId} class="nw-card__accordion-panel" hidden>
+        {/* Rating breakdown + Pros/Cons side by side */}
+        <div class="nw-card__editor-grid">
+          {/* Left: Overall rating + sub-scores */}
+          <div class="nw-card__editor-left">
+            <h4 class="nw-card__editor-heading">Overall rating</h4>
+            <div class="nw-card__overall-score">
+              <span class="nw-card__big-stars" aria-hidden="true">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <span class:list={['nw-star nw-star--lg', { 'nw-star--full': i < stars }]}>★</span>
+                ))}
+              </span>
+              <span class="nw-card__big-number">{score != null ? score.toFixed(1) : '-'}</span>
+            </div>
+            <a href="/editorial-guidelines" class="nw-card__methodology-link">Rating methodology</a>
 
-      <div class="cardrow__section">
-        <h4>Editor's take</h4>
-        <p class="cardrow__take">
-          Rated <ScoreTierBadge tier={rewT.tier} label={`${rewT.label} rewards value`} /> for its category.
-          {' '}Best suited to {detail.categorySlugs.join(', ') || 'everyday'} spenders.
-        </p>
+            {subscores.length > 0 && (
+              <table class="nw-card__subscores">
+                <tbody>
+                  {subscores.map(([label, val]) => (
+                    <tr>
+                      <th scope="row">{label}:</th>
+                      <td>{(val as number).toFixed(1)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Right: Pros & Cons */}
+          <div class="nw-card__editor-right">
+            {pros.length > 0 && (
+              <div>
+                <h4 class="nw-card__proscons-heading">Pros</h4>
+                <ul class="nw-card__pros">
+                  {pros.map((p) => <li>{p}</li>)}
+                </ul>
+              </div>
+            )}
+            {cons.length > 0 && (
+              <div>
+                <h4 class="nw-card__proscons-heading">Cons</h4>
+                <ul class="nw-card__cons">
+                  {cons.map((c) => <li>{c}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Why we like this card */}
+        <div class="nw-card__why">
+          <h4>Why we like this card</h4>
+          <p>
+            {detail.article?.body
+              ? detail.article.body.replace(/<[^>]+>/g, '').slice(0, 300) + (detail.article.body.length > 300 ? '…' : '')
+              : `The ${row.card_name} from ${row.bank_name} earns ${(detail.card.reward_rate_general_text ?? 'rewards on everyday spends').toLowerCase()}. ${welcome ? `New cardholders get a welcome benefit of ${welcome}. ` : ''}${(detail.card.lounge_domestic_visits_per_year ?? 0) > 0 ? `It includes ${detail.card.lounge_domestic_visits_per_year} complimentary domestic lounge visits a year. ` : ''}${detail.card.annual_fee_amount === 0 ? 'It carries no annual fee, making every reward pure upside.' : detail.card.annual_fee_waiver_spend_amount ? `The annual fee is waived on ${formatINRCompact(detail.card.annual_fee_waiver_spend_amount)} annual spend.` : ''}`
+            }
+          </p>
+        </div>
+
+        <a href={reviewHref} class="nw-card__full-review-link">Read the full review →</a>
       </div>
+    </div>
+  )}
 
-      {highlights.length > 0 && (
-        <div class="cardrow__section">
-          <h4>Highlights</h4>
-          <ul class="cardrow__highlights">{highlights.map((h) => <li>{h}</li>)}</ul>
-        </div>
-      )}
+  {/* ── Accordion: Card details ── */}
+  {detail && (
+    <div class="nw-card__accordion">
+      <button
+        type="button"
+        class="nw-card__accordion-btn"
+        aria-expanded="false"
+        aria-controls={detailPanelId}
+        data-nw-accordion
+      >
+        <span>Card details</span>
+        <span class="nw-card__accordion-icon" aria-hidden="true">+</span>
+      </button>
+      <div id={detailPanelId} class="nw-card__accordion-panel" hidden>
+        {/* Highlights */}
+        {highlights.length > 0 && (
+          <div class="nw-card__detail-section">
+            <h4>Highlights</h4>
+            <ul class="nw-card__highlights-list">
+              {highlights.map((h) => <li>{h}</li>)}
+            </ul>
+          </div>
+        )}
 
-      {detail.fees.length > 0 && (
-        <div class="cardrow__section">
-          <h4>Fees &amp; charges</h4>
-          <table class="cardrow__fees">
+        {/* Reward categories detail */}
+        {detail.rewardCategories.length > 0 && (
+          <div class="nw-card__detail-section">
+            <h4>Reward categories</h4>
+            <ul class="nw-card__highlights-list">
+              {detail.rewardCategories.map((rc) => (
+                <li><strong>{rc.multiplier ? `${rc.multiplier}X` : rc.rate_pct ? `${rc.rate_pct}%` : ''}</strong> {rc.raw_text ?? rc.category_key}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Rates & Fees */}
+        <div class="nw-card__detail-section">
+          <h4>Rates & Fees</h4>
+          <table class="nw-card__fees-table">
             <tbody>
+              <tr><th scope="row">Annual Fee</th><td>{formatAnnualFee(row.annual_fee_amount)}</td></tr>
+              {detail.card.joining_fee_amount != null && (
+                <tr><th scope="row">Joining Fee</th><td>{formatAnnualFee(detail.card.joining_fee_amount)}</td></tr>
+              )}
+              {detail.card.annual_fee_waiver_spend_amount != null && (
+                <tr><th scope="row">Fee Waiver Spend</th><td>{formatINRCompact(detail.card.annual_fee_waiver_spend_amount)}/yr</td></tr>
+              )}
+              {detail.card.forex_markup_pct != null && (
+                <tr><th scope="row">Forex Markup</th><td>{detail.card.forex_markup_pct}%</td></tr>
+              )}
               {detail.fees.slice(0, 6).map((f) => (
-                <tr><th scope="row">{f.fee_type.replace(/_/g, ' ')}</th><td>{f.raw_text ?? (f.amount != null ? formatINRCompact(f.amount) : '—')}</td></tr>
+                <tr>
+                  <th scope="row">{f.fee_type.replace(/_/g, ' ')}</th>
+                  <td>{f.raw_text ?? (f.amount != null ? formatINRCompact(f.amount) : '-')}</td>
+                </tr>
               ))}
             </tbody>
           </table>
         </div>
-      )}
 
-      <Button variant="outline" size="sm" href={reviewHref}>View full {row.card_name} details &amp; MITC</Button>
+        {/* Links section */}
+        <div class="nw-card__links">
+          <a href={reviewHref} class="nw-card__detail-link">View All {row.card_name} Details →</a>
+          <a href={bankPageHref} class="nw-card__detail-link">All {row.bank_name} Credit Cards →</a>
+          {detail.card.official_url && (
+            <a href={detail.card.official_url} target="_blank" rel="nofollow sponsored noopener" class="nw-card__detail-link">Official {row.bank_name} Card Page ↗</a>
+          )}
+        </div>
+      </div>
     </div>
   )}
 </article>
 
 <style>
-  .cardrow {
-    border-radius: var(--radius-md);
-    padding: var(--space-6);
+  /* ============================================================= */
+  /* NerdWallet-style card display — Indian adaptation              */
+  /* ============================================================= */
+
+  .nw-card {
     background: var(--color-surface);
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-hairline-inset), var(--shadow-elevation-1);
     margin-bottom: var(--space-8);
+    padding: 0;
+    overflow: hidden;
     transition: box-shadow var(--duration-base) var(--ease-out);
   }
-  .cardrow:hover { box-shadow: var(--shadow-hairline-inset), var(--shadow-elevation-2); }
-  .cardrow__main { display: grid; gap: var(--space-6); }
-  @media (min-width: 768px) { .cardrow__main { grid-template-columns: 240px 1fr; } }
-  .cardrow__art img { width: 100%; height: auto; aspect-ratio: 1.59 / 1; object-fit: contain; border-radius: var(--radius-sm); background: var(--color-surface-alt); }
-  .cardrow__eyebrow { color: var(--color-text-secondary); margin-bottom: var(--space-1); }
-  .cardrow__name { font-size: var(--text-h3); margin-bottom: var(--space-1); }
-  .cardrow__issuer { color: var(--color-text-secondary); font-size: var(--text-body-sm); margin-bottom: var(--space-3); }
-  .cardrow__headline { margin: var(--space-3) 0; font-size: var(--text-body-lg); }
-  .cardrow__glance { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin: var(--space-4) 0; }
-  .cardrow__glance dt { font-size: var(--text-caption); text-transform: uppercase; letter-spacing: var(--tracking-wide); color: var(--color-text-muted); margin-bottom: var(--space-1); }
-  .cardrow__glance dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--text-body-sm); }
-  .cardrow__actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3); margin-top: var(--space-4); }
-  .cardrow__toggle {
-    margin-top: var(--space-4); background: none; border: none; cursor: pointer;
-    color: var(--color-primary-blue); font-weight: var(--weight-semibold);
-    font-size: var(--text-body-sm); padding: var(--space-2) 0; min-height: 44px;
+  .nw-card:hover {
+    box-shadow: var(--shadow-hairline-inset), var(--shadow-elevation-2);
   }
-  .cardrow__details { margin-top: var(--space-6); padding-top: var(--space-6); border-top: var(--border-width-hairline) solid var(--color-border); }
-  .cardrow__section { margin-bottom: var(--space-6); }
-  .cardrow__section h4 { font-size: var(--text-h4); margin-bottom: var(--space-2); }
-  .cardrow__rewards, .cardrow__highlights { margin: 0; padding-left: var(--space-6); }
-  .cardrow__rewards li, .cardrow__highlights li { margin-bottom: var(--space-2); }
-  .cardrow__fees { border-collapse: collapse; width: 100%; max-width: 480px; }
-  .cardrow__fees th, .cardrow__fees td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: var(--border-width-hairline) solid var(--color-border); font-size: var(--text-body-sm); text-transform: capitalize; }
-  .cardrow__fees td { text-align: right; font-weight: var(--weight-medium); text-transform: none; }
+
+  /* ── Eyebrow badge ── */
+  .nw-card__eyebrow {
+    padding: var(--space-3) var(--space-6);
+    border-bottom: var(--border-width-hairline) solid var(--color-border);
+    background: var(--color-surface-alt);
+  }
+  .nw-card__badge {
+    font-family: var(--font-mono);
+    font-size: var(--text-caption);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-primary-blue);
+    text-transform: uppercase;
+  }
+
+  /* ── Card title ── */
+  .nw-card__title {
+    font-size: var(--text-h2);
+    margin: 0;
+    padding: var(--space-4) var(--space-6) 0;
+    line-height: var(--leading-snug);
+  }
+  .nw-card__title a {
+    color: var(--color-text-primary);
+    text-decoration: none;
+  }
+  .nw-card__title a:hover {
+    color: var(--color-primary-blue);
+  }
+
+  /* ── 3-column hero grid ── */
+  .nw-card__hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-6) var(--space-3);
+  }
+  @media (min-width: 768px) {
+    .nw-card__hero {
+      grid-template-columns: 260px 1fr auto;
+      gap: var(--space-6);
+      align-items: start;
+    }
+  }
+
+  /* Left column */
+  .nw-card__left {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .nw-card__art img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1.59 / 1;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-alt);
+    display: block;
+  }
+
+  /* Rating row */
+  .nw-card__rating {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin-top: var(--space-1);
+  }
+  .nw-card__rating-label {
+    font-size: var(--text-body-sm);
+    color: var(--color-text-secondary);
+  }
+  .nw-card__stars {
+    font-size: 1rem;
+    letter-spacing: 1px;
+    color: var(--color-star-empty);
+  }
+  .nw-star { color: var(--color-star-empty); }
+  .nw-star--full { color: var(--color-star-fill); }
+  .nw-star--lg { font-size: 1.5rem; }
+  .nw-card__score {
+    font-weight: var(--weight-bold);
+    font-size: var(--text-h3);
+    color: var(--color-primary-blue);
+  }
+  .nw-card__rates-link {
+    font-size: var(--text-body-sm);
+    color: var(--color-primary-blue);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .nw-card__rates-link:hover { color: var(--color-primary-blue-dark); }
+
+  /* Compare checkbox */
+  .nw-card__compare {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-body-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    min-height: 44px;
+  }
+  .nw-card__compare input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary-blue);
+    cursor: pointer;
+  }
+
+  /* Middle column — rewards rate */
+  .nw-card__middle {
+    padding-top: var(--space-1);
+  }
+  .nw-card__rewards-title {
+    font-size: var(--text-h4);
+    font-weight: var(--weight-semibold);
+    margin: 0 0 var(--space-3);
+    color: var(--color-text-primary);
+  }
+  .nw-card__rewards-list {
+    margin: 0;
+    display: grid;
+    gap: var(--space-3);
+  }
+  .nw-card__reward-row {
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
+  }
+  .nw-card__reward-rate {
+    font-weight: var(--weight-bold);
+    font-size: var(--text-body);
+    color: var(--color-text-primary);
+    min-width: 48px;
+    flex-shrink: 0;
+  }
+  .nw-card__reward-desc {
+    margin: 0;
+    font-size: var(--text-body-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+  }
+  .nw-card__reward-headline {
+    font-size: var(--text-body);
+    color: var(--color-text-secondary);
+    margin: 0;
+    line-height: var(--leading-normal);
+  }
+
+  /* Right column — CTA */
+  .nw-card__right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: var(--space-2);
+  }
+  @media (max-width: 767px) {
+    .nw-card__right {
+      align-items: stretch;
+    }
+  }
+
+  /* ── 4-stat specs row ── */
+  .nw-card__specs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    border-top: var(--border-width-hairline) solid var(--color-border);
+  }
+  @media (min-width: 768px) {
+    .nw-card__specs {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  .nw-card__spec {
+    padding: var(--space-4) var(--space-6);
+  }
+  /* Vertical dividers: use left border on all except first in each row */
+  .nw-card__spec:nth-child(2) {
+    border-left: var(--border-width-hairline) solid var(--color-border);
+  }
+  /* Mobile: 2-col, top row (1,2) gets bottom border */
+  .nw-card__spec:nth-child(1),
+  .nw-card__spec:nth-child(2) {
+    border-bottom: var(--border-width-hairline) solid var(--color-border);
+  }
+  .nw-card__spec:nth-child(4) {
+    border-left: var(--border-width-hairline) solid var(--color-border);
+  }
+  @media (min-width: 768px) {
+    /* Desktop: 4-col single row, no bottom border, left border on 2/3/4 */
+    .nw-card__spec:nth-child(1),
+    .nw-card__spec:nth-child(2) {
+      border-bottom: none;
+    }
+    .nw-card__spec:nth-child(3) {
+      border-left: var(--border-width-hairline) solid var(--color-border);
+    }
+  }
+  .nw-card__spec dt {
+    font-size: var(--text-caption);
+    color: var(--color-text-muted);
+    text-transform: none;
+    margin-bottom: var(--space-1);
+    white-space: nowrap;
+  }
+  .nw-card__spec dd {
+    margin: 0;
+    font-size: var(--text-body-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-primary);
+    line-height: var(--leading-normal);
+  }
+
+  /* ── Accordion sections ── */
+  .nw-card__accordion {
+    border-top: var(--border-width-hairline) solid var(--color-border);
+  }
+  .nw-card__accordion-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: var(--space-4) var(--space-6);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: var(--text-body);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-primary);
+    font-family: var(--font-primary);
+    min-height: 56px;
+    transition: background-color var(--duration-fast) var(--ease-standard);
+  }
+  .nw-card__accordion-btn:hover {
+    background: var(--color-surface-alt);
+  }
+  .nw-card__accordion-icon {
+    font-size: var(--text-h3);
+    font-weight: var(--weight-regular);
+    color: var(--color-text-secondary);
+    transition: transform var(--duration-base) var(--ease-standard);
+    line-height: 1;
+  }
+  .nw-card__accordion-btn[aria-expanded="true"] .nw-card__accordion-icon {
+    transform: rotate(45deg);
+  }
+  .nw-card__accordion-panel {
+    padding: 0 var(--space-6) var(--space-6);
+  }
+
+  /* ── Editor's take grid ── */
+  .nw-card__editor-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+    padding-top: var(--space-2);
+  }
+  @media (min-width: 768px) {
+    .nw-card__editor-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-8);
+    }
+  }
+
+  .nw-card__editor-left {
+    border-top: 3px solid var(--color-primary-blue);
+    padding-top: var(--space-4);
+  }
+  .nw-card__editor-heading {
+    font-size: var(--text-h4);
+    font-weight: var(--weight-semibold);
+    margin: 0 0 var(--space-2);
+  }
+  .nw-card__overall-score {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+  .nw-card__big-stars {
+    letter-spacing: 2px;
+  }
+  .nw-card__big-number {
+    font-size: var(--text-rating-number);
+    font-weight: var(--weight-bold);
+    color: var(--color-text-primary);
+  }
+  .nw-card__methodology-link {
+    font-size: var(--text-body-sm);
+    color: var(--color-primary-blue);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    display: inline-block;
+    margin-bottom: var(--space-4);
+  }
+
+  .nw-card__subscores {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 360px;
+  }
+  .nw-card__subscores th,
+  .nw-card__subscores td {
+    text-align: left;
+    padding: var(--space-2) var(--space-3);
+    border-bottom: var(--border-width-hairline) solid var(--color-border);
+    font-size: var(--text-body-sm);
+  }
+  .nw-card__subscores th {
+    font-weight: var(--weight-regular);
+    color: var(--color-text-secondary);
+  }
+  .nw-card__subscores td {
+    text-align: right;
+    font-weight: var(--weight-bold);
+    color: var(--color-primary-blue);
+  }
+
+  /* Pros & Cons */
+  .nw-card__editor-right {
+    padding-top: var(--space-2);
+  }
+  .nw-card__proscons-heading {
+    font-size: var(--text-h4);
+    font-weight: var(--weight-bold);
+    margin: 0 0 var(--space-2);
+  }
+  .nw-card__pros,
+  .nw-card__cons {
+    margin: 0 0 var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+  .nw-card__pros li,
+  .nw-card__cons li {
+    position: relative;
+    padding-left: var(--space-6);
+    margin-bottom: var(--space-2);
+    font-size: var(--text-body-sm);
+    line-height: var(--leading-normal);
+    color: var(--color-text-secondary);
+  }
+  .nw-card__pros li::before {
+    content: "•";
+    position: absolute;
+    left: var(--space-2);
+    color: var(--color-rating-excellent);
+    font-weight: var(--weight-bold);
+  }
+  .nw-card__cons li::before {
+    content: "•";
+    position: absolute;
+    left: var(--space-2);
+    color: var(--color-text-muted);
+    font-weight: var(--weight-bold);
+  }
+
+  /* Why we like */
+  .nw-card__why {
+    border-top: var(--border-width-hairline) solid var(--color-border);
+    padding-top: var(--space-4);
+    margin-top: var(--space-2);
+  }
+  .nw-card__why h4 {
+    font-size: var(--text-h4);
+    font-weight: var(--weight-bold);
+    font-style: italic;
+    margin: 0 0 var(--space-2);
+  }
+  .nw-card__why p {
+    font-size: var(--text-body-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    margin: 0;
+    max-width: 64ch;
+  }
+
+  .nw-card__full-review-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+    font-weight: var(--weight-bold);
+    color: var(--color-primary-blue);
+    font-size: var(--text-body-sm);
+    text-decoration: none;
+  }
+  .nw-card__full-review-link:hover { text-decoration: underline; }
+
+  /* ── Card details panel ── */
+  .nw-card__detail-section {
+    margin-bottom: var(--space-6);
+  }
+  .nw-card__detail-section h4 {
+    font-size: var(--text-h4);
+    font-weight: var(--weight-bold);
+    margin: 0 0 var(--space-3);
+    color: var(--color-text-primary);
+  }
+  .nw-card__highlights-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .nw-card__highlights-list li {
+    padding: var(--space-2) 0;
+    border-bottom: var(--border-width-hairline) solid var(--color-border);
+    font-size: var(--text-body-sm);
+    line-height: var(--leading-normal);
+    color: var(--color-text-secondary);
+  }
+  .nw-card__highlights-list li::before {
+    content: "•  ";
+    color: var(--color-text-muted);
+  }
+  .nw-card__highlights-list li:last-child { border-bottom: none; }
+
+  /* Fees table */
+  .nw-card__fees-table {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 600px;
+  }
+  .nw-card__fees-table th,
+  .nw-card__fees-table td {
+    text-align: left;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: var(--border-width-hairline) solid var(--color-border);
+    font-size: var(--text-body-sm);
+  }
+  .nw-card__fees-table th {
+    font-weight: var(--weight-bold);
+    color: var(--color-text-primary);
+    text-transform: capitalize;
+    width: 40%;
+  }
+  .nw-card__fees-table td {
+    color: var(--color-text-secondary);
+  }
+
+  /* Links section */
+  .nw-card__links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-top: var(--space-4);
+    border-top: var(--border-width-hairline) solid var(--color-border);
+  }
+  .nw-card__detail-link {
+    font-size: var(--text-body-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-primary-blue);
+    text-decoration: none;
+  }
+  .nw-card__detail-link:hover {
+    text-decoration: underline;
+    color: var(--color-primary-blue-dark);
+  }
 </style>
 
 <script>
-  document.querySelectorAll<HTMLButtonElement>('[data-card-toggle]').forEach((btn) => {
+  // Accordion toggles
+  document.querySelectorAll<HTMLButtonElement>('[data-nw-accordion]').forEach((btn) => {
     const panel = document.getElementById(btn.getAttribute('aria-controls') || '');
-    const label = btn.querySelector('[data-toggle-label]');
+    const icon = btn.querySelector('.nw-card__accordion-icon');
     btn.addEventListener('click', () => {
       const open = btn.getAttribute('aria-expanded') === 'true';
       btn.setAttribute('aria-expanded', String(!open));
       if (panel) panel.hidden = open;
-      if (label) label.textContent = open ? 'Show full card details' : 'Hide card details';
+    });
+  });
+
+
+
+  // Compare checkbox → navigate to compare page
+  document.querySelectorAll<HTMLInputElement>('[data-compare-card]').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) {
+        const slug = cb.dataset.compareCard;
+        if (slug) window.location.href = `/compare?add=${slug}`;
+      }
     });
   });
 </script>

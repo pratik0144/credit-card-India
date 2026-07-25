@@ -9,7 +9,6 @@
 import PageLayout from '../../../layouts/PageLayout.astro';
 import StickyApplyBanner from '../../../components/StickyApplyBanner.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
-import AffiliateDisclosure from '../../../components/AffiliateDisclosure.astro';
 import AuthorByline from '../../../components/AuthorByline.astro';
 import RatingWidget from '../../../components/RatingWidget.astro';
 import OnThisPage from '../../../components/OnThisPage.astro';
@@ -60,15 +59,15 @@ const listing = await getCardListing();
 const competitors = listing.filter((r) => r.card_id !== c.id && r.primary_category_slug === detail.categorySlugs[0]).slice(0, 2);
 const compCols = [{ header: c.name }, ...competitors.map((r) => ({ header: r.card_name, href: `/cards/${r.bank_slug}/${r.card_slug.replace(new RegExp(`^${r.bank_slug}-`), '')}` }))];
 const compRows = [
-  { label: 'Reward rate', values: [c.reward_rate_general_text ?? '—', ...competitors.map((r) => r.headline_reward_line ?? '—')] },
-  { label: 'Welcome benefit', values: [welcome ?? '—', ...competitors.map(() => '—')] },
+  { label: 'Reward rate', values: [c.reward_rate_general_text ?? '-', ...competitors.map((r) => r.headline_reward_line ?? '-')] },
+  { label: 'Welcome benefit', values: [welcome ?? '-', ...competitors.map(() => '-')] },
   { label: 'Annual fee', values: [formatAnnualFee(c.annual_fee_amount), ...competitors.map((r) => formatAnnualFee(r.annual_fee_amount))] },
-  { label: 'Our rating', values: [detail.rating?.overall_score ? `${detail.rating.overall_score} / 5` : '—', ...competitors.map((r) => r.overall_score ? `${r.overall_score} / 5` : '—')] },
+  { label: 'Our rating', values: [detail.rating?.overall_score ? `${detail.rating.overall_score} / 5` : '-', ...competitors.map((r) => r.overall_score ? `${r.overall_score} / 5` : '-')] },
 ];
 
 const monthYear = currentMonthYear();
 const title = `${c.name} Review ${monthYear}: Fees, Rewards & Eligibility`;
-const nutshell = `${c.name} is a ${detail.categorySlugs[0] ?? 'rewards'} card from ${b.name} with a ${formatAnnualFee(c.annual_fee_amount).toLowerCase()} annual fee${c.annual_fee_waiver_spend_amount ? ` (waived on ${formatINRCompact(c.annual_fee_waiver_spend_amount)} spend)` : ''} — best for ${detail.categorySlugs.join(', ') || 'everyday'} spenders who value ${headlineReward(detail).toLowerCase()}.`;
+const nutshell = `${c.name} is a ${detail.categorySlugs[0] ?? 'rewards'} card from ${b.name} with a ${formatAnnualFee(c.annual_fee_amount).toLowerCase()} annual fee${c.annual_fee_waiver_spend_amount ? ` (waived on ${formatINRCompact(c.annual_fee_waiver_spend_amount)} spend)` : ''}, best for ${detail.categorySlugs.join(', ') || 'everyday'} spenders who value ${headlineReward(detail).toLowerCase()}.`;
 
 // FAQ block (SEO_PROMPT §5): 5–8 real questions, data-conditional so no two
 // cards share an identical set. Answers must agree with the At-a-Glance block.
@@ -77,16 +76,16 @@ const faqs = [
   { q: `What CIBIL score do I need for the ${c.name}?`, a: c.cibil_min ? `Issuers typically look for a CIBIL score of ${c.cibil_min}+ for this card, though approval depends on the bank's full review of your application.` : 'This card is relatively flexible on credit score; approval still depends on the issuer\'s review.' },
   { q: `What is the annual fee for the ${c.name}?`, a: `${formatAnnualFee(c.annual_fee_amount)}${c.annual_fee_waiver_spend_amount ? `, waived when you spend ${formatINRCompact(c.annual_fee_waiver_spend_amount)} in a year.` : '.'}` },
   ...((c.lounge_domestic_visits_per_year ?? 0) > 0 || (c.lounge_intl_visits_per_year ?? 0) > 0
-    ? [{ q: `Does the ${c.name} offer airport lounge access?`, a: `Yes — ${(c.lounge_domestic_visits_per_year ?? 0) > 0 ? `${formatLounge(c.lounge_domestic_visits_per_year)} complimentary domestic lounge visits a year` : ''}${(c.lounge_domestic_visits_per_year ?? 0) > 0 && (c.lounge_intl_visits_per_year ?? 0) > 0 ? ' and ' : ''}${(c.lounge_intl_visits_per_year ?? 0) > 0 ? `${formatLounge(c.lounge_intl_visits_per_year)} international visits${c.lounge_intl_network ? ` via ${c.lounge_intl_network}` : ''}` : ''}. Lounge programmes change often — confirm current access rules with ${b.name} before travelling.` }]
+    ? [{ q: `Does the ${c.name} offer airport lounge access?`, a: `Yes, ${(c.lounge_domestic_visits_per_year ?? 0) > 0 ? `${formatLounge(c.lounge_domestic_visits_per_year)} complimentary domestic lounge visits a year` : ''}${(c.lounge_domestic_visits_per_year ?? 0) > 0 && (c.lounge_intl_visits_per_year ?? 0) > 0 ? ' and ' : ''}${(c.lounge_intl_visits_per_year ?? 0) > 0 ? `${formatLounge(c.lounge_intl_visits_per_year)} international visits${c.lounge_intl_network ? ` via ${c.lounge_intl_network}` : ''}` : ''}. Lounge programmes change often, confirm current access rules with ${b.name} before travelling.` }]
     : [{ q: `Does the ${c.name} offer airport lounge access?`, a: `No complimentary lounge access is listed for this card. If lounges matter to you, compare travel cards in our best-of listings instead.` }]),
   ...(c.forex_markup_pct != null
-    ? [{ q: `What is the forex markup on the ${c.name}?`, a: `${c.forex_markup_pct}% on international transactions${c.forex_markup_pct >= 3 ? ' — around the standard (and expensive) end for Indian cards, so it is not the card to swipe abroad' : c.forex_markup_pct > 0 ? ' — lower than the typical 3.5%, which makes it a reasonable companion for international spends' : ' — zero markup, one of the strongest reasons to carry it for international spending'}.` }]
+    ? [{ q: `What is the forex markup on the ${c.name}?`, a: `${c.forex_markup_pct}% on international transactions${c.forex_markup_pct >= 3 ? ', around the standard (and expensive) end for Indian cards, so it is not the card to swipe abroad' : c.forex_markup_pct > 0 ? ', lower than the typical 3.5%, which makes it a reasonable companion for international spends' : ', zero markup, one of the strongest reasons to carry it for international spending'}.` }]
     : []),
   ...(welcome
-    ? [{ q: `What is the welcome benefit on the ${c.name}?`, a: `${welcome}. Welcome benefits usually require fee payment and sometimes a minimum spend within the first 30–90 days — check the current offer terms on ${b.name}'s site before applying.` }]
+    ? [{ q: `What is the welcome benefit on the ${c.name}?`, a: `${welcome}. Welcome benefits usually require fee payment and sometimes a minimum spend within the first 30–90 days, check the current offer terms on ${b.name}'s site before applying.` }]
     : []),
   { q: `How do I apply for the ${c.name}?`, a: `Apply on ${b.name}'s official site (the Apply Now button on this page takes you there). Keep your PAN, address proof, and income documents handy; issuers typically decide within a few working days.` },
-  // [NEEDS LEGAL REVIEW — confirm current RBI Integrated Ombudsman process/timelines before launch.]
+  // [NEEDS LEGAL REVIEW, confirm current RBI Integrated Ombudsman process/timelines before launch.]
   { q: 'What if something goes wrong with this card?', a: 'Raise a complaint with the issuer\'s grievance team first. If it stays unresolved for 30 days, you can escalate to the RBI Integrated Ombudsman scheme free of charge.' },
 ];
 
@@ -120,7 +119,6 @@ const jsonLd = [
       </div>
     </div>
 
-    <AffiliateDisclosure />
 
     <OnThisPage items={[
       { id: 'our-rating', label: 'Our rating' },
@@ -159,11 +157,11 @@ const jsonLd = [
     <section class="review__section" id="at-a-glance">
       <h2>At a glance</h2>
       <dl class="glance">
-        <div><dt>Reward Rate</dt><dd><strong>{c.reward_rate_general_text ?? '—'}</strong> <ScoreTierBadge tier={rewT.tier} label={rewT.label} /></dd></div>
-        <div><dt>Welcome Benefit</dt><dd><strong>{welcome ?? '—'}</strong></dd></div>
+        <div><dt>Reward Rate</dt><dd><strong>{c.reward_rate_general_text ?? '-'}</strong> <ScoreTierBadge tier={rewT.tier} label={rewT.label} /></dd></div>
+        <div><dt>Welcome Benefit</dt><dd><strong>{welcome ?? '-'}</strong></dd></div>
         <div><dt>Joining Fee</dt><dd><strong>{formatAnnualFee(c.joining_fee_amount)}</strong></dd></div>
         <div><dt>Annual Fee</dt><dd><strong>{formatAnnualFee(c.annual_fee_amount)}</strong> <ScoreTierBadge tier={feeT.tier} label={feeT.label} /></dd></div>
-        <div><dt>Forex Markup</dt><dd><strong>{c.forex_markup_pct != null ? `${c.forex_markup_pct}%` : '—'}</strong> <ScoreTierBadge tier={forexT.tier} label={forexT.label} /></dd></div>
+        <div><dt>Forex Markup</dt><dd><strong>{c.forex_markup_pct != null ? `${c.forex_markup_pct}%` : '-'}</strong> <ScoreTierBadge tier={forexT.tier} label={forexT.label} /></dd></div>
         <div><dt>Min. CIBIL Score</dt><dd><strong>{c.cibil_min ?? 'Flexible'}</strong> <ScoreTierBadge tier={cibT.tier} label={cibT.label} /></dd></div>
       </dl>
       {c.data_confidence !== 'verified' && (
@@ -185,12 +183,12 @@ const jsonLd = [
         : (
           <>
             <p>The {c.name} earns {headlineReward(detail).toLowerCase()}. {welcome ? `New cardholders get a welcome benefit of ${welcome}. ` : ''}{(c.lounge_domestic_visits_per_year ?? 0) > 0 ? `It also includes ${formatLounge(c.lounge_domestic_visits_per_year).toLowerCase() === 'unlimited' ? 'unlimited' : c.lounge_domestic_visits_per_year} complimentary domestic airport lounge visits a year${(c.lounge_intl_visits_per_year ?? 0) > 0 ? `, plus ${formatLounge(c.lounge_intl_visits_per_year).toLowerCase() === 'unlimited' ? 'unlimited' : c.lounge_intl_visits_per_year} international visits${c.lounge_intl_network ? ` via ${c.lounge_intl_network}` : ''}` : ''}. ` : ''}</p>
-            <p><em>Tip:</em> {c.annual_fee_waiver_spend_amount ? `spending ${formatINRCompact(c.annual_fee_waiver_spend_amount)} across the year waives the ${formatINR(c.annual_fee_amount)} fee — worth planning your big purchases around if you're close.` : c.annual_fee_amount === 0 ? 'this is a lifetime-free card, so there is no fee threshold to worry about.' : 'weigh the annual fee against the rewards you would realistically earn at your spend level.'}</p>
+            <p><em>Tip:</em> {c.annual_fee_waiver_spend_amount ? `spending ${formatINRCompact(c.annual_fee_waiver_spend_amount)} across the year waives the ${formatINR(c.annual_fee_amount)} fee, worth planning your big purchases around if you're close.` : c.annual_fee_amount === 0 ? 'this is a lifetime-free card, so there is no fee threshold to worry about.' : 'weigh the annual fee against the rewards you would realistically earn at your spend level.'}</p>
           </>
         )}
     </section>
 
-    <!-- Fees & eligibility prose (SEO_PROMPT §3 — keeps sparse cards above the
+    <!-- Fees & eligibility prose (SEO_PROMPT §3, keeps sparse cards above the
          ~800-word floor with real crawlable analysis, not just the spec table) -->
     <section class="review__section reading-column" id="fees-charges">
       <h2>Fees and charges, in plain terms</h2>
@@ -199,24 +197,24 @@ const jsonLd = [
           ? `You pay ${formatINR(c.joining_fee_amount)} once at joining. `
           : 'There is no joining fee. '}
         {c.annual_fee_amount === 0
-          ? `The card is lifetime-free — ${b.name} charges no annual fee, so every rupee of rewards is pure upside and there is no renewal-day maths to do.`
+          ? `The card is lifetime-free, ${b.name} charges no annual fee, so every rupee of rewards is pure upside and there is no renewal-day maths to do.`
           : c.annual_fee_waiver_spend_amount
-            ? `The ${formatINR(c.annual_fee_amount)} annual fee is waived if you spend ${formatINRCompact(c.annual_fee_waiver_spend_amount)} in the card year — roughly ${formatINRCompact(Math.round((c.annual_fee_waiver_spend_amount ?? 0) / 12))} a month. If your normal spending clears that bar, treat this as an effectively free card; if it doesn't, count the full fee against the rewards you realistically expect.`
+            ? `The ${formatINR(c.annual_fee_amount)} annual fee is waived if you spend ${formatINRCompact(c.annual_fee_waiver_spend_amount)} in the card year, roughly ${formatINRCompact(Math.round((c.annual_fee_waiver_spend_amount ?? 0) / 12))} a month. If your normal spending clears that bar, treat this as an effectively free card; if it doesn't, count the full fee against the rewards you realistically expect.`
             : `The annual fee is ${formatINR(c.annual_fee_amount)} with no spend-based waiver, so the card has to earn that back in rewards and benefits every single year to stay in your wallet.`}
         {c.forex_markup_pct != null
           ? c.forex_markup_pct === 0
-            ? ' Internationally, there is no forex markup — rare among Indian cards and worth a lot if you travel or shop on foreign sites.'
+            ? ' Internationally, there is no forex markup, rare among Indian cards and worth a lot if you travel or shop on foreign sites.'
             : ` International transactions carry a ${c.forex_markup_pct}% forex markup${c.forex_markup_pct >= 3 ? ", so it's not the card to use abroad" : ', on the lower side for an Indian card'}.`
           : ''}
-        {' '}As with every Indian credit card, interest on revolved balances is punishing — the reward maths on
+        {' '}As with every Indian credit card, interest on revolved balances is punishing, the reward maths on
         this page only holds if you pay your statement in full.
       </p>
 
       <h2>Eligibility for the {c.name}</h2>
       <p>
         {c.cibil_min
-          ? `${b.name} typically looks for a CIBIL score of ${c.cibil_min} or better for this card. A score alone doesn't guarantee approval — income, existing credit lines, and the bank's internal policy all factor in — but below that band an application is a long shot.`
-          : `${b.name} doesn't publish a hard CIBIL cutoff for this card, and our data suggests it is relatively flexible — but income, existing credit lines, and internal policy still decide the outcome.`}
+          ? `${b.name} typically looks for a CIBIL score of ${c.cibil_min} or better for this card. A score alone doesn't guarantee approval, income, existing credit lines, and the bank's internal policy all factor in, but below that band an application is a long shot.`
+          : `${b.name} doesn't publish a hard CIBIL cutoff for this card, and our data suggests it is relatively flexible, but income, existing credit lines, and internal policy still decide the outcome.`}
         {' '}If you're not sure where you stand, our <a href="/cibil-score">CIBIL score guide</a> explains what
         each band realistically unlocks, and the <a href="/recommend">recommendation tool</a> can filter cards
         to your band without any impact on your score.
@@ -252,7 +250,7 @@ const jsonLd = [
 
       <h2>How to use the {c.name}</h2>
       <ul>
-        {c.annual_fee_waiver_spend_amount && <li>Track your spend toward the {formatINRCompact(c.annual_fee_waiver_spend_amount)} fee-waiver threshold — add it to <a href="/wallet">My Wallet</a> to get a reminder.</li>}
+        {c.annual_fee_waiver_spend_amount && <li>Track your spend toward the {formatINRCompact(c.annual_fee_waiver_spend_amount)} fee-waiver threshold, add it to <a href="/wallet">My Wallet</a> to get a reminder.</li>}
         <li>Use it for the categories where its reward rate is highest; use a different card where it isn't.</li>
         <li>Check the issuer MITC for reward caps and redemption fees before you rely on a benefit.</li>
       </ul>
@@ -272,7 +270,7 @@ const jsonLd = [
       <h2>Frequently asked questions</h2>
       <dl class="faq">{faqs.map((f) => (<><dt>{f.q}</dt><dd set:html={f.a} /></>))}</dl>
       <p class="footnote">
-        Terms apply. Rewards, fees and benefits are subject to change by the issuer — verify current terms in the
+        Terms apply. Rewards, fees and benefits are subject to change by the issuer, verify current terms in the
         card's MITC. Figures marked estimated are our best reading of published information, not issuer-confirmed.
         {c.last_verified_at && ` Last verified ${new Date(c.last_verified_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}.`}
       </p>

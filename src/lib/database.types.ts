@@ -2,7 +2,7 @@
  * Hand-authored schema contract matching BACKEND_PROMPT.md §4. This is the
  * agreed interface between the Astro frontend and the Supabase backend built in
  * supabase/migrations/. When the real DB exists, this can be replaced by
- * `supabase gen types typescript` output — but the shapes must stay compatible.
+ * `supabase gen types typescript` output, but the shapes must stay compatible.
  * Frontend queries and Edge Function I/O both import from here.
  */
 import type {

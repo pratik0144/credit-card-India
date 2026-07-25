@@ -6,7 +6,6 @@
  */
 import PageLayout from '../layouts/PageLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
-import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
 import { getChangeLog } from '../lib/queries';
 import { breadcrumbList } from '../lib/seo';
 
@@ -20,15 +19,14 @@ const typeLabel: Record<string, string> = {
 const negative = new Set(['fee_increase', 'reward_devaluation', 'benefit_removed']);
 ---
 <PageLayout
-  title="Credit Card Changes & Devaluation Tracker — India"
+  title="Credit Card Changes & Devaluation Tracker, India"
   description="A running feed of fee hikes, reward devaluations, and benefit changes across Indian credit cards. Dated, with the old and new values."
   jsonLd={[breadcrumbList([{ name: 'Home', path: '/' }, { name: 'Card changes', path: '/changes' }])]}
 >
   <div class="container">
     <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Card changes' }]} />
-    <AffiliateDisclosure />
     <h1>Card change &amp; devaluation tracker</h1>
-    <p class="lede">Indian card programs change reward caps, fees, and benefits often. We log material changes here as we detect them — most recent first.</p>
+    <p class="lede">Indian card programs change reward caps, fees, and benefits often. We log material changes here as we detect them, most recent first.</p>
   </div>
   <section class="container section">
     {changes.length === 0 && <p>No changes logged yet.</p>}
@@ -42,7 +40,7 @@ const negative = new Set(['fee_increase', 'reward_devaluation', 'benefit_removed
           <h2 class="feed__card">{ch.bank_name} {ch.card_name}</h2>
           <p class="feed__summary">{ch.summary}</p>
           {(ch.old_value || ch.new_value) && (
-            <p class="feed__diff"><span class="feed__old">{ch.old_value ?? '—'}</span> <span aria-hidden="true">→</span> <span class="feed__new">{ch.new_value ?? '—'}</span></p>
+            <p class="feed__diff"><span class="feed__old">{ch.old_value ?? '-'}</span> <span aria-hidden="true">→</span> <span class="feed__new">{ch.new_value ?? '-'}</span></p>
           )}
         </li>
       ))}

@@ -1,5 +1,5 @@
 /*
- * Canonical taxonomies & enums — the single source of truth shared by the
+ * Canonical taxonomies & enums, the single source of truth shared by the
  * frontend, the Edge Functions, and the import/enrich scripts. Keep these in
  * sync with BACKEND_PROMPT.md §2 (spend categories), §6 (content categories),
  * and §9 (recommend / combo / best-card input enums). Do NOT invent new keys.
@@ -39,7 +39,7 @@ export const SPEND_CATEGORY_LABELS: Record<SpendCategoryKey, string> = {
 
 /* ---- §6 Content / nav category taxonomy (seed for `categories`) ---- */
 /* Drives /best/[category-slug]. A card may belong to more than one.
-   Deliberately NO "0% APR" — DESIGN.md §10.9 (use "Low Interest"). */
+   Deliberately NO "0% APR", DESIGN.md §10.9 (use "Low Interest"). */
 export const CONTENT_CATEGORIES = [
   { slug: 'cashback', name: 'Cashback' },
   { slug: 'travel', name: 'Travel' },

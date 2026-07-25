@@ -120,7 +120,7 @@ const rows = subscores
 </style>
 
 <script>
-  // Inline disclosure toggle (§6.4) — no modal, no focus trap. Keyboard-operable.
+  // Inline disclosure toggle (§6.4), no modal, no focus trap. Keyboard-operable.
   document.querySelectorAll('[data-rating-toggle]').forEach((btn) => {
     const panel = document.getElementById(btn.getAttribute('aria-controls') || '');
     if (!panel) return;

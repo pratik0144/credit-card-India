@@ -1,5 +1,5 @@
 /*
- * Seed data — hand-derived from bank-data/cc-data/Master-data-banks.json.
+ * Seed data, hand-derived from bank-data/cc-data/Master-data-banks.json.
  * Used by src/lib/queries.ts whenever `hasSupabaseEnv` is false (no live DB
  * this session) so every page renders real-looking content and `astro build`
  * succeeds. 12 real cards across 6 banks (exceeds FRONTEND §17 DoD of 5/3).
@@ -36,7 +36,7 @@ export const banks: Bank[] = [
     is_scheduled_commercial_bank: true },
   { id: 'bank-icici', slug: 'icici-bank', name: 'ICICI Bank', logo_url: null,
     official_website: 'https://www.icicibank.com',
-    about: 'ICICI Bank is a leading private-sector bank whose co-branded cards — notably the Amazon Pay ICICI card — are among the most widely held credit cards in India.',
+    about: 'ICICI Bank is a leading private-sector bank whose co-branded cards, notably the Amazon Pay ICICI card, are among the most widely held credit cards in India.',
     is_scheduled_commercial_bank: true },
   { id: 'bank-idfc', slug: 'idfc-first-bank', name: 'IDFC FIRST Bank', logo_url: null,
     official_website: 'https://www.idfcfirstbank.com',
@@ -114,7 +114,7 @@ export const cards: SeedCard[] = [
     base_reward_value_inr_per_100: 1.6,
     fuel_surcharge_waiver_text: '1% fuel surcharge waiver (min. spend Rs. 400, max cap varies)',
     fuel_surcharge_waiver_pct: 1, lounge_domestic_visits_per_year: 12,
-    lounge_domestic_text: '3 visits per quarter (spend-based: requires ₹60,000 spend in preceding calendar quarter — effective July 2026)',
+    lounge_domestic_text: '3 visits per quarter (spend-based: requires ₹60,000 spend in preceding calendar quarter, effective July 2026)',
     lounge_intl_visits_per_year: 6, lounge_intl_network: 'Priority Pass',
     lounge_intl_text: '6 per year', supports_contactless: true, supports_upi: false,
     age_min: 21, age_max: 65, cibil_min: 750, cibil_min_is_estimated: false,
@@ -185,7 +185,7 @@ export const cards: SeedCard[] = [
     joining_fee_amount: 5000, joining_fee_raw: '₹5,000 + GST',
     annual_fee_amount: 5000, annual_fee_raw: '₹5,000 + GST',
     annual_fee_waiver_spend_amount: null,
-    annual_fee_waiver_spend_raw: 'No traditional waiver — tier-based milestone EDGE Miles awarded on fee payment',
+    annual_fee_waiver_spend_raw: 'No traditional waiver, tier-based milestone EDGE Miles awarded on fee payment',
     forex_markup_pct: 3.5, reward_type: 'miles',
     reward_rate_general_text: '2 EDGE Miles per ₹100 on general spends; 5 EDGE Miles per ₹100 on direct airline & hotel bookings',
     base_reward_value_inr_per_100: 2.0,
@@ -308,7 +308,7 @@ export const cards: SeedCard[] = [
   {
     id: 'card-idfc-first-millennia', bank_id: 'bank-idfc', slug: 'idfc-first-bank-first-millennia-credit-card',
     name: 'FIRST Millennia Credit Card', image_url: '/card-img/255_idfc_FIRST-Millennia-Credit-Card.png',
-    card_type: 'credit', network: 'visa', network_is_estimated: false, tier: 'Entry-level — Lifetime Free',
+    card_type: 'credit', network: 'visa', network_is_estimated: false, tier: 'Entry-level, Lifetime Free',
     official_url: 'https://www.idfcfirst.bank.in/credit-card/millennia',
     last_verified_at: '2026-06-07T00:00:00+00:00',
     joining_fee_amount: 0, joining_fee_raw: 'Lifetime Free',
@@ -333,7 +333,7 @@ export const cards: SeedCard[] = [
   {
     id: 'card-idfc-first-select', bank_id: 'bank-idfc', slug: 'idfc-first-bank-first-select-credit-card',
     name: 'FIRST Select Credit Card', image_url: '/card-img/254_idfc_FIRST-Select-Credit-Card.png',
-    card_type: 'credit', network: 'visa', network_is_estimated: false, tier: 'Mid-range — Lifetime Free',
+    card_type: 'credit', network: 'visa', network_is_estimated: false, tier: 'Mid-range, Lifetime Free',
     official_url: 'https://www.idfcfirst.bank.in/credit-card/select',
     last_verified_at: '2026-06-07T00:00:00+00:00',
     joining_fee_amount: 0, joining_fee_raw: 'Lifetime Free',
@@ -500,13 +500,13 @@ export const cardRatings: CardRating[] = [
 ];
 
 /* ----------------------------------------------------- Card change log --- */
-/* DESIGN §9 / FRONTEND §11.5 — dated, diffed old→new. One recent, real change. */
+/* DESIGN §9 / FRONTEND §11.5, dated, diffed old→new. One recent, real change. */
 export const cardChangeLog: CardChangeLog[] = [
   { id: 'chg-1', card_id: 'card-hdfc-regalia-gold', detected_at: '2026-06-01T00:00:00+00:00',
     change_type: 'benefit_removed', field_name: 'airport_lounge_domestic',
     old_value: '12 complimentary domestic visits per year',
     new_value: '3 visits per quarter, spend-gated (₹60,000 in the preceding quarter)',
-    summary: 'Domestic lounge access moved to a spend-based model — ₹60,000 quarterly spend now required for lounge visits (effective July 2026).',
+    summary: 'Domestic lounge access moved to a spend-based model, ₹60,000 quarterly spend now required for lounge visits (effective July 2026).',
     source_note: 'Issuer communication, effective July 2026' },
   { id: 'chg-2', card_id: 'card-axis-atlas', detected_at: '2026-05-15T00:00:00+00:00',
     change_type: 'eligibility_change', field_name: 'availability',
@@ -517,7 +517,7 @@ export const cardChangeLog: CardChangeLog[] = [
 ];
 
 /* -------------------------------------------------------------- Authors --- */
-/* Headshots deliberately null — DESIGN §11 / FRONTEND §16: no invented author
+/* Headshots deliberately null, DESIGN §11 / FRONTEND §16: no invented author
    photos. Components render an initials placeholder. */
 export const authors: Author[] = [
   { id: 'author-priya', slug: 'priya-menon', name: 'Priya Menon',
@@ -551,15 +551,15 @@ export const articles: Article[] = [
     related_card_id: 'card-hdfc-regalia-gold',
     body: [
       '## Why you might want the HDFC Regalia Gold',
-      'The Regalia Gold sits in HDFC Bank’s upper-mid tier and rewards concentrated spending well. At 5 Reward Points per ₹200 on general spends — and far more through the SmartBuy and PayZapp portals — it can return meaningful value if you route travel and shopping through the right channels.',
+      'The Regalia Gold sits in HDFC Bank’s upper-mid tier and rewards concentrated spending well. At 5 Reward Points per ₹200 on general spends, and far more through the SmartBuy and PayZapp portals, it can return meaningful value if you route travel and shopping through the right channels.',
       '## Who should get this card',
       'This card suits salaried professionals and self-employed applicants who comfortably clear ₹4 lakh of annual spend, which is also the threshold at which the ₹2,500 annual fee is waived. If your spending is lower, a lifetime-free card will usually serve you better.',
       '## How to use this card',
-      'Concentrate high-value bookings on SmartBuy to hit accelerated earn rates, and track your quarterly spend if airport lounge access matters to you — access is now spend-gated from July 2026.',
+      'Concentrate high-value bookings on SmartBuy to hit accelerated earn rates, and track your quarterly spend if airport lounge access matters to you, access is now spend-gated from July 2026.',
       '## Is the HDFC Regalia Gold right for you?',
       'If you spend heavily and value flexible points plus lounge access, the Regalia Gold earns its fee. If not, look at a lifetime-free alternative.',
     ].join('\n\n'),
-    meta_description: 'An independent review of the HDFC Regalia Gold Credit Card — rewards, fees, lounge access, eligibility and who it’s right for.',
+    meta_description: 'An independent review of the HDFC Regalia Gold Credit Card, rewards, fees, lounge access, eligibility and who it’s right for.',
     og_image_url: '/card-img/036_hdfc_Regalia-Gold-Credit-Card.png',
     published_at: '2026-06-20T00:00:00+00:00', updated_at: '2026-06-28T00:00:00+00:00', is_published: true,
   },
@@ -572,7 +572,7 @@ export const articles: Article[] = [
       '## What the CIBIL score bands mean',
       'A CIBIL score of 750 or above is generally considered good to excellent by most Indian card issuers. Scores between 700 and 749 are usually treated as good, 650–699 as fair, and below 650 as an area to improve before applying.',
       '## How your score affects approval',
-      'Issuers use your CIBIL score as one input among many — income, existing obligations and employment stability also matter. A strong score widens the range of cards you can realistically be approved for, including premium travel cards.',
+      'Issuers use your CIBIL score as one input among many, income, existing obligations and employment stability also matter. A strong score widens the range of cards you can realistically be approved for, including premium travel cards.',
       '## How to improve your CIBIL score',
       'Pay in full and on time, keep your credit utilisation low, and avoid applying for many cards in a short window, since each application triggers a hard inquiry.',
     ].join('\n\n'),
@@ -600,17 +600,27 @@ export const articles: Article[] = [
 ];
 
 /* ---------------------------------------------------- point_valuations --- */
-/* BACKEND §4.5 — assumed ₹-per-point, marked as estimates. */
+/* BACKEND §4.5, assumed ₹-per-point, marked as estimates. */
 export const pointValuations: PointValuation[] = [
+  // Calibrated to the current Indian market (verified 2026-07 against Paisabazaar,
+  // CardExpert, CardTrail and HonestMoney 2026 guides). Every major issuer devalued
+  // reward programmes between Jan and Apr 2026, so typical values sit near the
+  // statement-credit floor; max reflects best-case travel/transfer redemption.
   { id: 'pv-hdfc', bank_id: 'bank-hdfc', program_name: 'HDFC Reward Points', reward_type: 'points',
-    redemption_channel: 'voucher', estimated_inr_per_point_min: 0.2, estimated_inr_per_point_typical: 0.3,
-    estimated_inr_per_point_max: 0.5, notes: 'Higher via SmartBuy flight/hotel bookings.', last_reviewed_at: '2026-06-01' },
+    redemption_channel: 'voucher', estimated_inr_per_point_min: 0.2, estimated_inr_per_point_typical: 0.25,
+    estimated_inr_per_point_max: 0.5, notes: 'Statement/vouchers ~₹0.25; up to ₹0.50 via SmartBuy (monthly voucher-points cap since 2026).', last_reviewed_at: '2026-07-01' },
   { id: 'pv-axis-miles', bank_id: 'bank-axis', program_name: 'Axis EDGE Miles', reward_type: 'miles',
     redemption_channel: 'flight_transfer', estimated_inr_per_point_min: 0.8, estimated_inr_per_point_typical: 1.0,
-    estimated_inr_per_point_max: 1.2, notes: 'Best value via partner airline transfers.', last_reviewed_at: '2026-06-01' },
+    estimated_inr_per_point_max: 1.5, notes: 'Best value via partner airline transfers (InterMiles, Air India).', last_reviewed_at: '2026-07-01' },
   { id: 'pv-amex-mr', bank_id: 'bank-amex', program_name: 'Amex Membership Rewards', reward_type: 'points',
-    redemption_channel: 'voucher', estimated_inr_per_point_min: 0.4, estimated_inr_per_point_typical: 0.5,
-    estimated_inr_per_point_max: 1.0, notes: 'Milestone-driven; value depends on redemption.', last_reviewed_at: '2026-06-01' },
+    redemption_channel: 'voucher', estimated_inr_per_point_min: 0.4, estimated_inr_per_point_typical: 0.45,
+    estimated_inr_per_point_max: 1.0, notes: 'Milestone-driven; value depends on redemption.', last_reviewed_at: '2026-07-01' },
+  { id: 'pv-sbi', bank_id: 'bank-sbi', program_name: 'SBI Reward Points', reward_type: 'points',
+    redemption_channel: 'statement_credit', estimated_inr_per_point_min: 0.2, estimated_inr_per_point_typical: 0.25,
+    estimated_inr_per_point_max: 0.25, notes: '~₹0.25/point; statement-credit redemptions capped at 60,000/month from Apr 2026.', last_reviewed_at: '2026-07-01' },
+  { id: 'pv-icici', bank_id: 'bank-icici', program_name: 'ICICI Reward Points', reward_type: 'points',
+    redemption_channel: 'statement_credit', estimated_inr_per_point_min: 0.25, estimated_inr_per_point_typical: 0.25,
+    estimated_inr_per_point_max: 1.0, notes: '₹0.25–₹1 depending on card and redemption channel.', last_reviewed_at: '2026-07-01' },
 ];
 
 /* ----------------------------------------------------- Derived helpers --- */

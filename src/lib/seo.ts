@@ -81,7 +81,7 @@ export function articleSchema(
 
 /**
  * Organization + WebSite (with SearchAction for the Google sitelinks
- * searchbox) — homepage ONLY (SEO_PROMPT §4).
+ * searchbox), homepage ONLY (SEO_PROMPT §4).
  */
 export function organizationSchema(): Record<string, unknown> {
   return {

@@ -1,6 +1,6 @@
 ---
 /*
- * ProsConsBlock (DESIGN §6.9, §11). Two columns, EQUAL visual weight — never a
+ * ProsConsBlock (DESIGN §6.9, §11). Two columns, EQUAL visual weight, never a
  * single mixed list, never Cons smaller/quieter than Pros. Stacks to two
  * sequential sections on mobile. Color markers are secondary (small), text primary.
  */
@@ -53,7 +53,7 @@ const { pros, cons, heading = 'Pros and cons' } = Astro.props;
     left: 0;
     font-weight: var(--weight-bold);
   }
-  /* Small color markers — never the only signal; the Pros/Cons headings carry meaning. */
+  /* Small color markers, never the only signal; the Pros/Cons headings carry meaning. */
   .proscons__list--pro li::before { content: "✓"; color: var(--color-rating-excellent); }
   .proscons__list--con li::before { content: "–"; color: var(--color-text-muted); }
 </style>

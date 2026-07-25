@@ -14,7 +14,7 @@ if (!a) return Astro.redirect('/404');
 const path = `/authors/${slug}`;
 ---
 <PageLayout
-  title={`${a.name} — ${a.title ?? 'Contributor'}`}
+  title={`${a.name}, ${a.title ?? 'Contributor'}`}
   description={a.bio ?? `${a.name} writes and reviews credit-card coverage for CardCompare.in.`}
   canonicalPath={path}
   jsonLd={[

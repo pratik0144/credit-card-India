@@ -1,6 +1,6 @@
 ---
 /*
- * Card-discovery / tool hub (FRONTEND §8). Formerly the homepage — relocated to
+ * Card-discovery / tool hub (FRONTEND §8). Formerly the homepage, relocated to
  * /discover so `/` can be a dedicated marketing landing page; content is
  * otherwise unchanged. Stays sparse by comparison-site standards: hero + CTA
  * into /recommend, category pill strip, 3–5 collapsed CardRows, how-it-works,
@@ -9,7 +9,6 @@
  * the canonical `/` entry (SEO_PROMPT §4), not here.
  */
 import PageLayout from '../layouts/PageLayout.astro';
-import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
 import CategoryPillStrip from '../components/CategoryPillStrip.astro';
 import CardRow from '../components/CardRow.astro';
 import Button from '../components/Button.astro';
@@ -30,30 +29,29 @@ const teasers = (await getArticles()).slice(0, 3);
 const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Best lifetime-free'];
 ---
 <PageLayout
-  title={`Browse & Compare Credit Cards — ${SITE.name}`}
-  description={`${SITE.tagline}. Independent, issuer-blind reviews of Indian credit cards — compare rewards, fees, and eligibility. Updated ${currentMonthYear()}.`}
+  title={`Browse & Compare Credit Cards, ${SITE.name}`}
+  description={`${SITE.tagline}. Independent, issuer-blind reviews of Indian credit cards, compare rewards, fees, and eligibility. Updated ${currentMonthYear()}.`}
   canonicalPath="/discover"
   ogType="website"
 >
-  <!-- Hero — mesh-gradient atmospheric backdrop, hero scale ONLY -->
+  <!-- Hero, mesh-gradient atmospheric backdrop, hero scale ONLY -->
   <section class="hero mesh-hero">
     <div class="container">
       <p class="eyebrow">Independent · Issuer-blind · Updated {currentMonthYear()}</p>
       <h1 class="hero__title">Find the right credit card, without the sales pitch.</h1>{/* sentence-case, period-terminated (brand voice) */}
       <p class="hero__sub">
-        We review India's cards the way a research desk would — numbers first, every rating attributed,
+        We review India's cards the way a research desk would, numbers first, every rating attributed,
         and we tell you when a card <em>isn't</em> for you.
       </p>
       <div class="hero__cta">
         <Button variant="primary" size="lg" href="/recommend">Check my eligibility &amp; get matched</Button>
         <Button variant="outline" href="/best/all-credit-cards">Browse all cards</Button>
       </div>
-      <p class="hero__trust">A soft, estimate-based match — no PAN, no credit-score impact.</p>
+      <p class="hero__trust">A soft, estimate-based match, no PAN, no credit-score impact.</p>
     </div>
   </section>
 
   <div class="container">
-    <AffiliateDisclosure />
     <CategoryPillStrip />
   </div>
 
@@ -74,7 +72,7 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
       <ol class="how">
         <li><span class="how__n">1</span><h3>Answer a few questions</h3><p>Tell us how you spend and what you want. Takes about a minute.</p></li>
         <li><span class="how__n">2</span><h3>Compare your matches</h3><p>See estimated annual value, fees, and eligibility side by side.</p></li>
-        <li><span class="how__n">3</span><h3>Apply with confidence</h3><p>Apply on the issuer's secure site — we're transparent about our affiliate links.</p></li>
+        <li><span class="how__n">3</span><h3>Apply with confidence</h3><p>Apply on the issuer's secure site, we're transparent about our affiliate links.</p></li>
       </ol>
     </div>
   </section>
@@ -100,9 +98,9 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
     <div class="container section trust">
       <h2>Why trust {SITE.name}</h2>
       <div class="trust__grid">
-        {/* Counts derived from the live catalog at build time — never invented (DESIGN §6.8, §13.8). */}
+        {/* Counts derived from the live catalog at build time, never invented (DESIGN §6.8, §13.8). */}
         <div><strong>{listing.length}</strong><span>cards tracked across {issuerCount} issuers</span></div>
-        <div><strong>Issuer-blind</strong><span>ratings — issuers can't influence rank</span></div>
+        <div><strong>Issuer-blind</strong><span>ratings, issuers can't influence rank</span></div>
         <div><strong>Every rating</strong><span>attributed to a named reviewer</span></div>
         <div><strong>Fee-change</strong><span>tracking so reviews never go stale</span></div>
       </div>
@@ -110,14 +108,14 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
   </section>
 
 
-  <!-- Below-fold explanatory prose (SEO_PROMPT §3 — 500–700 words, prerendered).
+  <!-- Below-fold explanatory prose (SEO_PROMPT §3, 500–700 words, prerendered).
        Kept after the product sections so it never crowds the hero. -->
   <section class="container section reading-column about-prose reveal">
     <h2>Compare credit cards in India, without the sales pitch</h2>
     <p>
       {SITE.name} exists to answer one question honestly: <strong>which credit card should you get?</strong>
-      India has more than 350 actively marketed credit cards across 20+ issuers — from lifetime-free starter
-      cards to super-premium metal cards with ₹12,500 annual fees — and almost every site that "compares" them
+      India has more than 350 actively marketed credit cards across 20+ issuers, from lifetime-free starter
+      cards to super-premium metal cards with ₹12,500 annual fees, and almost every site that "compares" them
       earns more when you pick the card they push hardest. We do earn affiliate commission from some issuers
       (it's how the site stays free), but our ratings are issuer-blind: the editorial score is locked before
       anyone looks at what a card pays us, and plenty of our top-rated cards pay us nothing at all.
@@ -127,8 +125,7 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
     <p>
       Every card in our catalogue is scored on the same rubric: rewards value at realistic Indian spend levels,
       total cost of ownership (joining fee, annual fee and its waiver threshold, forex markup), welcome and
-      milestone benefits, redemption flexibility, and issuer service quality. The key step is normalisation —
-      we convert every reward structure, whether it's "5X points on dining" or "1.5% cashback", into an
+      milestone benefits, redemption flexibility, and issuer service quality. The key step is normalisation, we convert every reward structure, whether it's "5X points on dining" or "1.5% cashback", into an
       estimated rupee value per ₹100 spent. That's what makes an HDFC points card genuinely comparable with an
       SBI cashback card or an Axis miles card on a single axis, instead of leaving you to guess what a point
       is worth.
@@ -137,8 +134,8 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
     <h3>How the recommendation engine works</h3>
     <p>
       If you'd rather not read 350 reviews, the <a href="/recommend">card recommendation tool</a> asks about
-      eight questions — your monthly spend by category, whether you travel, your approximate CIBIL score band,
-      and the annual fee you're comfortable with — then ranks cards by the estimated annual value each would
+      eight questions, your monthly spend by category, whether you travel, your approximate CIBIL score band,
+      and the annual fee you're comfortable with, then ranks cards by the estimated annual value each would
       return on <em>your</em> spending, net of fees. It's a soft, estimate-based match: no PAN, no OTP, and no
       hard inquiry on your credit report. If you already hold a card or two, the
       <a href="/combo-optimizer">combo optimizer</a> goes a step further and finds the best 2- or 3-card
@@ -158,7 +155,7 @@ const eyebrows = ['Editor’s pick', 'Best for cashback', 'Best for travel', 'Be
     <h3>What we won't do</h3>
     <p>
       We won't tell you a card is "worth it" when the maths says otherwise, we won't hide the annual fee below
-      the fold, and every review includes a "why you might want a different card" section — because the best
+      the fold, and every review includes a "why you might want a different card" section, because the best
       credit card comparison in India is only useful if it's willing to say <em>no card at all</em> is
       sometimes the right answer. Figures we can't verify from an issuer's MITC are labelled as estimates, and
       every rating carries the name of the person who wrote it.

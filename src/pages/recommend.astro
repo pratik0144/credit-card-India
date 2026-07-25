@@ -2,27 +2,21 @@
 /*
  * Card Recommendation Engine /recommend (FRONTEND §11.1). Prerendered shell +
  * client-side React island (§5). The quiz replaces DESIGN's PAN/soft-pull
- * checker — one flow, framed as an estimate, NO PAN collection in v1.
+ * checker, one flow, framed as an estimate, NO PAN collection in v1.
  * Static prose + FAQ below the island are the crawlable content (SEO_PROMPT §3).
  */
 import PageLayout from '../layouts/PageLayout.astro';
-import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
 import RecommendWizard from '../islands/RecommendWizard.tsx';
-import { getCardListing } from '../lib/queries';
+import { getRecommendCandidates } from '../lib/queries';
 import { faqPage, breadcrumbList } from '../lib/seo';
 export const prerender = true;
-const listing = await getCardListing();
-const previewCards = listing.slice(0, 6).map((r) => ({
-  card_id: r.card_id, card_slug: r.card_slug, card_name: r.card_name,
-  overall_score: r.overall_score, annual_fee_amount: r.annual_fee_amount,
-  headline_reward_line: r.headline_reward_line,
-}));
+const { cards: candidates, valuations } = await getRecommendCandidates();
 
 const faqs = [
-  { q: 'Which credit card should I get in India?', a: 'It depends on where your money actually goes each month. A card that is excellent for online shopping can be mediocre for fuel or travel. Our recommendation engine asks about your spending by category, your approximate CIBIL score band, and your fee comfort, then ranks cards by the estimated annual value each would return on your profile — net of the annual fee.' },
-  { q: 'Does checking my card matches affect my CIBIL score?', a: 'No. This is a soft, estimate-based match built entirely from the answers you type in — we do not collect your PAN, run a bureau pull, or trigger any inquiry. Only a real application submitted to a bank creates a hard inquiry.' },
+  { q: 'Which credit card should I get in India?', a: 'It depends on where your money actually goes each month. A card that is excellent for online shopping can be mediocre for fuel or travel. Our recommendation engine asks about your spending by category, your approximate CIBIL score band, and your fee comfort, then ranks cards by the estimated annual value each would return on your profile, net of the annual fee.' },
+  { q: 'Does checking my card matches affect my CIBIL score?', a: 'No. This is a soft, estimate-based match built entirely from the answers you type in, we do not collect your PAN, run a bureau pull, or trigger any inquiry. Only a real application submitted to a bank creates a hard inquiry.' },
   { q: 'Is the recommendation influenced by affiliate commission?', a: 'No. Rankings come from our issuer-blind editorial ratings and your inputs. Some Apply Now links pay us a commission, but a card cannot buy a higher recommendation, and top matches frequently include cards that pay us nothing.' },
-  { q: 'What information do I need to provide?', a: 'Roughly eight quick answers: monthly spend across categories like groceries, dining, fuel, travel and online shopping, whether you want lounge access, your approximate credit score band, and the annual fee range you will accept. It takes about a minute.' },
+  { q: 'What information do I need to provide?', a: 'Ten quick answers, and they adapt to you: your main goal, monthly spend, your top spending categories and roughly how much goes to each, plus age, employment, income and CIBIL band for eligibility. Depending on your answers we ask a couple of tailored follow-ups, on flights and forex for travellers, or credit history for first-timers. Numeric answers take digits only. It takes about a minute.' },
   { q: 'How accurate are the estimated reward values?', a: "They are honest estimates, not guarantees. We normalise every reward programme to an estimated rupee value per ₹100 spent using published earn rates and sensible redemption assumptions, and we label estimated figures. Always confirm current terms in the issuer's MITC before applying." },
 ];
 const jsonLd = [
@@ -31,8 +25,8 @@ const jsonLd = [
 ];
 ---
 <PageLayout
-  title="Credit Card Recommendation Engine — Get Matched"
-  description="Answer 8 quick questions and get personalised credit-card matches for your spending and profile. A soft, estimate-based match — no PAN, no credit-score impact."
+  title="Credit Card Recommendation Engine, Get Matched"
+  description="Answer 10 quick questions and get personalised credit-card matches ranked by estimated annual value for your spending and profile. A soft, estimate-based match, no PAN, no credit-score impact."
   canonicalPath="/recommend"
   jsonLd={jsonLd}
 >
@@ -40,20 +34,19 @@ const jsonLd = [
     <div class="container">
       <p class="eyebrow">Free · Takes about a minute · No PAN required</p>
       <h1>Which card is right for you?</h1>
-      <p class="lede">Tell us how you spend and what you want. We'll estimate your best matches — with the reasons, not just a score.</p>
+      <p class="lede">Tell us how you spend and what you want. We'll estimate your best matches, with the reasons, not just a score.</p>
     </div>
   </section>
-  <div class="container"><AffiliateDisclosure compact /></div>
   <section class="container section">
-    <RecommendWizard client:load previewCards={previewCards} />
+    <RecommendWizard client:load candidates={candidates} valuations={valuations} />
   </section>
 
-  <!-- Prerendered explanatory prose (SEO_PROMPT §3) — the island above renders
+  <!-- Prerendered explanatory prose (SEO_PROMPT §3), the island above renders
        client-side, so this static copy is what crawlers actually read. -->
   <section class="container section reading-column">
     <h2>How our credit card recommendation works</h2>
     <p>
-      There is no single best credit card in India — there is only the best card for how <em>you</em> spend.
+      There is no single best credit card in India, there is only the best card for how <em>you</em> spend.
       A ₹50,000-a-month spender who eats out constantly should hold a completely different card from someone
       whose budget is dominated by fuel and utility bills, even if both have the same income and CIBIL score.
       This tool exists to do that matching properly instead of pointing everyone at the same three heavily
@@ -64,8 +57,8 @@ const jsonLd = [
       is converted to an estimated rupee value per ₹100 spent, per category. When you enter your monthly
       spending, we multiply your category amounts by each card's effective earn rate, add realistic welcome
       and milestone benefits, subtract the annual fee (accounting for spend-based waivers you would actually
-      hit), and rank the results by estimated net annual value. Each match shows the reasons — not just a
-      score — so you can see exactly which of your categories is driving the recommendation.
+      hit), and rank the results by estimated net annual value. Each match shows the reasons, not just a
+      score, so you can see exactly which of your categories is driving the recommendation.
     </p>
     <h3>What this tool doesn't do</h3>
     <p>
@@ -74,7 +67,7 @@ const jsonLd = [
       always rests with the issuer's own underwriting, which considers income, existing credit lines and
       internal policy. Reward values are estimates built from published rates and reasonable redemption
       assumptions; caps, exclusions and devaluations live in each card's MITC, which we link from every
-      review. If you want a deeper dive before applying, open the full review of any matched card — every one
+      review. If you want a deeper dive before applying, open the full review of any matched card, every one
       covers fees, eligibility, and the case for choosing a different card instead.
     </p>
     <h2>Frequently asked questions</h2>

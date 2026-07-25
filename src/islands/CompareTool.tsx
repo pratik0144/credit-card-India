@@ -2,7 +2,7 @@
  * CompareTool (FRONTEND §8, DESIGN §6.6). Interactive picker: search/add up to
  * 3 cards, render a real semantic comparison table (column per card). Reads an
  * initial ?add=<slug> from the URL (from CardRow "Add to Compare"). Zero backend
- * needed — operates on card data passed from the server.
+ * needed, operates on card data passed from the server.
  */
 import { useMemo, useState, useEffect } from 'react';
 import '../styles/islands.css';

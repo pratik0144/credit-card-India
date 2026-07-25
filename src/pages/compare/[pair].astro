@@ -8,7 +8,6 @@
  */
 import PageLayout from '../../layouts/PageLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
-import AffiliateDisclosure from '../../components/AffiliateDisclosure.astro';
 import ComparisonTable from '../../components/ComparisonTable.astro';
 import Button from '../../components/Button.astro';
 import NewsletterForm from '../../components/NewsletterForm.astro';
@@ -40,7 +39,7 @@ const da = await getCardDetailByFullSlug(a);
 const db = await getCardDetailByFullSlug(b);
 if (!da || !db) return Astro.redirect('/404');
 const path = `/compare/${a}-vs-${b}`;
-// Canonical is ALWAYS the alphabetical ordering (§2) — the reverse direction
+// Canonical is ALWAYS the alphabetical ordering (§2), the reverse direction
 // renders but points its canonical here.
 const [cx, cy] = [a, b].sort();
 const canonicalPath = `/compare/${cx}-vs-${cy}`;
@@ -53,9 +52,9 @@ const columns = [
 ];
 const rows = [
   { label: 'Our rating', values: [formatRating(da.rating?.overall_score ?? da.card.editorial_score_5), formatRating(db.rating?.overall_score ?? db.card.editorial_score_5)] },
-  { label: 'Reward rate', values: [da.card.reward_rate_general_text ?? '—', db.card.reward_rate_general_text ?? '—'] },
+  { label: 'Reward rate', values: [da.card.reward_rate_general_text ?? '-', db.card.reward_rate_general_text ?? '-'] },
   { label: 'Annual fee', values: [formatAnnualFee(da.card.annual_fee_amount), formatAnnualFee(db.card.annual_fee_amount)] },
-  { label: 'Forex markup', values: [da.card.forex_markup_pct != null ? `${da.card.forex_markup_pct}%` : '—', db.card.forex_markup_pct != null ? `${db.card.forex_markup_pct}%` : '—'] },
+  { label: 'Forex markup', values: [da.card.forex_markup_pct != null ? `${da.card.forex_markup_pct}%` : '-', db.card.forex_markup_pct != null ? `${db.card.forex_markup_pct}%` : '-'] },
   { label: 'Domestic lounge', values: [formatLounge(da.card.lounge_domestic_visits_per_year ?? 0), formatLounge(db.card.lounge_domestic_visits_per_year ?? 0)] },
   { label: 'Min. CIBIL', values: [da.card.cibil_min ?? 'Flexible', db.card.cibil_min ?? 'Flexible'] },
 ];
@@ -80,22 +79,22 @@ const sameBank = da.bank.id === db.bank.id;
 
 const faqs = [
   {
-    q: `${da.card.name} or ${db.card.name} — which is better?`,
+    q: `${da.card.name} or ${db.card.name}, which is better?`,
     a: higherRated
-      ? `On our issuer-blind rubric, the ${higherRated.card.name} rates higher (${formatRating(higherRated === da ? scoreA : scoreB)} vs ${formatRating(higherRated === da ? scoreB : scoreA)}). But the better card for you depends on your spending pattern — the comparison table above shows where each one wins.`
+      ? `On our issuer-blind rubric, the ${higherRated.card.name} rates higher (${formatRating(higherRated === da ? scoreA : scoreB)} vs ${formatRating(higherRated === da ? scoreB : scoreA)}). But the better card for you depends on your spending pattern, the comparison table above shows where each one wins.`
       : `Our ratings put them close together, so the decision comes down to fit: compare the annual fee, reward rate, and travel benefits above against how you actually spend.`,
   },
   {
     q: `Which has the lower annual fee, ${da.card.name} or ${db.card.name}?`,
     a: cheaper
-      ? `The ${cheaper.card.name} — ${formatAnnualFee(cheaper.card.annual_fee_amount)} against ${formatAnnualFee(pricier!.card.annual_fee_amount)} for the ${pricier!.card.name}${feeGap ? `, a difference of ${formatINRCompact(feeGap)} a year` : ''}. Check each card's fee-waiver spend threshold before letting the fee decide alone.`
-      : `Both carry the same annual fee (${formatAnnualFee(feeA)}), so the fee is a wash — let the reward rate and benefits decide.`,
+      ? `The ${cheaper.card.name}, ${formatAnnualFee(cheaper.card.annual_fee_amount)} against ${formatAnnualFee(pricier!.card.annual_fee_amount)} for the ${pricier!.card.name}${feeGap ? `, a difference of ${formatINRCompact(feeGap)} a year` : ''}. Check each card's fee-waiver spend threshold before letting the fee decide alone.`
+      : `Both carry the same annual fee (${formatAnnualFee(feeA)}), so the fee is a wash, let the reward rate and benefits decide.`,
   },
   {
     q: `Can I hold both the ${da.card.name} and the ${db.card.name}?`,
     a: sameBank
-      ? `Both are issued by ${da.bank.name}, and most issuers do allow multiple cards, subject to a combined credit limit. Whether it's worth it is a different question — our combo optimizer can tell you if this pairing actually covers more spend categories than either card alone.`
-      : `Yes — they come from different issuers (${da.bank.name} and ${db.bank.name}), so each application is judged independently. If their reward categories complement each other, holding both can out-earn either alone; our combo optimizer will run that maths on your spending.`,
+      ? `Both are issued by ${da.bank.name}, and most issuers do allow multiple cards, subject to a combined credit limit. Whether it's worth it is a different question, our combo optimizer can tell you if this pairing actually covers more spend categories than either card alone.`
+      : `Yes, they come from different issuers (${da.bank.name} and ${db.bank.name}), so each application is judged independently. If their reward categories complement each other, holding both can out-earn either alone; our combo optimizer will run that maths on your spending.`,
   },
 ];
 
@@ -106,13 +105,12 @@ const jsonLd = [
 ---
 <PageLayout
   title={`${title}: Which Card Wins?`}
-  description={`${da.card.name} vs ${db.card.name} — compare rewards, fees, forex, lounge access, and eligibility to see which credit card is right for you.`}
+  description={`${da.card.name} vs ${db.card.name}, compare rewards, fees, forex, lounge access, and eligibility to see which credit card is right for you.`}
   canonicalPath={canonicalPath}
   jsonLd={jsonLd}
 >
   <div class="container" style="padding-block: var(--space-8);">
     <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Compare', path: '/compare' }, { name: title }]} />
-    <AffiliateDisclosure />
     <h1>{da.card.name} vs {db.card.name}</h1>
     <p class="lede">A head-to-head on the numbers that matter. Prefer to build your own? Use the <a href="/compare">interactive compare tool</a>.</p>
 
@@ -121,15 +119,15 @@ const jsonLd = [
       <p>
         Choosing between the <a href={hrefFor(da)}>{da.card.name}</a> from {da.bank.name} and the
         <a href={hrefFor(db)}>{db.card.name}</a> from {db.bank.name} is a common shortlist
-        {sameBank ? ' — unusually, both come from the same issuer, so this is really a question of which product tier matches your spending' : ', and the two cards take genuinely different approaches to earning you value'}.
+        {sameBank ? ', unusually, both come from the same issuer, so this is really a question of which product tier matches your spending' : ', and the two cards take genuinely different approaches to earning you value'}.
         {higherRated
           ? ` On our issuer-blind rubric the ${higherRated.card.name} comes out ahead (${formatRating(higherRated === da ? scoreA : scoreB)} vs ${formatRating(higherRated === da ? scoreB : scoreA)}), but a headline rating never settles a two-card decision on its own.`
           : ' Our editorial ratings put them close enough that the winner depends entirely on your spending profile.'}
       </p>
       <p>
         {cheaper
-          ? `On cost, the ${cheaper.card.name} is the lighter commitment at ${formatAnnualFee(cheaper.card.annual_fee_amount).toLowerCase()} against ${formatAnnualFee(pricier!.card.annual_fee_amount).toLowerCase()} for the ${pricier!.card.name}${feeGap && feeGap > 0 ? ` — a gap of ${formatINRCompact(feeGap)} every year that the pricier card's extra rewards need to earn back before it breaks even` : ''}.`
-          : `Neither card wins on cost — both carry ${formatAnnualFee(feeA).toLowerCase()} as the annual fee — so the comparison rests on what each returns for your spending.`}
+          ? `On cost, the ${cheaper.card.name} is the lighter commitment at ${formatAnnualFee(cheaper.card.annual_fee_amount).toLowerCase()} against ${formatAnnualFee(pricier!.card.annual_fee_amount).toLowerCase()} for the ${pricier!.card.name}${feeGap && feeGap > 0 ? `, a gap of ${formatINRCompact(feeGap)} every year that the pricier card's extra rewards need to earn back before it breaks even` : ''}.`
+          : `Neither card wins on cost, both carry ${formatAnnualFee(feeA).toLowerCase()} as the annual fee, so the comparison rests on what each returns for your spending.`}
         {betterForex
           ? ` If you spend abroad, note the forex column: the ${betterForex.card.name}'s ${betterForex === da ? fxA : fxB}% markup beats the other's ${betterForex === da ? fxB : fxA}% on every international transaction.`
           : ''}
@@ -138,7 +136,7 @@ const jsonLd = [
           : ''}
       </p>
       <p>
-        The table below puts the two side by side on the numbers that decide it — reward rate, fees, forex
+        The table below puts the two side by side on the numbers that decide it, reward rate, fees, forex
         markup, lounge access, and the CIBIL score each realistically requires. Figures come from our reviewed
         database; anything we could not verify against the issuer's MITC is labelled an estimate in the full
         reviews linked from each column.

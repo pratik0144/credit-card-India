@@ -30,7 +30,7 @@ export default function WalletDashboard() {
   if (status === 'no-backend') {
     return (
       <div className="island">
-        <div className="island__notice">Preview mode — My Wallet requires Supabase Auth. Connect the backend to sign in, add your cards, and track fee-waiver progress.</div>
+        <div className="island__notice">Preview mode, My Wallet requires Supabase Auth. Connect the backend to sign in, add your cards, and track fee-waiver progress.</div>
         <WalletPreview />
       </div>
     );

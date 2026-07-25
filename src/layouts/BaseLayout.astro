@@ -1,8 +1,8 @@
 ---
 /*
- * BaseLayout — the single root layout. Sets lang="en-IN" (DESIGN.md §7),
+ * BaseLayout, the single root layout. Sets lang="en-IN" (DESIGN.md §7),
  * loads design tokens + global styles once, and centralises SEO head tags
- * (unique title/description, canonical, og:image — FRONTEND_PROMPT.md §9).
+ * (unique title/description, canonical, og:image, FRONTEND_PROMPT.md §9).
  * Page chrome (header/footer) is composed by the frontend build on top of this.
  */
 import '../styles/tokens.css';
@@ -61,8 +61,7 @@ const fullTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
     <meta property="og:locale" content="en_IN" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <!-- Inter (Geist substitute) + JetBrains Mono (Geist Mono substitute) —
-         DESIGN-vercel.md font-substitute note; display=swap, non-blocking. -->
+    <!-- Inter (Geist substitute) + JetBrains Mono (Geist Mono substitute), DESIGN-vercel.md font-substitute note; display=swap, non-blocking. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -80,7 +79,7 @@ const fullTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
   <body>
     <slot />
     <script>
-      // Scroll-reveal (global.css .reveal) — opacity/transform only, once per
+      // Scroll-reveal (global.css .reveal), opacity/transform only, once per
       // element, disabled implicitly under prefers-reduced-motion by CSS.
       const els = document.querySelectorAll('.reveal');
       if (els.length && 'IntersectionObserver' in window) {

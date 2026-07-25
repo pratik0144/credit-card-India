@@ -1,7 +1,6 @@
 ---
 /*
- * ComparisonTable (DESIGN §6.6). Real semantic <table>/<thead>/<th scope> —
- * never div-grids. Card figures stay un-truncated; horizontal scroll on mobile
+ * ComparisonTable (DESIGN §6.6). Real semantic <table>/<thead>/<th scope>, * never div-grids. Card figures stay un-truncated; horizontal scroll on mobile
  * (preserves column-per-card). Two supported shapes here:
  *  - variant="cards": card-image-header columns (2–3 up) + spec rows.
  *  - variant="listing": wide summary table (Card | Best for | Reward | Fee | Rating).
@@ -38,7 +37,7 @@ const img = (src?: string | null) => (src ? `/card-img/${src.replace(/^card-img\
       {rows.map((r) => (
         <tr>
           <th scope="row">{r.label}</th>
-          {r.values.map((v) => <td>{v ?? '—'}</td>)}
+          {r.values.map((v) => <td>{v ?? '-'}</td>)}
         </tr>
       ))}
     </tbody>

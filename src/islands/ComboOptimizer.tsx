@@ -44,7 +44,7 @@ export default function ComboOptimizer({ cardNames }: Props) {
 
   return (
     <div className="island">
-      <p className="island__trust">This is a heuristic estimate based on published reward rates — not a guarantee. Actual redemption value varies by how you use points, miles, or cashback.</p>
+      <p className="island__trust">This is a heuristic estimate based on published reward rates, not a guarantee. Actual redemption value varies by how you use points, miles, or cashback.</p>
 
       <h2>Your monthly spend</h2>
       <div className="grid-2">
@@ -91,7 +91,7 @@ export default function ComboOptimizer({ cardNames }: Props) {
 
       {results && (
         <div aria-live="polite" style={{ marginTop: 'var(--space-8)' }}>
-          {preview && <p className="island__notice">Preview mode — connect the optimize-combo Edge Function to compute a live combo from the full catalog.</p>}
+          {preview && <p className="island__notice">Preview mode, connect the optimize-combo Edge Function to compute a live combo from the full catalog.</p>}
           {results.map((combo, idx) => (
             <div key={idx} className="result-card">
               <span className="result-card__label">{idx === 0 ? 'Recommended combo' : 'Alternate'}</span>
@@ -109,7 +109,7 @@ export default function ComboOptimizer({ cardNames }: Props) {
                 <div><strong>₹{new Intl.NumberFormat('en-IN').format(combo.total_annual_fees_inr)}</strong><span>annual fees</span></div>
                 <div><strong>₹{new Intl.NumberFormat('en-IN').format(combo.net_value_inr)}</strong><span>net value</span></div>
               </div>
-              {combo.warnings.map((w, i) => <p className="warning" key={i}>⚠ {w}</p>)}
+              {combo.warnings.map((w, i) => <p className="warning" key={i}>{w}</p>)}
             </div>
           ))}
           {results.length === 0 && !preview && <p>No eligible combo found for these inputs.</p>}

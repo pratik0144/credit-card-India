@@ -1,37 +1,50 @@
 /*
- * BestCardCalculator (FRONTEND §11.3). Category + amount inputs, pick up to 6
- * cards, calls best-card-for-purchase (§9.3). Ranked ₹-value output with the
- * redemption caveat and milestone nudge. Also embeddable on review pages.
+ * BestCardCalculator (FRONTEND §11.3). Category + amount inputs and a type-to-
+ * search card picker (up to 6). On "Find the best card" it runs the shared
+ * ranking engine (best-card-engine.ts) over the chosen cards, producing a ranked
+ * 1/2/3 list with the estimated rupee value and a plain-language "why" for each.
+ * The engine mirrors the server-side scoring so results stay consistent whether
+ * they come from live data or the seed fallback. Also embeddable on review pages.
  */
-import { useState } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import '../styles/islands.css';
-import { bestCardForPurchase } from '../lib/edge-functions';
 import { SPEND_CATEGORY_KEYS, SPEND_CATEGORY_LABELS, type SpendCategoryKey } from '../lib/taxonomy';
-import type { BestCardResult } from '../lib/database.types';
+import { rankCardsForPurchase, type BestCardCandidate, type PointValuationLite, type RankedCard } from '../lib/best-card-engine';
 
-interface PickCard { id: string; name: string; bank_name: string; }
-interface Props { cards: PickCard[]; compact?: boolean; }
+interface Props {
+  candidates: BestCardCandidate[];
+  valuations: PointValuationLite[];
+  compact?: boolean;
+}
 
-export default function BestCardCalculator({ cards, compact = false }: Props) {
+export default function BestCardCalculator({ candidates, valuations, compact = false }: Props) {
   const [category, setCategory] = useState<SpendCategoryKey>('dining');
   const [amount, setAmount] = useState(3000);
-  const [picked, setPicked] = useState<string[]>(cards.slice(0, 3).map((c) => c.id));
-  const [results, setResults] = useState<(BestCardResult & { name?: string })[] | null>(null);
-  const [preview, setPreview] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<RankedCard[] | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < 6 ? [...p, id] : p));
-  const nameOf = (id: string) => cards.find((c) => c.id === id)?.name ?? id;
+  const byId = useMemo(() => new Map(candidates.map((c) => [c.id, c])), [candidates]);
+  const nameOf = (id: string) => byId.get(id)?.name ?? id;
 
-  const run = async () => {
-    setLoading(true);
-    try {
-      const res = await bestCardForPurchase({ category_key: category, amount_inr: amount, card_ids: picked });
-      setResults(res.map((r) => ({ ...r, name: r.card_name ?? nameOf(r.card_id) })));
-    } catch {
-      setPreview(true);
-      setResults(picked.map((id) => ({ card_id: id, name: nameOf(id), estimated_value_inr: 0, redemption_note: 'Connect the calculator Edge Function to see estimated value.', milestone_nudge: null })));
-    } finally { setLoading(false); }
+  const filtered = query.trim().length > 0
+    ? candidates.filter((c) =>
+        !picked.includes(c.id) &&
+        `${c.name} ${c.bank_name}`.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 8)
+    : [];
+
+  const add = (id: string) => {
+    if (picked.length < 6) setPicked((p) => [...p, id]);
+    setQuery('');
+    inputRef.current?.focus();
+  };
+  const remove = (id: string) => setPicked((p) => p.filter((x) => x !== id));
+
+  const run = () => {
+    const chosen = picked.map((id) => byId.get(id)).filter((c): c is BestCardCandidate => Boolean(c));
+    setResults(rankCardsForPurchase(chosen, category, amount, valuations));
   };
 
   return (
@@ -46,37 +59,76 @@ export default function BestCardCalculator({ cards, compact = false }: Props) {
         <label htmlFor="calc-amt">Amount (₹)</label>
         <input id="calc-amt" type="number" inputMode="numeric" min={0} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
       </div>
-      <fieldset style={{ border: 'none', padding: 0, margin: '0 0 var(--space-4)' }}>
-        <legend style={{ fontWeight: 500, fontSize: 'var(--text-body-sm)', marginBottom: 'var(--space-2)' }}>Compare cards (up to 6)</legend>
-        <ul className="opt-list">
-          {cards.map((c) => {
-            const on = picked.includes(c.id);
-            return (
-              <li key={c.id}>
-                <button type="button" className={`opt${on ? ' opt--selected' : ''}`} aria-pressed={on} onClick={() => toggle(c.id)}>
-                  <span className="opt__check" aria-hidden="true">{on ? '✓' : ''}</span>{c.name} <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>· {c.bank_name}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </fieldset>
-      <button className="btn-i btn-i--primary" onClick={run} disabled={loading || picked.length === 0}>{loading ? 'Calculating…' : 'Find the best card'}</button>
+
+      <div className="field">
+        <label htmlFor="calc-search">Add cards to compare <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>(up to 6)</span></label>
+        {picked.length > 0 && (
+          <div className="card-chips" role="list" aria-label="Selected cards">
+            {picked.map((id) => (
+              <span className="card-chip" role="listitem" key={id}>
+                {nameOf(id)}
+                <button type="button" aria-label={`Remove ${nameOf(id)}`} onClick={() => remove(id)}>×</button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="search-wrap">
+          <input
+            ref={inputRef}
+            id="calc-search"
+            type="search"
+            autoComplete="off"
+            placeholder="Search by card or bank name..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            disabled={picked.length >= 6}
+            aria-expanded={filtered.length > 0}
+            aria-autocomplete="list"
+            aria-controls="calc-search-results"
+          />
+          {filtered.length > 0 && (
+            <ul id="calc-search-results" className="search-results" role="listbox">
+              {filtered.map((c) => (
+                <li key={c.id} role="option" aria-selected={false}>
+                  <button type="button" onMouseDown={(e) => { e.preventDefault(); add(c.id); }}>
+                    <span>{c.name}</span>
+                    <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-caption)' }}>{c.bank_name}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      <button className="btn-i btn-i--primary" onClick={run} disabled={picked.length === 0}>Find the best card</button>
 
       {results && (
         <div aria-live="polite" style={{ marginTop: 'var(--space-8)' }}>
-          {preview && <p className="island__notice">Preview mode — connect the Edge Function for live ₹-value estimates.</p>}
-          <p className="island__trust">Estimated value varies by how you redeem — statement credit, vouchers, or flight transfers can differ significantly.</p>
-          {results.map((r, i) => (
-            <article className="result-card" key={r.card_id}>
-              <div className="result-card__head">
-                <h3>{i === 0 ? '🏆 ' : ''}{r.name}</h3>
-                {r.estimated_value_inr > 0 && <span className="result-card__score">₹{new Intl.NumberFormat('en-IN').format(r.estimated_value_inr)}</span>}
-              </div>
-              <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: 'var(--text-body-sm)' }}>{r.redemption_note}</p>
-              {r.milestone_nudge && <p style={{ margin: 0, color: 'var(--color-primary-blue)', fontSize: 'var(--text-body-sm)' }}>{r.milestone_nudge}</p>}
-            </article>
-          ))}
+          <p className="island__trust">Ranked by estimated value on this one purchase. Value varies by how you redeem: statement credit, vouchers, or flight transfers can differ significantly. Monthly reward caps you have already used are not visible here.</p>
+          {results.length === 0 && <p>Add at least one card to compare.</p>}
+          <ol className="rank-list">
+            {results.map((r) => (
+              <li className={`rank-card${r.rank === 1 ? ' rank-card--top' : ''}`} key={r.card_id}>
+                <div className="rank-card__head">
+                  <span className="rank-card__badge" aria-hidden="true">{r.rank}</span>
+                  <div className="rank-card__id">
+                    <h3>{r.card_name}</h3>
+                    <p className="rank-card__bank">{r.bank_name}</p>
+                  </div>
+                  <div className="rank-card__value">
+                    <strong>₹{new Intl.NumberFormat('en-IN').format(r.estimated_value_inr)}</strong>
+                    <span>est. value</span>
+                  </div>
+                </div>
+                <p className="rank-card__why-label">Why{r.rank === 1 ? ' it wins' : ` #${r.rank}`}</p>
+                <ul className="rank-card__why">
+                  {r.why.map((w, i) => <li key={i}>{w}</li>)}
+                </ul>
+                <p className="rank-card__note">{r.redemption_note}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       )}
     </div>

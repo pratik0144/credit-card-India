@@ -43,6 +43,107 @@
 .opt__check { width: 22px; height: 22px; border-radius: var(--radius-sm); border: 2px solid var(--color-border-strong); flex: none; display: grid; place-items: center; }
 .opt--selected .opt__check { background: var(--color-cta-primary); border-color: var(--color-cta-primary); color: var(--color-on-primary); }
 
+/* Card search (BestCardCalculator) */
+.card-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); }
+.card-chip {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-surface-footer); border: var(--border-width-hairline) solid var(--color-border);
+  border-radius: var(--radius-pill); font-size: var(--text-body-sm);
+}
+.card-chip button {
+  background: none; border: none; cursor: pointer; padding: 0; line-height: 1;
+  color: var(--color-text-muted); font-size: var(--text-body); min-height: 0;
+}
+.card-chip button:hover { color: var(--color-text-primary); }
+.search-wrap { position: relative; }
+.search-wrap input[type="search"] {
+  width: 100%; min-height: 44px; padding: 0 var(--space-4);
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-sm); font-size: var(--text-body); font-family: inherit;
+  background: var(--color-surface);
+}
+.search-wrap input[type="search"]:focus-visible { outline: 2px solid var(--color-primary-blue); outline-offset: 2px; border-color: var(--color-primary-blue); }
+.search-results {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 20;
+  background: var(--color-surface); border: var(--border-width-hairline) solid var(--color-border);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-elevation-3);
+  list-style: none; margin: var(--space-1) 0 0; padding: var(--space-2); max-height: 280px; overflow-y: auto;
+}
+.search-results li button {
+  display: flex; flex-direction: column; gap: 2px;
+  width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm);
+  font-size: var(--text-body-sm); font-family: inherit; min-height: 44px; justify-content: center;
+}
+.search-results li button:hover { background: var(--color-surface-footer); }
+
+/* Ranked results (BestCardCalculator) */
+.rank-list { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: var(--space-4); counter-reset: rank; }
+.rank-card {
+  background: var(--color-surface);
+  border: var(--border-width-hairline) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hairline-inset), var(--shadow-elevation-1);
+  padding: var(--space-5);
+}
+.rank-card--top { border-color: var(--color-cta-primary); box-shadow: var(--shadow-hairline-inset), var(--shadow-elevation-2); }
+.rank-card__head { display: flex; align-items: center; gap: var(--space-4); }
+.rank-card__badge {
+  flex: none; width: 36px; height: 36px; border-radius: var(--radius-circle);
+  display: grid; place-items: center;
+  background: var(--color-surface-footer); color: var(--color-text-secondary);
+  font-family: var(--font-mono); font-weight: var(--weight-semibold); font-size: var(--text-body);
+}
+.rank-card--top .rank-card__badge { background: var(--color-cta-primary); color: var(--color-on-primary); }
+.rank-card__id { flex: 1; min-width: 0; }
+.rank-card__id h3 { margin: 0; font-size: var(--text-h4); }
+.rank-card__bank { margin: 0; font-size: var(--text-body-sm); color: var(--color-text-muted); }
+.rank-card__value { text-align: right; flex: none; }
+.rank-card__value strong { display: block; font-size: var(--text-h3); letter-spacing: var(--tracking-display-sm); }
+.rank-card__value span { font-size: var(--text-caption); color: var(--color-text-muted); }
+.rank-card__why-label {
+  margin: var(--space-4) 0 var(--space-2); font-family: var(--font-mono);
+  text-transform: uppercase; letter-spacing: var(--tracking-wide);
+  font-size: var(--text-caption); color: var(--color-text-secondary);
+}
+.rank-card__why { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); }
+.rank-card__why li { font-size: var(--text-body-sm); color: var(--color-text-secondary); line-height: var(--leading-normal); }
+.rank-card__note { margin: var(--space-3) 0 0; font-size: var(--text-caption); color: var(--color-text-muted); }
+
+/* Recommend wizard: help text, numeric inputs, analysis state */
+.wizard__help { margin: calc(-1 * var(--space-4)) 0 var(--space-6); font-size: var(--text-body-sm); color: var(--color-text-secondary); }
+.num-field { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-8); }
+.num-field--sm { margin-bottom: 0; }
+.num-input {
+  flex: 1; min-width: 0; min-height: 52px; padding: 0 var(--space-4);
+  font-size: var(--text-h4); font-family: inherit;
+  border: var(--border-width-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius-sm); background: var(--color-surface);
+}
+.num-field--sm .num-input { min-height: 44px; font-size: var(--text-body); }
+.num-input:focus-visible { outline: 2px solid var(--color-primary-blue); outline-offset: 2px; border-color: var(--color-primary-blue); }
+.num-unit { flex: none; font-size: var(--text-body-sm); color: var(--color-text-muted); white-space: nowrap; }
+.num-group { display: grid; gap: var(--space-4); margin-bottom: var(--space-8); }
+.num-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.num-row__label { font-size: var(--text-body); color: var(--color-text-primary); }
+.num-row .num-field { margin-bottom: 0; flex: none; width: 180px; }
+
+.analysis { text-align: center; padding: var(--space-12) var(--space-4); }
+.analysis h2 { margin-bottom: var(--space-2); }
+.analysis p { color: var(--color-text-secondary); margin: 0 auto; max-width: 44ch; }
+.analysis__spinner {
+  width: 40px; height: 40px; margin: 0 auto var(--space-6);
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-cta-primary);
+  border-radius: var(--radius-circle);
+  animation: analysis-spin 0.8s linear infinite;
+}
+@keyframes analysis-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .analysis__spinner { animation-duration: 2s; }
+}
+
 .wizard__nav { display: flex; justify-content: space-between; gap: var(--space-4); }
 .btn-i {
   min-height: 48px; padding: 0 var(--btn-padding-x);

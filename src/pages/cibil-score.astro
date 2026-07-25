@@ -2,7 +2,7 @@
 /*
  * CIBIL score hub /cibil-score (FRONTEND §8, DESIGN §10.2). Explainer on
  * CIBIL/CIC scoring, band-based recommendations linking into filtered listings,
- * link to the recommendation engine. [NEEDS LEGAL REVIEW] — §10 copy.
+ * link to the recommendation engine. [NEEDS LEGAL REVIEW], §10 copy.
  */
 import PageLayout from '../layouts/PageLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
@@ -22,7 +22,7 @@ const faqs = [
 import ScoreTierBadge from '../components/ScoreTierBadge.astro';
 ---
 <PageLayout
-  title="CIBIL Score & Credit Cards — Which Card Can You Get?"
+  title="CIBIL Score & Credit Cards, Which Card Can You Get?"
   description="Understand CIBIL score bands and which Indian credit cards you're likely eligible for at each band. CIBIL is one of four RBI-licensed credit bureaus."
   jsonLd={[faqPage(faqs), breadcrumbList([{ name: 'Home', path: '/' }, { name: 'CIBIL score', path: '/cibil-score' }])]}
 >
@@ -30,7 +30,7 @@ import ScoreTierBadge from '../components/ScoreTierBadge.astro';
     <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'CIBIL score' }]} />
     <h1>Your CIBIL score and credit cards</h1>
     <p class="lede reading-column">
-      Your CIBIL score is the number most Indian issuers check first. It's issued by TransUnion CIBIL — one of four
+      Your CIBIL score is the number most Indian issuers check first. It's issued by TransUnion CIBIL, one of four
       credit information companies (CICs) licensed by the RBI. Here's roughly which cards each band opens up.
     </p>
 
@@ -54,7 +54,7 @@ import ScoreTierBadge from '../components/ScoreTierBadge.astro';
     <section class="reading-column">
       <h2>Frequently asked questions</h2>
       <dl class="faq">{faqs.map((f) => (<><dt>{f.q}</dt><dd>{f.a}</dd></>))}</dl>
-      {/* [NEEDS LEGAL REVIEW] — CIBIL/CIC disclosure copy (DESIGN §10.2). */}
+      {/* [NEEDS LEGAL REVIEW], CIBIL/CIC disclosure copy (DESIGN §10.2). */}
       <p class="note">CIBIL score bands are indicative; individual issuer criteria vary and approval is never guaranteed by score alone.</p>
     </section>
   </div>

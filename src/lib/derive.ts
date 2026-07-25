@@ -1,7 +1,7 @@
 /*
  * Data-driven derivation of review content from structured card fields.
  * Used where editorial prose isn't authored yet (seed/preview). Everything here
- * is grounded in real parsed fields — we never fabricate benefit claims
+ * is grounded in real parsed fields, we never fabricate benefit claims
  * (FRONTEND §16, DESIGN §11). When a card has an authored `articles` row, prefer
  * that; these derivations are the honest fallback.
  */
@@ -27,7 +27,7 @@ export function headlineReward(detail: CardDetail): string {
 export function derivePros(detail: CardDetail): string[] {
   const c = detail.card;
   const pros: string[] = [];
-  if (c.annual_fee_amount === 0) pros.push('Lifetime free — no joining or annual fee');
+  if (c.annual_fee_amount === 0) pros.push('Lifetime free, no joining or annual fee');
   else if (c.annual_fee_waiver_spend_amount)
     pros.push(`Annual fee waived on ${formatINRCompact(c.annual_fee_waiver_spend_amount)} annual spend`);
   if ((c.lounge_domestic_visits_per_year ?? 0) > 0)
@@ -44,7 +44,7 @@ export function derivePros(detail: CardDetail): string[] {
   return pros.slice(0, 6);
 }
 
-/** Balanced, grounded cons — the counter-argument is core to credibility (DESIGN §8). */
+/** Balanced, grounded cons, the counter-argument is core to credibility (DESIGN §8). */
 export function deriveCons(detail: CardDetail): string[] {
   const c = detail.card;
   const cons: string[] = [];
@@ -57,7 +57,7 @@ export function deriveCons(detail: CardDetail): string[] {
   if (c.cibil_min != null && c.cibil_min >= 750)
     cons.push('Typically needs a CIBIL score of 750+ for approval');
   if (c.data_confidence !== 'verified')
-    cons.push('Some benefit details are estimated — confirm current terms in the issuer MITC');
+    cons.push('Some benefit details are estimated, confirm current terms in the issuer MITC');
   if (cons.length === 0) cons.push('Rewards are modest for high spenders who could do better elsewhere');
   return cons.slice(0, 6);
 }

@@ -1,180 +1,239 @@
 /*
- * RecommendWizard (FRONTEND §11.1, DESIGN §6.7 structural pattern).
- * One-topic-per-screen, 8-question wizard with persistent Back/Next. NO PAN, no
- * PII required to see results. Calls the recommend-cards Edge Function (§9.1) —
- * scoring stays server-side (§16). When no backend is configured, falls back to
- * a clearly-labelled preview using cards passed from the server.
- *
- * The verbatim trust sentence from §11.1 sits directly above the results.
+ * RecommendWizard (FRONTEND §11.1) — the site's core "which card is right for
+ * you?" flow. An adaptive 10-question wizard: the questions branch on prior
+ * answers (a traveller gets flight/forex questions, a first-timer gets credit-
+ * history questions) via orderedQuestions(). Numeric questions accept digits
+ * only. On submit it runs the client-side recommend-engine over the card data
+ * shipped from the server and shows results ranked 1..N by estimated annual
+ * value, each with the reasons. No PAN, no bureau pull. Server scoring stays the
+ * canonical source; this engine mirrors it (see recommend-engine.ts).
  */
 import { useMemo, useState } from 'react';
 import '../styles/islands.css';
-import { recommendCards } from '../lib/edge-functions';
-import type { RecommendInput, RecommendResult } from '../lib/database.types';
+import {
+  orderedQuestions, canAdvance, toRecommendAnswers, TOTAL_QUESTIONS,
+  type AnswerMap, type Question,
+} from '../lib/recommend-questions';
+import {
+  recommendCards, type RecommendCandidate, type PointValuationLite, type RankedRecommendation,
+} from '../lib/recommend-engine';
 
-interface PreviewCard { card_id: string; card_slug: string; card_name: string; overall_score: number | null; annual_fee_amount: number | null; headline_reward_line: string | null; }
-interface Props { previewCards: PreviewCard[]; }
+interface Props {
+  candidates: RecommendCandidate[];
+  valuations: PointValuationLite[];
+}
 
-type Q = {
-  key: keyof RecommendInput;
-  title: string;
-  multi?: boolean;
-  max?: number;
-  options: { value: string; label: string }[];
-};
+type Phase = 'quiz' | 'analysing' | 'results';
 
-const QUESTIONS: Q[] = [
-  { key: 'goal', title: 'What do you mainly want from a credit card?', options: [
-    { value: 'cashback', label: 'Cashback' }, { value: 'travel_miles', label: 'Travel & miles' },
-    { value: 'rewards_points', label: 'Rewards points' }, { value: 'fuel_savings', label: 'Fuel savings' },
-    { value: 'first_card', label: 'My first credit card' }, { value: 'business', label: 'Business expenses' },
-    { value: 'lounge_access', label: 'Airport lounge access' } ] },
-  { key: 'monthly_spend_band', title: 'Roughly how much do you spend on cards each month?', options: [
-    { value: 'lt20k', label: 'Under ₹20,000' }, { value: '20k_50k', label: '₹20,000 – ₹50,000' },
-    { value: '50k_1l', label: '₹50,000 – ₹1 lakh' }, { value: '1l_3l', label: '₹1 lakh – ₹3 lakh' },
-    { value: '3l_plus', label: '₹3 lakh+' } ] },
-  { key: 'top_categories', title: 'Where do you spend the most? (pick up to 2)', multi: true, max: 2, options: [
-    { value: 'groceries', label: 'Groceries & online shopping' }, { value: 'dining', label: 'Dining' },
-    { value: 'travel_flights', label: 'Flights & travel' }, { value: 'fuel', label: 'Fuel' },
-    { value: 'utility_bills', label: 'Utility bills' }, { value: 'emi_large_purchases', label: 'Large purchases (EMI)' } ] },
-  { key: 'air_travel_frequency', title: 'How often do you fly?', options: [
-    { value: 'never', label: 'Never' }, { value: '1_2_year', label: '1–2 times a year' },
-    { value: '3_6_year', label: '3–6 times a year' }, { value: '7_plus_year', label: '7+ times a year' } ] },
-  { key: 'employment_type', title: 'What best describes your employment?', options: [
-    { value: 'salaried', label: 'Salaried' }, { value: 'self_employed', label: 'Self-employed' },
-    { value: 'student', label: 'Student' }, { value: 'not_employed', label: 'Not currently employed' } ] },
-  { key: 'annual_income_band', title: 'What is your annual income?', options: [
-    { value: 'lt3l', label: 'Under ₹3 lakh' }, { value: '3_6l', label: '₹3 – 6 lakh' },
-    { value: '6_12l', label: '₹6 – 12 lakh' }, { value: '12_25l', label: '₹12 – 25 lakh' },
-    { value: '25l_plus', label: '₹25 lakh+' } ] },
-  { key: 'cibil_band', title: 'Your best estimate of your CIBIL score?', options: [
-    { value: '750_plus', label: '750+ (Excellent)' }, { value: '700_749', label: '700–749 (Good)' },
-    { value: '650_699', label: '650–699 (Fair)' }, { value: 'new_to_credit', label: 'New to credit' },
-    { value: 'not_sure', label: 'Not sure' } ] },
-  { key: 'fee_preference', title: 'How do you feel about annual fees?', options: [
-    { value: 'lifetime_free_only', label: 'Prefer lifetime-free only' },
-    { value: 'value_over_3x', label: 'Okay with a fee if the value is clearly worth it' },
-    { value: 'no_preference', label: 'No preference' } ] },
-];
+const inr = (n: number) => `₹${new Intl.NumberFormat('en-IN').format(Math.round(n))}`;
+const digitsOnly = (s: string) => s.replace(/[^\d]/g, '');
 
-export default function RecommendWizard({ previewCards }: Props) {
+export default function RecommendWizard({ candidates, valuations }: Props) {
+  const [answers, setAnswers] = useState<AnswerMap>({});
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
-  const [results, setResults] = useState<RecommendResult[] | null>(null);
-  const [preview, setPreview] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<Phase>('quiz');
+  const [results, setResults] = useState<RankedRecommendation[] | null>(null);
+  const [eligibleCount, setEligibleCount] = useState(0);
 
-  const q = QUESTIONS[step];
-  const total = QUESTIONS.length;
-  const isLast = step === total - 1;
-  const current = answers[q.key as string];
+  const questions = useMemo(() => orderedQuestions(answers), [answers]);
+  const q = questions[step];
+  const value = answers[q.id];
+  const proceed = canAdvance(q, value);
 
-  const canProceed = q.multi ? Array.isArray(current) && current.length > 0 : Boolean(current);
+  const set = (id: string, v: AnswerMap[string]) => setAnswers((a) => ({ ...a, [id]: v }));
 
-  const select = (value: string) => {
-    if (q.multi) {
-      const arr = Array.isArray(current) ? [...current] : [];
-      const i = arr.indexOf(value);
-      if (i >= 0) arr.splice(i, 1);
-      else if (arr.length < (q.max ?? 99)) arr.push(value);
-      setAnswers({ ...answers, [q.key]: arr });
-    } else {
-      setAnswers({ ...answers, [q.key]: value });
-    }
+  const selectSingle = (v: string) => set(q.id, v);
+  const toggleMulti = (v: string) => {
+    const cur = Array.isArray(value) ? [...(value as string[])] : [];
+    const i = cur.indexOf(v);
+    if (i >= 0) cur.splice(i, 1);
+    else if (cur.length < (q.max ?? 99)) cur.push(v);
+    set(q.id, cur);
+  };
+  const setNumber = (raw: string) => {
+    const digits = digitsOnly(raw);
+    set(q.id, digits === '' ? (undefined as unknown as number) : Number(digits));
+  };
+  const setGroupNumber = (key: string, raw: string) => {
+    const digits = digitsOnly(raw);
+    const cur = { ...((value as Record<string, number>) ?? {}) };
+    if (digits === '') delete cur[key];
+    else cur[key] = Number(digits);
+    set(q.id, cur);
   };
 
-  const submit = async () => {
-    setLoading(true);
-    const input = answers as unknown as RecommendInput;
-    try {
-      const res = await recommendCards(input);
-      setResults(res);
-    } catch {
-      // No backend — labelled preview from server-passed cards.
-      setPreview(true);
-      setResults(previewCards.slice(0, 3).map((c) => ({
-        card_id: c.card_id, card_slug: c.card_slug, card_name: c.card_name,
-        total_score: Math.round((c.overall_score ?? 4) * 20),
-        subscores: { category_match: 0, net_value: 0, travel_fit: 0, fee_pref: 0, editorial_prior: 0 },
-        reasons: [c.headline_reward_line ?? 'A strong all-round pick', c.annual_fee_amount === 0 ? 'No annual fee' : 'Editorial favourite'],
-        estimated_annual_value_inr: 0, fee_waiver_note: null,
-      })));
-    } finally {
-      setLoading(false);
-    }
+  const back = () => setStep((s) => Math.max(0, s - 1));
+  const next = () => {
+    if (step < TOTAL_QUESTIONS - 1) { setStep((s) => s + 1); return; }
+    runEngine();
   };
 
-  const progress = useMemo(() => (results ? 100 : ((step) / total) * 100), [step, results]);
+  const runEngine = () => {
+    setPhase('analysing');
+    // A short, deliberate analysis pause — the engine is fast, but the work is
+    // real and users trust a considered answer more than an instant one.
+    window.setTimeout(() => {
+      const input = toRecommendAnswers(answers);
+      const { ranked, eligibleCount } = recommendCards(candidates, input, valuations, 5);
+      setResults(ranked);
+      setEligibleCount(eligibleCount);
+      setPhase('results');
+    }, 900);
+  };
 
-  if (results) {
+  const restart = () => { setAnswers({}); setStep(0); setResults(null); setPhase('quiz'); };
+
+  /* ---------------------------------------------------------- results --- */
+  if (phase === 'results' && results) {
     return (
       <div className="island">
-        {preview && (
-          <p className="island__notice">Preview mode — connect the recommendation Edge Function to see real scores and estimated annual value. These are illustrative editorial picks.</p>
+        <p className="island__trust">These are estimates based on your answers and each issuer's published eligibility criteria, not a bureau-verified check. Actual approval depends on the issuer's own review of your application.</p>
+        {results.length === 0 ? (
+          <div className="analysis">
+            <h2>No confident matches yet</h2>
+            <p>None of the cards we track are a clear fit for the income, CIBIL and age you entered. Try widening your answers, or browse cards by category.</p>
+            <a className="btn-i btn-i--primary" href="/discover" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Browse all cards</a>
+          </div>
+        ) : (
+          <>
+            <h2>Your top matches</h2>
+            <p className="wizard__step-count">Ranked by estimated annual value on your spending, from {eligibleCount} eligible cards.</p>
+            <ol className="rank-list">
+              {results.map((r) => (
+                <li className={`rank-card${r.rank === 1 ? ' rank-card--top' : ''}`} key={r.card_id}>
+                  <div className="rank-card__head">
+                    <span className="rank-card__badge" aria-hidden="true">{r.rank}</span>
+                    <div className="rank-card__id">
+                      <h3><a href={r.review_path}>{r.card_name}</a></h3>
+                      <p className="rank-card__bank">{r.bank_name} · {r.fee_note}</p>
+                    </div>
+                    <div className="rank-card__value">
+                      <strong>{inr(r.estimated_annual_value_inr)}</strong>
+                      <span>est. value / yr</span>
+                    </div>
+                  </div>
+                  <p className="rank-card__why-label">Why #{r.rank}</p>
+                  <ul className="rank-card__why">
+                    {r.reasons.map((w, i) => <li key={i}>{w}</li>)}
+                  </ul>
+                  {r.first_year_value_inr !== r.estimated_annual_value_inr && (
+                    <p className="rank-card__note">First-year value about {inr(r.first_year_value_inr)} with welcome benefits, minus any joining fee.</p>
+                  )}
+                  <div style={{ marginTop: 'var(--space-4)' }}>
+                    <a className="btn-i btn-i--primary" href={r.review_path} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Read review &amp; apply</a>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </>
         )}
-        {/* §11.1 verbatim trust copy, directly above results */}
-        <p className="island__trust">These are estimates based on your answers and each issuer's published eligibility criteria — not a bureau-verified check. Actual approval depends on the issuer's own review of your application.</p>
-        <h2>Your top matches</h2>
-        <div aria-live="polite">
-          {results.map((r, i) => (
-            <article className="result-card" key={r.card_id}>
-              <div className="result-card__head">
-                <div>
-                  {i === 0 && <span className="result-card__label">Best overall</span>}
-                  <h3><a href={`/cards/${r.card_slug.split('-')[0]}/${r.card_slug}`}>{r.card_name}</a></h3>
-                </div>
-                <span className="result-card__score">{r.total_score}</span>
-              </div>
-              <ul className="result-card__reasons">{r.reasons.map((x, j) => <li key={j}>{x}</li>)}</ul>
-              {r.estimated_annual_value_inr > 0 && (
-                <p className="result-card__value">Estimated value: ₹{new Intl.NumberFormat('en-IN').format(r.estimated_annual_value_inr)}/year</p>
-              )}
-              {r.fee_waiver_note && <p>{r.fee_waiver_note}</p>}
-              <div>
-                <a className="btn-i btn-i--primary" href={`/cards/${r.card_slug.split('-')[0]}/${r.card_slug}`} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Read review &amp; apply</a>
-              </div>
-            </article>
-          ))}
-        </div>
-        <button className="btn-i btn-i--ghost" onClick={() => { setResults(null); setStep(0); }}>Start over</button>
+        <button className="btn-i btn-i--ghost" onClick={restart} style={{ marginTop: 'var(--space-6)' }}>Start over</button>
       </div>
     );
   }
 
+  /* -------------------------------------------------------- analysing --- */
+  if (phase === 'analysing') {
+    return (
+      <div className="island">
+        <div className="analysis" aria-live="polite">
+          <div className="analysis__spinner" aria-hidden="true"></div>
+          <h2>Analysing {candidates.length} cards…</h2>
+          <p>Scoring each card on your spending, applying reward caps, fees and eligibility.</p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ------------------------------------------------------------- quiz --- */
+  const progress = (step / TOTAL_QUESTIONS) * 100;
+
   return (
     <div className="island">
-      <div className="wizard__progress"><div className="wizard__progress-bar" style={{ width: `${progress}%` }} /></div>
-      <p className="wizard__step-count">Question {step + 1} of {total}</p>
-      <h2 className="wizard__question" aria-live="polite">{q.title}</h2>
+      <div className="wizard__progress" aria-hidden="true">
+        <div className="wizard__progress-bar" style={{ width: `${progress}%` }}></div>
+      </div>
+      <p className="wizard__step-count">Question {step + 1} of {TOTAL_QUESTIONS}</p>
+      <h2 className="wizard__question">{q.title}</h2>
+      {q.help && <p className="wizard__help">{q.help}</p>}
 
-      <ul className="opt-list">
-        {q.options.map((opt) => {
-          const selected = q.multi ? Array.isArray(current) && current.includes(opt.value) : current === opt.value;
-          return (
-            <li key={opt.value}>
-              <button
-                type="button"
-                className={`opt${selected ? ' opt--selected' : ''}`}
-                aria-pressed={selected}
-                onClick={() => select(opt.value)}
-              >
-                <span className="opt__check" aria-hidden="true">{selected ? '✓' : ''}</span>
-                {opt.label}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      {q.kind === 'single' && (
+        <ul className="opt-list">
+          {q.options!.map((o) => {
+            const on = value === o.value;
+            return (
+              <li key={o.value}>
+                <button type="button" className={`opt${on ? ' opt--selected' : ''}`} aria-pressed={on} onClick={() => selectSingle(o.value)}>
+                  <span className="opt__check" aria-hidden="true"></span>{o.label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {q.kind === 'multi' && (
+        <ul className="opt-list">
+          {q.options!.map((o) => {
+            const arr = Array.isArray(value) ? (value as string[]) : [];
+            const on = arr.includes(o.value);
+            const full = arr.length >= (q.max ?? 99) && !on;
+            return (
+              <li key={o.value}>
+                <button type="button" className={`opt${on ? ' opt--selected' : ''}`} aria-pressed={on} disabled={full} onClick={() => toggleMulti(o.value)}>
+                  <span className="opt__check" aria-hidden="true"></span>{o.label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {q.kind === 'number' && (
+        <div className="num-field">
+          <input
+            className="num-input"
+            type="text" inputMode="numeric" pattern="[0-9]*"
+            autoComplete="off"
+            value={value != null ? String(value) : ''}
+            onChange={(e) => setNumber(e.target.value)}
+            placeholder={q.placeholder}
+            aria-label={q.title}
+          />
+          {q.unit && <span className="num-unit">{q.unit}</span>}
+        </div>
+      )}
+
+      {q.kind === 'number_group' && (
+        <div className="num-group">
+          {(q.fields ?? []).map((f) => {
+            const rec = (value as Record<string, number>) ?? {};
+            return (
+              <label className="num-row" key={f.key}>
+                <span className="num-row__label">{f.label}</span>
+                <span className="num-field num-field--sm">
+                  <input
+                    className="num-input"
+                    type="text" inputMode="numeric" pattern="[0-9]*"
+                    autoComplete="off"
+                    value={rec[f.key] != null ? String(rec[f.key]) : ''}
+                    onChange={(e) => setGroupNumber(f.key, e.target.value)}
+                    placeholder="0"
+                    aria-label={f.label}
+                  />
+                  <span className="num-unit">{q.unit}</span>
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      )}
 
       <div className="wizard__nav">
-        <button className="btn-i btn-i--ghost" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>Back</button>
-        {isLast ? (
-          <button className="btn-i btn-i--primary" onClick={submit} disabled={!canProceed || loading}>
-            {loading ? 'Finding your matches…' : 'See my matches'}
-          </button>
-        ) : (
-          <button className="btn-i btn-i--primary" onClick={() => setStep((s) => s + 1)} disabled={!canProceed}>Next</button>
-        )}
+        <button className="btn-i btn-i--ghost" onClick={back} disabled={step === 0}>Back</button>
+        <button className="btn-i btn-i--primary" onClick={next} disabled={!proceed}>
+          {step < TOTAL_QUESTIONS - 1 ? 'Next' : 'See my matches'}
+        </button>
       </div>
     </div>
   );

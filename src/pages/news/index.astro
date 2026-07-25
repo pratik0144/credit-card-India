@@ -5,7 +5,7 @@ import { getArticles } from '../../lib/queries';
 export const prerender = true;
 const news = await getArticles('news');
 ---
-<PageLayout title="Credit Card News & RBI Updates — India" description="Card launches, reward devaluations, and RBI regulatory updates that affect Indian cardholders.">
+<PageLayout title="Credit Card News & RBI Updates, India" description="Card launches, reward devaluations, and RBI regulatory updates that affect Indian cardholders.">
   <div class="container" style="padding-block: var(--space-8);">
     <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'News' }]} />
     <h1>News &amp; RBI Updates</h1>

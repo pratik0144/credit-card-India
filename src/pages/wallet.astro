@@ -1,6 +1,6 @@
 ---
 /*
- * My Wallet /wallet (FRONTEND §11.4). prerender = false (on-demand/SSR) — this
+ * My Wallet /wallet (FRONTEND §11.4). prerender = false (on-demand/SSR), this
  * route requires an authenticated session and must never be cached publicly
  * (§5). Auth + data handled client-side by the island (RLS-scoped to auth.uid()).
  */
@@ -9,7 +9,7 @@ import WalletDashboard from '../islands/WalletDashboard.tsx';
 export const prerender = false;
 ---
 <PageLayout
-  title="My Wallet — Fee-waiver & Milestone Tracker"
+  title="My Wallet, Fee-waiver & Milestone Tracker"
   description="Track fee-waiver progress, milestone bonuses, lounge visits, and renewals across the cards you own."
   noindex
 >

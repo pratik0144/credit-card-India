@@ -1,9 +1,8 @@
 ---
 /*
  * SiteFooter (DESIGN §6.11). Multi-column links + copyright + the THREE full
- * legal disclosure paragraphs (Affiliate, Editorial Independence, CIBIL/CIC) —
- * §10.1 & §10.2. These are NEVER omitted or abbreviated on any page (§6.11, §11).
- * [NEEDS LEGAL REVIEW] — all §10 compliance copy must be signed off before production.
+ * legal disclosure paragraphs (Affiliate, Editorial Independence, CIBIL/CIC), * §10.1 & §10.2. These are NEVER omitted or abbreviated on any page (§6.11, §11).
+ * [NEEDS LEGAL REVIEW], all §10 compliance copy must be signed off before production.
  */
 import { SITE } from '../lib/site';
 const year = new Date().getFullYear();
@@ -53,7 +52,7 @@ const cols = [
 
     <p class="footer__copyright">Copyright © {year} {SITE.name}. All Rights Reserved.</p>
 
-    {/* [NEEDS LEGAL REVIEW] — full disclosure blocks, never abbreviated (§10.1, §10.2). */}
+    {/* [NEEDS LEGAL REVIEW], full disclosure blocks, never abbreviated (§10.1, §10.2). */}
     <div class="footer__legal">
       <p>
         <strong>Affiliate Disclosure.</strong> {SITE.name} may earn a commission from card
@@ -69,8 +68,8 @@ const cols = [
       <p>
         <strong>Credit-score Disclosure.</strong> {SITE.name}'s credit-score references are based
         on the CIBIL Score, issued by TransUnion CIBIL Limited, one of four credit information
-        companies (CICs) licensed by the Reserve Bank of India. Other CICs — including Experian,
-        Equifax, and CRIF High Mark — may generate different scores based on the same underlying
+        companies (CICs) licensed by the Reserve Bank of India. Other CICs, including Experian,
+        Equifax, and CRIF High Mark, may generate different scores based on the same underlying
         credit history. A CIBIL score of 750 or above is generally considered good to excellent by
         most Indian card issuers; individual issuer criteria vary and this site's recommendations
         should not be read as a guarantee of approval.

@@ -5,7 +5,6 @@
  * (SEO_PROMPT §3).
  */
 import PageLayout from '../layouts/PageLayout.astro';
-import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
 import ComboOptimizer from '../islands/ComboOptimizer.tsx';
 import { getCardPickerList } from '../lib/queries';
 import { faqPage, breadcrumbList } from '../lib/seo';
@@ -14,11 +13,11 @@ const cards = await getCardPickerList();
 const cardNames: Record<string, string> = Object.fromEntries(cards.map((c) => [c.id, c.name]));
 
 const faqs = [
-  { q: 'Which 2 credit cards should I have in India?', a: 'The strongest two-card combinations usually pair a high flat-rate card for everything with a specialist card for your single biggest category — for example, a 1.5–2% everywhere card alongside a dining, travel, or online-shopping multiplier. The right pair depends on your spend split, which is exactly what this optimizer calculates from your numbers.' },
-  { q: 'Is a credit card combination better than one premium card?', a: 'Often, yes. Two well-chosen mid-fee cards can out-earn a single premium card at the same total fee, because no single card leads every category. But if your spend is concentrated in one category, or you value premium lounge and concierge benefits, one card can still win — the optimizer shows the net value either way.' },
+  { q: 'Which 2 credit cards should I have in India?', a: 'The strongest two-card combinations usually pair a high flat-rate card for everything with a specialist card for your single biggest category, for example, a 1.5–2% everywhere card alongside a dining, travel, or online-shopping multiplier. The right pair depends on your spend split, which is exactly what this optimizer calculates from your numbers.' },
+  { q: 'Is a credit card combination better than one premium card?', a: 'Often, yes. Two well-chosen mid-fee cards can out-earn a single premium card at the same total fee, because no single card leads every category. But if your spend is concentrated in one category, or you value premium lounge and concierge benefits, one card can still win, the optimizer shows the net value either way.' },
   { q: 'How does the combo optimizer decide which card gets each category?', a: 'For every candidate combination, each of your spend categories is assigned to whichever card in the combo earns the highest estimated rupee value per ₹100 for that category. We then total the annual rewards, subtract the combined annual fees (respecting spend-based waiver thresholds), and rank the combinations by net value.' },
-  { q: 'Does holding multiple credit cards hurt my CIBIL score?', a: 'Responsibly managed, it usually helps: more total limit lowers your credit-utilisation ratio. Applying for several cards in a short window does cause multiple hard inquiries, so space applications a few months apart. Never take a second card if you might carry a balance — interest wipes out any reward maths.' },
-  { q: 'Are the reward values in the results guaranteed?', a: "No — they are estimates from published earn rates and sensible redemption assumptions. Reward caps, category exclusions, and devaluations are set out in each issuer's MITC, which we link from every card review. Verify current terms before applying." },
+  { q: 'Does holding multiple credit cards hurt my CIBIL score?', a: 'Responsibly managed, it usually helps: more total limit lowers your credit-utilisation ratio. Applying for several cards in a short window does cause multiple hard inquiries, so space applications a few months apart. Never take a second card if you might carry a balance, interest wipes out any reward maths.' },
+  { q: 'Are the reward values in the results guaranteed?', a: "No, they are estimates from published earn rates and sensible redemption assumptions. Reward caps, category exclusions, and devaluations are set out in each issuer's MITC, which we link from every card review. Verify current terms before applying." },
 ];
 const jsonLd = [
   breadcrumbList([{ name: 'Home', path: '/' }, { name: 'Combo optimizer', path: '/combo-optimizer' }]),
@@ -26,7 +25,7 @@ const jsonLd = [
 ];
 ---
 <PageLayout
-  title="Credit Card Combo Optimizer — Best 2 or 3 Card Setup"
+  title="Credit Card Combo Optimizer, Best 2 or 3 Card Setup"
   description="Enter your monthly spend and we'll find the best 2- or 3-card combination for maximum rewards, with a per-category assignment table and net value after fees."
   canonicalPath="/combo-optimizer"
   jsonLd={jsonLd}
@@ -34,13 +33,12 @@ const jsonLd = [
   <section class="container" style="padding-block: var(--space-12) var(--space-6);">
     <h1>Find your best card combo</h1>
     <p class="lede">One card rarely wins every category. Enter your spend and we'll assign each category to the card that rewards it best.</p>
-    <AffiliateDisclosure compact />
   </section>
   <section class="container section">
     <ComboOptimizer client:visible cardNames={cardNames} />
   </section>
 
-  <!-- Prerendered explanatory prose (SEO_PROMPT §3) — the island above renders
+  <!-- Prerendered explanatory prose (SEO_PROMPT §3), the island above renders
        client-side, so this static copy is what crawlers actually read. -->
   <section class="container section reading-column">
     <h2>Why the best credit card combo beats any single card</h2>
@@ -54,7 +52,7 @@ const jsonLd = [
     </p>
     <h3>How the optimizer calculates your combo</h3>
     <p>
-      Enter your monthly spend by category — groceries, dining, fuel, travel, online shopping, utilities and
+      Enter your monthly spend by category, groceries, dining, fuel, travel, online shopping, utilities and
       the rest. The optimizer evaluates card combinations from our full reviewed catalogue, assigns every
       category to whichever card in a combo earns the highest estimated value for it, totals the annual
       rewards, and subtracts the real cost: joining fees, annual fees, and whether your assigned spend would
@@ -66,7 +64,7 @@ const jsonLd = [
     <p>
       The optimizer works from published earn rates and our normalised rupee-value estimates; it cannot know
       about a cap you have already exhausted, a limited-time merchant offer, or an issuer's internal approval
-      policy. It also assumes you pay statement balances in full — carrying a balance at 40%+ annual interest
+      policy. It also assumes you pay statement balances in full, carrying a balance at 40%+ annual interest
       overwhelms any reward optimisation. Treat the output as a strong starting shortlist, then read the full
       review of each card in your winning combo before applying.
     </p>

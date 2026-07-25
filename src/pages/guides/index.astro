@@ -5,11 +5,11 @@ import { getArticles } from '../../lib/queries';
 export const prerender = true;
 const guides = await getArticles('guide');
 ---
-<PageLayout title="Credit Card Guides — India" description="Plain-English guides to choosing, using, and getting the most from Indian credit cards.">
+<PageLayout title="Credit Card Guides, India" description="Plain-English guides to choosing, using, and getting the most from Indian credit cards.">
   <div class="container" style="padding-block: var(--space-8);">
     <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Guides' }]} />
     <h1>Guides</h1>
-    <p class="lede">Second-person, number-forward guides — no jargon, no sales pitch.</p>
+    <p class="lede">Second-person, number-forward guides, no jargon, no sales pitch.</p>
     <ul class="teaser-list">
       {guides.length === 0 && <p>Guides coming soon.</p>}
       {guides.map((a) => (
