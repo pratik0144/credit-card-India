@@ -8,6 +8,75 @@ everything currently lives under **Unreleased**.
 
 ## [Unreleased]
 
+### 2026-07-25 — Client-side recommendation engine & best-card ranking
+
+#### Added
+- **`src/lib/recommend-engine.ts`** (429 lines) — Full client-side recommendation
+  scoring engine that mirrors the Edge Function logic. Performs eligibility
+  filtering, 5-dimension weighted scoring (category match 35%, net value 30%,
+  travel fit 15%, fee preference 10%, editorial prior 10%), and returns ranked
+  results. Enables the recommendation wizard to work without Edge Functions.
+- **`src/lib/recommend-questions.ts`** (270 lines) — Quiz question definitions,
+  step flow configuration, validation logic, and answer-to-input mapping for
+  the 8-question recommendation wizard.
+- **`src/lib/best-card-engine.ts`** (197 lines) — Per-purchase card ranking
+  engine. Computes the best card for a given spend category and amount from the
+  user's wallet cards, including milestone-proximity nudges and redemption notes.
+
+#### Changed
+- **`RecommendWizard.tsx`** — Refactored to use the new client-side
+  `recommend-engine.ts` as the primary scoring path, with Edge Function as
+  fallback. Improved question flow and UI.
+- **`BestCardCalculator.tsx`** — Enhanced with `best-card-engine.ts` for
+  client-side ranking, reducing dependency on Edge Functions.
+- **`src/lib/queries.ts`** — Expanded from 19KB to 29KB with additional query
+  functions to support the new engines (card detail batching, enhanced filtering).
+- **`src/lib/seed-data.ts`** — Updated fallback dataset (45KB) with richer card
+  data to support client-side scoring previews.
+
+### 2026-07-23 — Discover page & marketing landing
+
+#### Added
+- **`/discover` route** (`src/pages/discover.astro`) — New persona-based card
+  discovery page. Users can explore cards by persona (frequent traveller, online
+  shopper, first-time card holder, etc.) with curated recommendations.
+- **`PersonaCard.astro`** — New component for persona-based card discovery tiles
+  with visual persona icons and descriptions.
+- **`FeatureCard.astro`** — Feature highlight card component for marketing and
+  landing pages with icon, title, and description.
+- **`FeatureGrid.astro`** — Responsive grid container for `FeatureCard`
+  components.
+
+#### Changed
+- **`src/pages/index.astro`** — Major overhaul of the homepage as a marketing
+  landing page. Added feature showcase sections, persona discovery strip, and
+  enhanced hero area. File grew from ~350 lines to ~500+ lines.
+- **`src/pages/compare/[pair].astro`** — Enhanced curated comparison pages with
+  richer card detail sections.
+- **`GlobalHeader.astro`** — Updated navigation to include the Discover page.
+- **`SiteFooter.astro`** — Updated footer links with Discover page.
+
+### 2026-07-22 — OnThisPage component
+
+#### Added
+- **`OnThisPage.astro`** — Table-of-contents sidebar navigation component for
+  long-form pages. Auto-generates anchor links from heading elements with smooth
+  scroll and active-state highlighting.
+
+### 2026-07-21 — SEO & error handling
+
+#### Added
+- **`public/robots.txt`** — SEO robots file with sitemap reference and
+  appropriate crawl directives.
+- **`src/pages/500.astro`** — Custom 500 server error page with consistent
+  branding and helpful error messaging.
+
+#### Changed
+- **`astro.config.mjs`** — Configuration updates for improved build output and
+  adapter settings.
+
+---
+
 ### 2026-07-05 — Deterministic enrichment, image fix, docs, live data
 
 #### Removed

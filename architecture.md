@@ -122,11 +122,12 @@ BaseLayout.astro
               Article body, NewsletterForm
 ```
 
-### Page Routes (27 page files)
+### Page Routes (28 page files)
 
 | Route Pattern | Page File | Rendering | Description |
 |---|---|---|---|
 | `/` | `index.astro` | SSG | Homepage with featured cards, category pills, tools |
+| `/discover` | `discover.astro` | SSG | Persona-based card discovery and exploration |
 | `/cards/[bank]/[card]` | `cards/[bank]/[card].astro` | SSG | Individual card review with full detail |
 | `/banks/[bank]` | `banks/[bank].astro` | SSG | Bank detail with all its cards |
 | `/best/[category]` | `best/[category].astro` | SSG | Category card listing (e.g., /best/cashback) |
@@ -158,7 +159,7 @@ Sitemap is auto-generated via `@astrojs/sitemap` (filters out `/wallet`, `/searc
 
 ### Component Architecture
 
-**17 Astro Components** — server-rendered, zero JS:
+**20 Astro Components** — server-rendered, zero JS:
 
 | Component | Responsibility |
 |---|---|
@@ -171,6 +172,9 @@ Sitemap is auto-generated via `@astrojs/sitemap` (filters out `/wallet`, `/searc
 | `Button` | Polymorphic button (renders `<a>` or `<button>`, 4 variants, optional microcopy) |
 | `StickyApplyBanner` | Bottom sticky bar on card reviews with affiliate "Apply Now" CTA |
 | `OnThisPage` | Table-of-contents sidebar navigation for long pages |
+| `FeatureCard` | Feature highlight card for marketing and landing pages |
+| `FeatureGrid` | Responsive grid container for feature cards |
+| `PersonaCard` | Persona-based card discovery tiles (traveller, shopper, first-timer, etc.) |
 | `NewsletterForm` | Email subscribe → direct Supabase insert to `newsletter_subscribers` |
 | `Breadcrumbs` | Navigation breadcrumb trail |
 | `AuthorByline` | Author attribution with headshot and expertise tags |
@@ -259,12 +263,15 @@ All islands have **preview/fallback modes** — if Edge Functions are unavailabl
 
 ### Utility Modules (`src/lib/`)
 
-11 modules covering data access, formatting, SEO, and offline fallback:
+14 modules covering data access, scoring engines, formatting, SEO, and offline fallback:
 
 | Module | Size | Purpose |
 |---|---|---|
-| `queries.ts` | 19KB | Three-way resilient data access layer (Supabase → seed-data fallback). 20+ exported query functions |
-| `seed-data.ts` | 44KB | Full hand-crafted offline fallback dataset (12 cards, 6 banks, categories, rewards, bonuses, fees, eligibility, ratings, change logs, authors, articles, point valuations) |
+| `queries.ts` | 29KB | Three-way resilient data access layer (Supabase → seed-data fallback). 20+ exported query functions |
+| `seed-data.ts` | 45KB | Full hand-crafted offline fallback dataset (12 cards, 6 banks, categories, rewards, bonuses, fees, eligibility, ratings, change logs, authors, articles, point valuations) |
+| `recommend-engine.ts` | 17KB | Client-side recommendation scoring engine — eligibility filtering, 5-dimension weighted scoring, and card ranking without requiring Edge Functions |
+| `recommend-questions.ts` | 10KB | Quiz question definitions, validation logic, and step flow for the recommendation wizard |
+| `best-card-engine.ts` | 8KB | Per-purchase card ranking engine — computes best card for a given spend category and amount from the user's wallet |
 | `database.types.ts` | 8KB | TypeScript contracts matching Supabase DB schema — all table row types, view rows, Edge Function I/O contracts (`RecommendInput/Result`, `ComboInput/Result`, `BestCardInput/Result`, `SearchResult`) |
 | `taxonomy.ts` | 4KB | Canonical spend categories (11 keys), content categories (12 slugs), quiz enums (goals, spend bands, income bands, CIBIL bands, employment types, fee preferences, air travel frequencies), midpoint/floor mappings |
 | `derive.ts` | 4KB | Data-driven derivation fallback helpers: `welcomeBenefit()`, `headlineReward()`, `derivePros()`, `deriveCons()`, `deriveHighlights()` — used when editorial prose is missing |
@@ -773,9 +780,9 @@ Every page includes:
 
 ```
 src/styles/
-├── tokens.css      200 lines — 80+ CSS custom properties
+├── tokens.css      200 lines — CSS custom properties
 ├── global.css      237 lines — resets, typography, utilities
-└── islands.css      99 lines — shared React island styles
+└── islands.css     200 lines — shared React island styles
 ```
 
 **Zero hardcoded hex or px values** — every Astro component and page references `var(--token)`.
@@ -861,27 +868,26 @@ CDN cache invalidated → users see updated content
 
 | Metric | Count |
 |---|---|
-| **Page files** | 27 |
-| **Astro Components** | 17 |
+| **Page files** | 28 |
+| **Astro Components** | 20 |
 | **React Islands** | 6 |
 | **Layouts** | 3 |
-| **Lib modules** | 11 |
+| **Lib modules** | 14 |
 | **Edge Functions** | 6 (+ 3 shared utility files) |
 | **Database Tables** | 24 |
 | **Database Views** | 3 |
 | **Storage Buckets** | 2 |
 | **RLS Policies** | ~50 |
-| **CSS Custom Properties** | 80+ |
-| **CSS Total Lines** | 536 |
+| **CSS Total Lines** | 637 |
 | **Source Cards** | 368 |
 | **Supported Banks** | 20+ |
 | **Content Categories** | 12 |
 | **Seed Fallback Cards** | 12 |
-| **Parser Functions** | 25+ (620 lines) |
+| **Parser Functions** | 25+ (838 lines) |
 | **Instruction Documents** | 3 |
 
 ---
 
 <p align="center">
-  <em>Last updated: July 2026</em>
+  <em>Last updated: 25 July 2026</em>
 </p>

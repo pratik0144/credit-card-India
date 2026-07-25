@@ -2,6 +2,13 @@
 
 > India's independent credit card comparison platform — find the right credit card, without the sales pitch.
 
+[![Astro](https://img.shields.io/badge/Astro-5.17-ff5d01?logo=astro&logoColor=white)](https://astro.build/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20Auth-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node](https://img.shields.io/badge/Node-%E2%89%A5%2022.12-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/License-Proprietary-red)](#-license)
+
 CardCompare.in helps Indian consumers compare 350+ credit cards across 20+ banks with transparent editorial ratings, personalised recommendations, and fee-waiver tracking — all powered by data, not affiliate incentives.
 
 **Live site:** SOON
@@ -13,10 +20,11 @@ CardCompare.in helps Indian consumers compare 350+ credit cards across 20+ banks
 | Feature | Description |
 |---|---|
 | **Card Reviews** | Detailed reviews with 5-dimension editorial ratings (rewards, fees, welcome benefit, flexibility, issuer service) |
-| **Smart Recommender** | 8-question wizard that scores and ranks cards based on spend profile, income, CIBIL, and goals |
+| **Smart Recommender** | 8-question wizard that scores and ranks cards based on spend profile, income, CIBIL, and goals — powered by a client-side recommendation engine with server-side fallback |
 | **Combo Optimizer** | Finds the best 2–3 card combination for your spending pattern across categories |
-| **Best Card Calculator** | "Which card should I use for this purchase?" — instant per-transaction advice |
+| **Best Card Calculator** | "Which card should I use for this purchase?" — instant per-transaction advice with a dedicated ranking engine |
 | **Compare Tool** | Side-by-side comparison of up to 3 cards, plus curated `[a]-vs-[b]` pages |
+| **Discover** | Persona-based card discovery — browse cards tailored to travellers, shoppers, first-timers, and more |
 | **Change Tracker** | Monitors fee increases, reward devaluations, and benefit changes across the market |
 | **CIBIL Score Hub** | Band-based card recommendations (750+, 700–749, 650–699, below 650) |
 | **My Wallet** | Auth-gated personal tracker for fee-waiver progress and card management |
@@ -33,7 +41,7 @@ CardCompare.in helps Indian consumers compare 350+ credit cards across 20+ banks
 | **Framework** | [Astro 5](https://astro.build/) (hybrid SSG + SSR) |
 | **Interactive Islands** | [React 19](https://react.dev/) (6 client-side islands) |
 | **Backend** | [Supabase](https://supabase.com/) (Postgres, Auth, Edge Functions, Storage) |
-| **Styling** | Custom CSS design tokens (no Tailwind, no UI library) — 200 lines of tokens, 237 lines of globals |
+| **Styling** | Custom CSS design tokens (no Tailwind, no UI library) — 637 lines across 3 files |
 | **Email** | [Resend](https://resend.com/) (change alerts, fee-waiver reminders) |
 | **Enrichment** | Deterministic parser (reward categories/bonuses/offers from source JSON — no external API, no LLM) |
 | **Hosting** | Static deploy with Node SSR adapter for `/wallet` (swappable to Vercel/Netlify) |
@@ -158,7 +166,7 @@ ccIndia.com/
 │   ├── og-default.png           Default Open Graph image
 │   └── robots.txt
 ├── src/
-│   ├── components/              17 Astro components (zero JS)
+│   ├── components/              20 Astro components (zero JS)
 │   │   ├── GlobalHeader.astro   Sticky nav with mega-menu & mobile drawer
 │   │   ├── CardRow.astro        Core card display with expandable detail
 │   │   ├── ComparisonTable.astro  Semantic table (cards + listing variants)
@@ -167,7 +175,10 @@ ccIndia.com/
 │   │   ├── CategoryPillStrip.astro  Horizontal scrolling category pills
 │   │   ├── Button.astro         Polymorphic <a>/<button>, 4 variants
 │   │   ├── StickyApplyBanner.astro  Bottom sticky CTA on reviews
-│   │   ├── OnThisPage.astro     Table-of-contents sidebar nav
+│   │   ├── OnThisPage.astro     Table-of-contents sidebar navigation
+│   │   ├── FeatureCard.astro    Feature highlight card for marketing pages
+│   │   ├── FeatureGrid.astro    Grid container for feature cards
+│   │   ├── PersonaCard.astro    Persona-based card discovery tiles
 │   │   ├── NewsletterForm.astro Email subscribe → Supabase
 │   │   ├── Breadcrumbs.astro, AuthorByline.astro, ProsConsBlock.astro,
 │   │   │   ScoreTierBadge.astro, AffiliateDisclosure.astro,
@@ -181,10 +192,13 @@ ccIndia.com/
 │   │   ├── SearchBox.tsx        Full-text search + offline fallback
 │   │   └── WalletDashboard.tsx  Auth-gated wallet tracker
 │   ├── layouts/                 3 layouts (Base → Page → Article)
-│   ├── lib/                     11 utility modules
+│   ├── lib/                     14 utility modules
 │   │   ├── supabase.ts          Client factories (anon + service-role)
 │   │   ├── queries.ts           Data access layer (Supabase ↔ seed fallback)
 │   │   ├── edge-functions.ts    Typed Edge Function wrappers
+│   │   ├── recommend-engine.ts  Client-side recommendation scoring engine
+│   │   ├── recommend-questions.ts  Quiz question definitions & validation
+│   │   ├── best-card-engine.ts  Per-purchase card ranking engine
 │   │   ├── seo.ts               JSON-LD structured data builders
 │   │   ├── format.ts            ₹ formatting with Indian digit grouping
 │   │   ├── taxonomy.ts          Spend categories & input enums
@@ -193,15 +207,15 @@ ccIndia.com/
 │   │   ├── derive.ts            Data-driven fallback helpers (pros/cons/highlights)
 │   │   ├── site.ts              Site config (name, domain, tagline)
 │   │   └── tiers.ts             Qualitative badge tier mapping
-│   ├── pages/                   27 page files
+│   ├── pages/                   28 page files
 │   └── styles/                  Design token system
-│       ├── tokens.css           200 lines — 80+ CSS custom properties
+│       ├── tokens.css           200 lines — CSS custom properties
 │       ├── global.css           237 lines — resets, typography, utilities
-│       └── islands.css          99 lines — shared React island styles
+│       └── islands.css          200 lines — shared React island styles
 ├── scripts/
 │   ├── import-cards.ts          Structured data import (368 cards)
 │   ├── enrich-cards.ts          Deterministic reward/bonus/offer parsing (no API)
-│   └── lib/parse.ts             Pure parsing library (620 lines, 25+ parsers)
+│   └── lib/parse.ts             Pure parsing library (838 lines, 25+ parsers)
 ├── supabase/
 │   ├── migrations/              7 SQL migration files
 │   ├── functions/               6 Edge Functions + shared lib
@@ -227,6 +241,7 @@ ccIndia.com/
 ├── package.json
 ├── tsconfig.json
 ├── CHANGELOG.md                 Full development history
+├── CONTRIBUTING.md              Contribution guidelines
 ├── SUPABASE_GUIDE.md            Database setup walkthrough
 ├── DESIGN-vercel.md             Vercel deployment design spec
 └── architecture.md              Technical architecture guide
@@ -239,6 +254,7 @@ ccIndia.com/
 | Route | Page | Mode | Description |
 |---|---|---|---|
 | `/` | `index.astro` | SSG | Homepage with featured cards, category pills, tools |
+| `/discover` | `discover.astro` | SSG | Persona-based card discovery and exploration |
 | `/cards/[bank]/[card]` | `cards/[bank]/[card].astro` | SSG | Individual card review (full detail, JSON-LD) |
 | `/banks/[bank]` | `banks/[bank].astro` | SSG | Bank detail with all its cards |
 | `/best/[category]` | `best/[category].astro` | SSG | Category card listing (e.g., /best/cashback) |
@@ -299,21 +315,21 @@ ccIndia.com/
 
 | Metric | Count |
 |---|---|
-| **Page files** | 27 |
-| **Astro Components** | 17 |
+| **Page files** | 28 |
+| **Astro Components** | 20 |
 | **React Islands** | 6 |
 | **Layouts** | 3 |
-| **Lib modules** | 11 |
+| **Lib modules** | 14 |
 | **Edge Functions** | 6 (+ 3 shared utility files) |
 | **Database Tables** | 24 |
 | **Database Views** | 3 |
 | **Storage Buckets** | 2 |
 | **RLS Policies** | ~50 |
-| **CSS Custom Properties** | 80+ |
+| **CSS Lines** | 637 |
 | **Source Cards** | 368 |
 | **Supported Banks** | 20+ |
 | **Content Categories** | 12 |
-| **Parser Functions** | 25+ (620 lines) |
+| **Parser Functions** | 25+ (838 lines) |
 | **Seed Fallback Cards** | 12 |
 
 ---
@@ -330,11 +346,12 @@ ccIndia.com/
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+We welcome contributions! Please see [`CONTRIBUTING.md`](./CONTRIBUTING.md) for detailed guidelines on:
+
+- Setting up your development environment
+- Coding standards and conventions
+- Pull request process
+- Bug reporting and feature requests
 
 ---
 
