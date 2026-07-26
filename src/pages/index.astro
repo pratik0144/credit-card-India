@@ -56,6 +56,12 @@ const ordered = amexLead
   : base;
 const specimens = ordered.map((r) => ({ id: r.card_id, name: r.card_name, bank_name: r.bank_name, image_url: r.image_url }));
 
+// Alt text: prefix the issuer only when the card name doesn't already carry it,
+// so we get "IDFC FIRST Bank Ashva Credit Card" but not
+// "American Express American Express Platinum Charge Card" (§9 no keyword-stuffing).
+const cardAlt = (s: { name: string; bank_name: string }) =>
+  s.name.toLowerCase().startsWith(s.bank_name.toLowerCase()) ? s.name : `${s.bank_name} ${s.name}`;
+
 /* ---- Latest guides / news preview ---- */
 const teasers = (await getArticles()).slice(0, 3);
 ---
@@ -100,7 +106,7 @@ const teasers = (await getArticles()).slice(0, 3);
                   <img
                     class="showcase__img"
                     src={s.image_url}
-                    alt={`${s.bank_name} ${s.name}`}
+                    alt={cardAlt(s)}
                     width="360" height="227"
                     loading={i === 0 ? 'eager' : 'lazy'} decoding="async"
                   />

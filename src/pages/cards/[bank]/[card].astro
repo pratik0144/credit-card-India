@@ -97,7 +97,7 @@ const jsonLd = [
 ---
 <PageLayout
   title={`${title} | ${SITE.name}`}
-  description={`Our independent ${c.name} review: real fees in ₹, reward rate, welcome benefit, eligibility and CIBIL requirement. ${detail.rating?.overall_score ? `Rated ${detail.rating.overall_score}/5.` : ''} Updated ${monthYear}.`}
+  description={`Our independent ${c.name} review: real fees in ₹, reward rate, welcome benefit, eligibility and CIBIL requirement.${detail.rating?.overall_score ? ` Rated ${detail.rating.overall_score}/5.` : ''} Updated ${monthYear}.`}
   canonicalPath={path}
   ogType="product"
   ogImage={c.image_url ? `/card-img/${c.image_url.replace(/^card-img\//, '')}` : undefined}
@@ -109,7 +109,7 @@ const jsonLd = [
     <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Reviews', path: '/best/all-credit-cards' }, { name: b.name, path: `/banks/${b.slug}` }, { name: `${c.name} review` }]} />
 
     <div class="review__hero">
-      <img class="review__art" src={c.image_url ? `/card-img/${c.image_url.replace(/^card-img\//, '')}` : '/og-default.png'} alt={`${c.name}`} width="360" height="226" />
+      <img class="review__art" src={c.image_url ? `/card-img/${c.image_url.replace(/^card-img\//, '')}` : '/og-default.png'} alt={`${c.name}`} width="360" height="226" fetchpriority="high" decoding="async" />
       <div>
         <h1>{c.name} Review</h1>
         <AuthorByline writtenBy={writtenBy} editedBy={editedBy} reviewedBy={reviewedBy} updated={detail.article?.updated_at ?? c.last_verified_at} />
