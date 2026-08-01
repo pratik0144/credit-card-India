@@ -80,15 +80,16 @@ const fullTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
   <body>
     <slot />
     <script>
-      // Scroll-reveal (global.css .reveal), opacity/transform only, once per
-      // element, disabled implicitly under prefers-reduced-motion by CSS.
-      const els = document.querySelectorAll('.reveal');
+      // Scroll-reveal (global.css .reveal / .reveal-stagger): opacity/transform
+      // only, once per element, disabled implicitly under prefers-reduced-motion
+      // by CSS. Staggered groups cascade their children via CSS nth-child delays.
+      const els = document.querySelectorAll('.reveal, .reveal-stagger');
       if (els.length && 'IntersectionObserver' in window) {
         const io = new IntersectionObserver((entries) => {
           for (const e of entries) {
             if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); }
           }
-        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        }, { threshold: 0.12, rootMargin: '0px 0px -12% 0px' });
         els.forEach((el) => io.observe(el));
       } else {
         els.forEach((el) => el.classList.add('is-visible'));

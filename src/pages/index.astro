@@ -119,8 +119,8 @@ const faqs = [
         <p class="eyebrow">Independent · Issuer-blind · Updated {currentMonthYear()}</p>
         <h1 class="hero__title">One rating system for every credit card in India.</h1>
         <p class="hero__sub">
-          We convert every bank's reward points, cashback, and miles onto a single
-          <strong>₹-per-₹100-spent</strong> scale, then rate what's left, fees, flexibility, and
+          We convert every bank's points, cashback, and miles onto a single<br />
+          <strong>₹-per-₹100</strong> scale, then rate what's left: fees, flexibility, and
           service. Commercial deals never touch the ranking.
         </p>
         <div class="hero__cta">
@@ -164,7 +164,7 @@ const faqs = [
   <!-- ==================================================== Proof / stats -->
   <section class="surface-alt">
     <div class="container section reveal">
-      <dl class="stats">
+      <dl class="stats reveal-stagger">
         <div class="stat">
           <dt class="stat__k">{cardCount}</dt>
           <dd class="stat__v">cards tracked across {issuerCount} issuers</dd>
@@ -247,7 +247,7 @@ const faqs = [
   <section class="surface-alt">
     <div class="container section reveal">
       <h2 class="section__title">How it works</h2>
-      <ol class="how">
+      <ol class="how reveal-stagger">
         <li><span class="how__n">1</span><h3>Answer a few questions</h3><p>Tell us how you spend and what you want. Takes about a minute, no PAN, no OTP, no hard inquiry.</p></li>
         <li><span class="how__n">2</span><h3>Compare your matches</h3><p>See estimated annual value, fees, and eligibility side by side, with the maths behind every rating.</p></li>
         <li><span class="how__n">3</span><h3>Apply with confidence</h3><p>Apply on the issuer's secure site. We're transparent about our affiliate links, they never change the ranking.</p></li>
@@ -280,7 +280,7 @@ const faqs = [
   <section class="surface-alt">
     <div class="container section reveal">
       <h2 class="section__title">Who it's for</h2>
-      <div class="personas">
+      <div class="personas reveal-stagger">
         <PersonaCard label="01" name="First-time applicants" line="A clear answer on the right first card for your CIBIL band, and how to improve approval odds." />
         <PersonaCard label="02" name="Frequent flyers" line="Lounge access, miles, and forex markup weighed honestly against the annual fee." />
         <PersonaCard label="03" name="Cashback maximisers" line="Flat 2% versus category multipliers, settled on your actual spending pattern." />
@@ -293,7 +293,7 @@ const faqs = [
   {teasers.length > 0 && (
     <section class="container section reveal">
       <h2 class="section__title">Guides &amp; updates</h2>
-      <div class="teasers">
+      <div class="teasers reveal-stagger">
         {teasers.map((a) => (
           <a class="teaser hover-lift" href={`/${a.article_type === 'news' ? 'news' : 'guides'}/${a.slug}`}>
             <p class="eyebrow">{a.article_type === 'news' ? 'News / RBI Update' : 'Guide'}</p>
@@ -310,7 +310,7 @@ const faqs = [
     <div class="container section reading-column reveal">
       <p class="eyebrow">Common questions</p>
       <h2 class="section__title">Straight answers before you start</h2>
-      <ul class="faq">
+      <ul class="faq reveal-stagger">
         {faqs.map((f, i) => (
           <li class="faq__item">
             <details open={i === 0 ? true : undefined} name="home-faq">
@@ -333,6 +333,30 @@ const faqs = [
   @media (min-width: 1024px) {
     .hero__grid { grid-template-columns: 1.1fr 0.9fr; gap: var(--space-16); }
   }
+
+  /* Hero entrance: gentle staggered fade-up on load. Gated behind .js so no-JS
+     visitors see it instantly, and behind reduced-motion below. Kept short and
+     the LCP <h1>/showcase paint at their natural time (transform/opacity only,
+     no layout shift) so Core Web Vitals stay clean. */
+  :global(html.js) .hero__copy > *,
+  :global(html.js) .showcase {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: hero-in var(--duration-reveal) var(--ease-reveal) forwards;
+  }
+  :global(html.js) .hero__copy > *:nth-child(1) { animation-delay: 60ms; }
+  :global(html.js) .hero__copy > *:nth-child(2) { animation-delay: 140ms; }
+  :global(html.js) .hero__copy > *:nth-child(3) { animation-delay: 220ms; }
+  :global(html.js) .hero__copy > *:nth-child(4) { animation-delay: 300ms; }
+  :global(html.js) .hero__copy > *:nth-child(5) { animation-delay: 380ms; }
+  :global(html.js) .showcase { animation-delay: 260ms; }
+  @keyframes hero-in {
+    to { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(html.js) .hero__copy > *,
+    :global(html.js) .showcase { opacity: 1; transform: none; animation: none; }
+  }
   .hero__title {
     font-size: var(--text-display);
     line-height: var(--leading-tight);
@@ -344,6 +368,7 @@ const faqs = [
     .hero__title { font-size: var(--text-h1); letter-spacing: var(--tracking-display-lg); }
   }
   .hero__sub { font-size: var(--text-body-lg); color: var(--color-text-secondary); max-width: 52ch; line-height: var(--leading-relaxed); }
+  .hero__sub strong { white-space: nowrap; }
   .hero__cta { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-6); }
   .hero__trust { margin-top: var(--space-3); font-size: var(--text-body-sm); color: var(--color-text-muted); }
 

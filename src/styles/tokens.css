@@ -183,6 +183,13 @@
   --ease-out:      cubic-bezier(0, 0, 0.2, 1);
   --ease-in:       cubic-bezier(0.4, 0, 1, 1);
 
+  /* Scroll-reveal choreography: a longer, gently decelerating curve (easeOutQuint)
+     that reads as "settling into place" rather than a UI click. Paired with a
+     stagger step so rows of cards cascade instead of snapping in together. */
+  --duration-reveal: 720ms;
+  --ease-reveal:     cubic-bezier(0.16, 1, 0.3, 1);
+  --stagger-step:    90ms;
+
   /* ---- Button sizing (marketing pill scale) ---- */
   --btn-height-lg: 48px;
   --btn-height-md: 40px;
