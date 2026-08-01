@@ -22,3 +22,6 @@ npm-debug.log*
 # editor
 .vscode/*
 !.vscode/extensions.json
+
+# Card-image fix workspace (not part of the site)
+update cards/
