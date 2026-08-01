@@ -20,7 +20,7 @@ import NewsletterForm from '../components/NewsletterForm.astro';
 import { SITE } from '../lib/site';
 import { currentMonthYear } from '../lib/format';
 import { getCardListing, getArticles, getCategories } from '../lib/queries';
-import { organizationSchema, webSiteSchema } from '../lib/seo';
+import { organizationSchema, webSiteSchema, itemListSchema, faqPage } from '../lib/seo';
 
 export const prerender = true;
 
@@ -41,6 +41,7 @@ const EXCLUDE_FROM_HERO = new Set([
   'PNB Patanjali RuPay Select Co-brand Credit Card',
   'IB Visa Business Credit Card',
   'Canara RuPay Platinum Credit Card',
+  'Axis Bank Magnus Credit Card',
 ]);
 const base = listing
   .filter((r) => r.overall_score != null)
@@ -54,7 +55,15 @@ const amexLead = listing
 const ordered = amexLead
   ? [amexLead, ...base.filter((r) => r.card_id !== amexLead.card_id)]
   : base;
-const specimens = ordered.map((r) => ({ id: r.card_id, name: r.card_name, bank_name: r.bank_name, image_url: r.image_url }));
+const specimens = ordered.map((r) => ({
+  id: r.card_id,
+  name: r.card_name,
+  bank_name: r.bank_name,
+  image_url: r.image_url,
+  // Review URL, same construction as CardRow.astro (strip the bank prefix the
+  // slug carries). Powers the ItemList schema so the reel can earn a carousel.
+  href: `/cards/${r.bank_slug}/${r.card_slug.replace(new RegExp(`^${r.bank_slug}-`), '')}`,
+}));
 
 // Alt text: prefix the issuer only when the card name doesn't already carry it,
 // so we get "IDFC FIRST Bank Ashva Credit Card" but not
@@ -64,13 +73,44 @@ const cardAlt = (s: { name: string; bank_name: string }) =>
 
 /* ---- Latest guides / news preview ---- */
 const teasers = (await getArticles()).slice(0, 3);
+
+/* ---- Homepage FAQ. Doubles as on-page content and FAQPage JSON-LD, which can
+   earn rich results and feed AI Overviews. Answers must match what the page
+   actually says (§9 no misleading markup); keep them short and specific. ---- */
+const faqs = [
+  {
+    q: `How does ${SITE.name} rate credit cards?`,
+    a: `We convert every card's rewards — points, cashback, or miles — into a single estimated rupee value per ₹100 spent, then score fees, welcome benefit, flexibility, and issuer service. The five dimensions combine into one overall score, with the maths shown rather than a bare star rating.`,
+  },
+  {
+    q: `Is ${SITE.name} free to use?`,
+    a: `Yes. All ${cardCount} card reviews and all six tools — recommender, combo optimizer, best-card calculator, compare, CIBIL hub, and wallet — are free, with no signup required to browse.`,
+  },
+  {
+    q: `Do affiliate links affect your rankings?`,
+    a: `No. The editorial score is locked before anyone looks at what a card pays us, and many of our top-rated cards pay us nothing. We disclose affiliate links, but they never change a card's position.`,
+  },
+  {
+    q: `Do I need to share my PAN or CIBIL score to get recommendations?`,
+    a: `No. The recommender asks how you spend and your approximate CIBIL band — no PAN, no OTP, and no hard credit inquiry. It takes about a minute and does not affect your credit score.`,
+  },
+  {
+    q: `How current are the reviews?`,
+    a: `Cards change quietly — fee hikes, reward devaluations, benefit cuts — so we log every change with a date in our Change Tracker, and each review reflects the card as it stands today.`,
+  },
+];
 ---
 <PageLayout
-  title={`${SITE.name}, One rating system for every credit card in India`}
+  title="Compare Credit Cards in India — One Independent Rating Scale"
   description={`We convert every bank's reward points, cashback, and miles onto a single ₹-per-₹100 scale, then rate what's left: fees, flexibility, and service. Independent, issuer-blind reviews of Indian credit cards. Updated ${currentMonthYear()}.`}
   canonicalPath="/"
   ogType="website"
-  jsonLd={[organizationSchema(), webSiteSchema()]}
+  jsonLd={[
+    organizationSchema(),
+    webSiteSchema(),
+    itemListSchema(specimens.map((s) => ({ name: s.name, path: s.href, image: s.image_url }))),
+    faqPage(faqs),
+  ]}
 >
   <!-- ============================================================ Hero -->
   <section class="hero mesh-hero">
@@ -109,6 +149,7 @@ const teasers = (await getArticles()).slice(0, 3);
                     alt={cardAlt(s)}
                     width="360" height="227"
                     loading={i === 0 ? 'eager' : 'lazy'} decoding="async"
+                    fetchpriority={i === 0 ? 'high' : undefined}
                   />
                 )}
                 <p class="showcase__name">{s.name}</p>
@@ -264,6 +305,24 @@ const teasers = (await getArticles()).slice(0, 3);
     </section>
   )}
 
+  <!-- ============================================================== FAQ -->
+  <section class="surface-alt">
+    <div class="container section reading-column reveal">
+      <p class="eyebrow">Common questions</p>
+      <h2 class="section__title">Straight answers before you start</h2>
+      <ul class="faq">
+        {faqs.map((f, i) => (
+          <li class="faq__item">
+            <details open={i === 0 ? true : undefined} name="home-faq">
+              <summary class="faq__q">{f.q}</summary>
+              <p class="faq__a">{f.a}</p>
+            </details>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
   <NewsletterForm source="landing" />
 </PageLayout>
 
@@ -384,6 +443,34 @@ const teasers = (await getArticles()).slice(0, 3);
   .teaser:hover { text-decoration: none; }
   .teaser h3 { font-size: var(--text-h4); margin-block: var(--space-1) var(--space-2); }
   .teaser__excerpt { color: var(--color-text-secondary); font-size: var(--text-body-sm); margin: 0; }
+
+  /* ---- FAQ (native <details> accordion, no JS) ---- */
+  .faq { list-style: none; margin: var(--space-8) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+  .faq__item {
+    background: var(--color-surface); border-radius: var(--radius-md);
+    box-shadow: var(--shadow-hairline-inset), var(--shadow-elevation-1);
+  }
+  .faq__item details { padding: var(--space-5) var(--space-6); }
+  .faq__q {
+    font-size: var(--text-h4); font-weight: var(--weight-semibold);
+    color: var(--color-text-primary); cursor: pointer; list-style: none;
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+  }
+  .faq__q::-webkit-details-marker { display: none; }
+  /* Chevron affordance, rotates when open. */
+  .faq__q::after {
+    content: ''; flex: none; width: 10px; height: 10px;
+    border-right: 2px solid var(--color-text-muted); border-bottom: 2px solid var(--color-text-muted);
+    transform: rotate(45deg); transition: transform var(--duration-fast) var(--ease-standard);
+  }
+  details[open] .faq__q::after { transform: rotate(-135deg); }
+  .faq__a {
+    color: var(--color-text-secondary); line-height: var(--leading-relaxed);
+    margin: var(--space-3) 0 0; max-width: 68ch;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .faq__q::after { transition: none; }
+  }
 </style>
 
 <script>

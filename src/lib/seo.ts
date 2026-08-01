@@ -82,6 +82,12 @@ export function articleSchema(
 /**
  * Organization + WebSite (with SearchAction for the Google sitelinks
  * searchbox), homepage ONLY (SEO_PROMPT §4).
+ *
+ * NOTE on `logo`: Google's logo guidelines want a crawlable raster (PNG/JPG),
+ * not SVG, so we point at the 1200×630 OG raster rather than favicon.svg.
+ * NOTE on `sameAs`: intentionally omitted until real, verified social profiles
+ * exist (footer links are still `#` placeholders). Pointing Google at guessed
+ * profiles would poison the entity, so we add it only when handles are real.
  */
 export function organizationSchema(): Record<string, unknown> {
   return {
@@ -89,8 +95,37 @@ export function organizationSchema(): Record<string, unknown> {
     '@type': 'Organization',
     name: SITE.name,
     url: SITE.url,
-    logo: new URL('/favicon.svg', SITE.url).href,
+    logo: new URL('/og-default.png', SITE.url).href,
     description: SITE.tagline,
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer support',
+      email: 'support@cardcompare.in',
+      areaServed: 'IN',
+      availableLanguage: ['en'],
+    },
+    // sameAs: [ ... ]  // TODO: add once verified X/Instagram/YouTube profiles exist.
+  };
+}
+
+/**
+ * ItemList for the homepage featured-card reel (SEO_PROMPT §4). Gives Google an
+ * ordered, URL-bearing list so the set can qualify as a carousel-rich result.
+ * Items must carry real URLs to be useful, so callers pass the review path.
+ */
+export function itemListSchema(
+  items: { name: string; path: string; image?: string | null }[],
+): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: items.map((it, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: it.name,
+      url: new URL(it.path, SITE.url).href,
+      ...(it.image ? { image: it.image } : {}),
+    })),
   };
 }
 
